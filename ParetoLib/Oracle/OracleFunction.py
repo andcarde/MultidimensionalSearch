@@ -9,10 +9,10 @@
 This module instantiate the abstract interface Oracle.
 The OracleFunction defines the boundary between the upper and lower
 closures based on polynomial constraints. For instance in a 2D
-space, the border x_2^1 + x_2^2 = 1 contains all the points
+space, the border x_2^2 + x_2^2 = 1 contains all the points
 x = (x_1, x_ 2) in the surface of a sphere of radius one. Every point
-whose coordinates satisfy x_2^1 + x_2^2 > 1 falls in the upper
-closure, and, conversely, every point x_2^1 + x_2^2< 1 in the lower
+whose coordinates satisfy x_1^2 + x_2^2 > 1 falls in the upper
+closure, and, conversely, every point x_2^2 + x_2^2 < 1 in the lower
 closure. This oracle has been created as a ‘proof of concept’ for
 testing and debugging purposes.
 """
