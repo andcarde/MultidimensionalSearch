@@ -15,8 +15,9 @@ The contents are the same of _py3k.__init__ file from MEvoLib
 
 import os
 import sys
+import platform
 
-if (sys.version_info[0] >= 3):
+if sys.version_info[0] >= 3:
     # Code for Python 3
     from builtins import open, zip, map, filter, range, input, round, max, min
     import codecs, io
@@ -132,7 +133,23 @@ else:  # sys.version_info[0] < 3
     # There is no TemporaryDirectory class in the temp library
     from TemporaryDirectory import TemporaryDirectory
 
-if (sys.platform == "win32"):
+# Required for limiting the recursion in NDTree.
+# "resource" library is only available on linux/unix
+if platform.system() == 'Linux':
+    from resource import setrlimit, RLIMIT_STACK, RLIM_INFINITY
+
+    def set_limit(max_rec):
+        setrlimit(RLIMIT_STACK, [0x100 * max_rec, RLIM_INFINITY])
+
+elif platform.system() == 'Windows':
+
+    def set_limit(max_rec):
+        None
+else:
+    raise RuntimeError('OS Platform \'{0}\' not compatible for "resource".\n'.format(platform.system()))
+
+
+if sys.platform == "win32":
     # Can't use commands.getoutput on Python 2, Unix only/broken:
     # http://bugs.python.org/issue15073
     # Can't use subprocess.getoutput on Python 3, Unix only/broken:
@@ -146,7 +163,7 @@ if (sys.platform == "win32"):
         stdout, stderr = child.communicate()
         # Remove trailing "\n" to match the Unix function
         return stdout.rstrip("\n")
-elif (sys.version_info[0] >= 3):
+elif sys.version_info[0] >= 3:
     # Use subprocess.getoutput on Python 3
     from subprocess import getoutput
 else:  # sys.version_info[0] <= 2

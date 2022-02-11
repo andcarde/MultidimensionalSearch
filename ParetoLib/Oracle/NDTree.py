@@ -18,10 +18,10 @@ https://ieeexplore.ieee.org/document/8274915/
 """
 
 import sys
-import resource
 import os
 import io
 import pickle
+from ParetoLib._py3k import set_limit
 
 from ParetoLib.Geometry.Rectangle import Rectangle
 from ParetoLib.Geometry.Point import less, less_equal, distance, dim
@@ -43,7 +43,7 @@ class NDTree:
         # Setting maximum recursion. It is required for the NDTree build
         # sys.getrecursionlimit()
         max_rec = 0x100000
-        resource.setrlimit(resource.RLIMIT_STACK, [0x100 * max_rec, resource.RLIM_INFINITY])
+        set_limit(max_rec)
         sys.setrecursionlimit(max_rec)
 
     def __contains__(self, p):
@@ -310,7 +310,7 @@ class NDTree:
         # Setting maximum recursion. It is required for the NDTree build
         # sys.getrecursionlimit()
         max_rec = 0x100000
-        resource.setrlimit(resource.RLIMIT_STACK, [0x100 * max_rec, resource.RLIM_INFINITY])
+        set_limit(max_rec)
         sys.setrecursionlimit(max_rec)
 
         self.root = pickle.load(finput)
@@ -414,7 +414,7 @@ class NDTree:
         # Setting maximum recursion. It is required for the NDTree build
         # sys.getrecursionlimit()
         max_rec = 0x100000
-        resource.setrlimit(resource.RLIMIT_STACK, [0x100 * max_rec, resource.RLIM_INFINITY])
+        set_limit(max_rec)
         sys.setrecursionlimit(max_rec)
 
         pickle.dump(self.root, foutput, pickle.HIGHEST_PROTOCOL)
