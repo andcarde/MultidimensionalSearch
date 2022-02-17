@@ -6,8 +6,8 @@ nfile = '../../../Tests/Oracle/OracleSTLe/2D/triangular/triangular.txt'
 human_readable = True
 
 # Definition of the n-dimensional space
-min_x, min_y = (0.0, 0.9)
-max_x, max_y = (1000.0, 1.1)
+min_x, min_y = (1.0, 0.0)
+max_x, max_y = (999.0, 2.0)
 
 oracle = OracleSTLeLib()
 oracle.from_file(nfile, human_readable)
