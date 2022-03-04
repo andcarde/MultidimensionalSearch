@@ -2,7 +2,7 @@ from ParetoLib.Oracle.OracleSTLe import OracleSTLeLib
 from ParetoLib.Search.Search import Search2D, EPS, DELTA, STEPS
 
 # File containing the definition of the Oracle
-nfile = '../../../Tests/Oracle/OracleSTLe/2D/triangular/triangular.txt'
+nfile = '../../../Tests/Oracle/OracleSTLe/2D/triangular/integral/triangular.txt'
 human_readable = True
 
 # Definition of the n-dimensional space
