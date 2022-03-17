@@ -1,22 +1,23 @@
-import csv
-import seaborn as sns
-import numpy as np
+import sys
 import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 
-# Leer fichero en CSV
 
-sns.set_theme(style="darkgrid")
-muestra_1= [1, 2]
-muestra_2= [2, 3]
+def plot_csv(csvfile):
+    # Read CSV file
+    names = ["Time", "Signal"]
+    df_signal = pd.read_csv(csvfile, names=names)
 
-signal_np = np.array([muestra_1, muestra_2], np.int32)
-signal_df = pd.DataFrame(signal_np, columns=["timepoint", "signal"])
+    # Plot the responses for different events and regions
+    sns.set_theme(style="darkgrid")
+    fig = sns.lineplot(x="Time",
+                       y="Signal",
+                       data=df_signal)
+    plt.show()
 
-# Plot the responses for different events and regions
-sns.lineplot(x="timepoint", y="signal",
-             data=signal_np)
-             
-             
-# Plot the responses for different events and regions
-sns.lineplot(x="timepoint", y="signal",
-             data=signal_df)
+
+if __name__ == '__main__':
+    csvfile = "../../Tests/Oracle/OracleSTLe/2D/stabilization/stabilization.csv"
+    # csvfile = sys.argv[1]
+    plot_csv(csvfile)
