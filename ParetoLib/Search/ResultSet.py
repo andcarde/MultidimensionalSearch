@@ -30,6 +30,7 @@ import tempfile
 
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.figure import Figure
 
 from ParetoLib.Oracle.NDTree import NDTree
 from ParetoLib.Geometry.Rectangle import Rectangle
@@ -541,7 +542,7 @@ class ResultSet(object):
     # MatPlot Graphics
     def _plot_space_2D(self, xaxe=0, yaxe=1, opacity=1.0):
         # type: (ResultSet, int, int, float) -> list
-        patch = [self.xspace.plot_2D('white', xaxe, yaxe, opacity)]
+        patch = [self.xspace.plot_2D('blue', xaxe, yaxe, opacity)]
         return patch
 
     def _plot_yup_2D(self, xaxe=0, yaxe=1, opacity=1.0):
@@ -567,9 +568,11 @@ class ResultSet(object):
                 blocking=False,
                 sec=0.0,
                 opacity=1.0,
-                fig_title='Approximation of the Pareto front'):
-        # type: (ResultSet, str, int, int, list, bool, float, float, str) -> plt
-        fig1 = plt.figure()
+                fig_title='Approximation of the Pareto front',
+                fig1=None):
+        # type: (ResultSet, str, int, int, list, bool, float, float, str, Figure) -> plt
+        if fig1 is None:
+            fig1 = plt.figure()
         # ax1 = fig1.add_subplot(111, aspect='equal')
         ax1 = fig1.add_subplot(111)
         # ax1.set_title('Approximation of the Pareto front, Parameters (' + str(xaxe) + ', ' + str(yaxe) + ')')
@@ -630,9 +633,13 @@ class ResultSet(object):
                      blocking=False,
                      sec=0.0,
                      opacity=1.0,
-                     fig_title='Approximation of the Pareto front'):
-        # type: (ResultSet, ResultSet, str, int, int, list, bool, float, float, str) -> plt
-        fig1 = plt.figure()
+                     fig_title='Approximation of the Pareto front',
+                     fig1=None):
+        # type: (ResultSet, ResultSet, str, int, int, list, bool, float, float, str, Figure) -> plt
+
+        if fig1 is None:
+            fig1 = plt.figure()
+
         # ax1 = fig1.add_subplot(111, aspect='equal')
         ax1 = fig1.add_subplot(111)
         # ax1.set_title('Approximation of the Pareto front, Parameters (' + str(xaxe) + ', ' + str(yaxe) + ')')
@@ -694,10 +701,12 @@ class ResultSet(object):
                       blocking=False,
                       sec=0.0,
                       opacity=1.0,
-                      fig_title='Approximation of the Pareto front'):
-        # type: (ResultSet, str, int, int, list, bool, float, float, str) -> plt
+                      fig_title='Approximation of the Pareto front',
+                      fig1=None):
+        # type: (ResultSet, str, int, int, list, bool, float, float, str, Figure) -> plt
 
-        fig1 = plt.figure()
+        if fig1 is None:
+            fig1 = plt.figure()
         # ax1 = fig1.add_subplot(111, aspect='equal')
         ax1 = fig1.add_subplot(111)
         # ax1.set_title('Approximation of the Pareto front, Parameters (' + str(xaxe) + ', ' + str(yaxe) + ')')
@@ -756,10 +765,12 @@ class ResultSet(object):
                        var_names=list(),
                        blocking=False,
                        sec=0.0,
-                       fig_title='Approximation of the Pareto front'):
-        # type: (ResultSet, str, int, int, list, bool, float, str) -> plt
+                       fig_title='Approximation of the Pareto front',
+                       fig1=None):
+        # type: (ResultSet, str, int, int, list, bool, float, str, Figure) -> plt
 
-        fig1 = plt.figure()
+        if fig1 is None:
+            fig1 = plt.figure()
         # ax1 = fig1.add_subplot(111, aspect='equal')
         ax1 = fig1.add_subplot(111)
         # ax1.set_title('Approximation of the Pareto front, Parameters (' + str(xaxe) + ', ' + str(yaxe) + ')')
@@ -847,10 +858,11 @@ class ResultSet(object):
                 sec=0.0,
                 opacity=1.0,
                 fig_title='Approximation of the Pareto front',
-                clip=False):
-
-        # type: (ResultSet, str, int, int, int, list, bool, float, float, str, bool) -> plt
-        fig1 = plt.figure()
+                clip=False,
+                fig1=None):
+        # type: (ResultSet, str, int, int, int, list, bool, float, float, str, bool, Figure) -> plt
+        if fig1 is None:
+            fig1 = plt.figure()
         # ax1 = fig1.add_subplot(111, aspect='equal', projection='3d')
         ax1 = fig1.add_subplot(111, projection='3d')
         ax1.set_title(fig_title)
@@ -919,10 +931,12 @@ class ResultSet(object):
                      sec=0.0,
                      opacity=1.0,
                      fig_title='Approximation of the Pareto front',
-                     clip=False):
+                     clip=False,
+                     fig1=None):
 
-        # type: (ResultSet, ResultSet, str, int, int, int, list, bool, float, float, str, bool) -> plt
-        fig1 = plt.figure()
+        # type: (ResultSet, ResultSet, str, int, int, int, list, bool, float, float, str, bool, Figure) -> plt
+        if fig1 is None:
+            fig1 = plt.figure()
         # ax1 = fig1.add_subplot(111, aspect='equal', projection='3d')
         ax1 = fig1.add_subplot(111, projection='3d')
         ax1.set_title(fig_title)
@@ -980,7 +994,7 @@ class ResultSet(object):
             fig1.savefig(filename, dpi=90, bbox_inches='tight')
         plt.close()
         return plt
-
+    
     def plot_3D_light(self,
                       filename='',
                       xaxe=0,
@@ -990,9 +1004,11 @@ class ResultSet(object):
                       blocking=False,
                       sec=0.0,
                       opacity=1.0,
-                      fig_title='Approximation of the Pareto front'):
-        # type: (ResultSet, str, int, int, int, list, bool, float, float, str) -> plt
-        fig1 = plt.figure()
+                      fig_title='Approximation of the Pareto front',
+                      fig1=None):
+        # type: (ResultSet, str, int, int, int, list, bool, float, float, str, Figure) -> plt
+        if fig1 is None:
+            fig1 = plt.figure()
         # ax1 = fig1.add_subplot(111, aspect='equal', projection='3d')
         ax1 = fig1.add_subplot(111, projection='3d')
         ax1.set_title(fig_title)
@@ -1053,9 +1069,11 @@ class ResultSet(object):
                        var_names=list(),
                        blocking=False,
                        sec=0.0,
-                       fig_title='Approximation of the Pareto front'):
-        # type: (ResultSet, str, int, int, int, list, bool, float, str) -> plt
-        fig1 = plt.figure()
+                       fig_title='Approximation of the Pareto front',
+                       fig1=None):
+        # type: (ResultSet, str, int, int, int, list, bool, float, str, Figure) -> plt
+        if fig1 is None:
+            fig1 = plt.figure()
         # ax1 = fig1.add_subplot(111, aspect='equal', projection='3d')
         ax1 = fig1.add_subplot(111, projection='3d')
         ax1.set_title(fig_title)

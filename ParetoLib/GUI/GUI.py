@@ -18,6 +18,7 @@ from ParetoLib.Oracle.OracleSTLe import OracleSTLeLib
 from ParetoLib.Search.Search import Search2D, Search3D, SearchND_2, EPS, DELTA, STEPS
 from ParetoLib.Search.ResultSet import ResultSet
 
+
 # TODO: Include more options in the GUI for reading the configuration parameters
 #  of PareboLib (e.g., EPS, DELTA, STEPS,...)
 # TODO: Extend STLe with more interporlation options
@@ -29,14 +30,34 @@ class StandardSolutionWindow(QWidget):
     This "window" is a QWidget. If it has no parent, it
     will appear as a free-floating window as we want.
     """
-    def __init__(self, result):
-        # type: (_, bool) -> None
+
+    def __init__(self):
         super().__init__()
-        layout = QVBoxLayout()
         self.setObjectName("Solution")
-        self.label = QLabel(str(result))
-        layout.addWidget(self.label)
+        layout = QVBoxLayout()
         self.setLayout(layout)
+
+    def set_message(self, result):
+        # type: (_, bool) -> None
+        # Message
+        label = QLabel(str(result))
+        self.layout().addWidget(label)
+
+    def set_resultset(self, rs, var_names):
+        # type: (_, ResultSet, list) -> None
+        dpi = 100
+        width = self.width() / dpi
+        height = self.height() / dpi
+        sc = MplCanvas(self, width=width, height=height, dpi=dpi)
+        # scene = QGraphicsScene()
+        # scene.addWidget(sc)
+        self.layout().addWidget(sc)
+        sc.axes = None
+
+        if rs.xspace.dim() == 2:
+            rs.plot_2D_light(var_names=var_names, fig1=sc.figure)
+        elif rs.xspace.dim() == 3:
+            rs.plot_3D_light(var_names=var_names, fig1=sc.figure)
 
 
 class MplCanvas(FigureCanvasQTAgg):
@@ -191,31 +212,17 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if not is_parametric:
             # Not parametric
             satisfied = self.run_non_parametric_stle()
-            self.solution = StandardSolutionWindow(satisfied)
-            self.solution.show()
+            # Visualization
+            self.solution = StandardSolutionWindow()
+            self.solution.set_message(satisfied)
         else:
             # Parametric
             rs = self.run_parametric_stle()
+            # Visualization
+            self.solution = StandardSolutionWindow()
+            self.solution.set_resultset(rs, self.oracle.get_var_names())
 
-
-# def mining_results(rs, intervals):
-#     # plt.gcf().number
-#
-#     solution = AnotherWindow()
-#     dpi = 100
-#     width = solution.width() / dpi
-#     height = solution.height() / dpi
-#     sc = MplCanvas(solution, width=width, height=height, dpi=dpi)
-#     # scene = QGraphicsScene()
-#     # scene.addWidget(sc)
-#     solution.layout().addWidget(sc)
-#
-#     if len(intervals) == 2:
-#         rs.plot_2D_light(var_names=self.oracle.get_var_names(), fig1=sc.figure)
-#     elif len(intervals) == 3:
-#         rs.plot_3D_light(var_names=self.oracle.get_var_names(), fig1=sc.figure)
-#
-#     solution.show()
+        self.solution.show()
 
 
 if __name__ == '__main__':
