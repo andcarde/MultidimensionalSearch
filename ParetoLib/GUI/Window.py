@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'primerboceto.ui'
+# Form implementation generated from reading ui file 'Window.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.6
 #
@@ -9,10 +9,9 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QWidget
+
 
 class Ui_MainWindow(object):
-    
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1049, 810)
@@ -24,9 +23,10 @@ class Ui_MainWindow(object):
         self.gridLayout = QtWidgets.QGridLayout(self.gridLayoutWidget)
         self.gridLayout.setContentsMargins(0, 0, 0, 0)
         self.gridLayout.setObjectName("gridLayout")
-        self.plainTextEdit = QtWidgets.QPlainTextEdit(self.gridLayoutWidget)
-        self.plainTextEdit.setObjectName("plainTextEdit")
-        self.gridLayout.addWidget(self.plainTextEdit, 0, 0, 1, 1)
+        self.formula = QtWidgets.QPlainTextEdit(self.gridLayoutWidget)
+        self.formula.setReadOnly(True)
+        self.formula.setObjectName("formula")
+        self.gridLayout.addWidget(self.formula, 0, 0, 1, 1)
         self.toolButton = QtWidgets.QToolButton(self.centralwidget)
         self.toolButton.setGeometry(QtCore.QRect(290, 710, 141, 31))
         self.toolButton.setObjectName("toolButton")
@@ -38,15 +38,15 @@ class Ui_MainWindow(object):
         self.input_files_groupBox = QtWidgets.QGroupBox(self.centralwidget)
         self.input_files_groupBox.setGeometry(QtCore.QRect(10, 30, 271, 211))
         self.input_files_groupBox.setObjectName("input_files_groupBox")
-        self.f_salida_textbox = QtWidgets.QPlainTextEdit(self.input_files_groupBox)
-        self.f_salida_textbox.setGeometry(QtCore.QRect(0, 170, 181, 31))
-        self.f_salida_textbox.setAcceptDrops(True)
-        self.f_salida_textbox.setLayoutDirection(QtCore.Qt.LeftToRight)
-        self.f_salida_textbox.setLineWrapMode(QtWidgets.QPlainTextEdit.NoWrap)
-        self.f_salida_textbox.setReadOnly(False)
-        self.f_salida_textbox.setPlainText("")
-        self.f_salida_textbox.setBackgroundVisible(False)
-        self.f_salida_textbox.setObjectName("f_salida_textbox")
+        self.f_variables_textbox = QtWidgets.QPlainTextEdit(self.input_files_groupBox)
+        self.f_variables_textbox.setGeometry(QtCore.QRect(0, 170, 181, 31))
+        self.f_variables_textbox.setAcceptDrops(True)
+        self.f_variables_textbox.setLayoutDirection(QtCore.Qt.LeftToRight)
+        self.f_variables_textbox.setLineWrapMode(QtWidgets.QPlainTextEdit.NoWrap)
+        self.f_variables_textbox.setReadOnly(True)
+        self.f_variables_textbox.setPlainText("")
+        self.f_variables_textbox.setBackgroundVisible(False)
+        self.f_variables_textbox.setObjectName("f_variables_textbox")
         self.f_senial_entrada_button = QtWidgets.QPushButton(self.input_files_groupBox)
         self.f_senial_entrada_button.setGeometry(QtCore.QRect(190, 110, 61, 31))
         self.f_senial_entrada_button.setObjectName("f_senial_entrada_button")
@@ -62,12 +62,12 @@ class Ui_MainWindow(object):
         self.label_3 = QtWidgets.QLabel(self.input_files_groupBox)
         self.label_3.setGeometry(QtCore.QRect(0, 90, 191, 16))
         self.label_3.setObjectName("label_3")
-        self.f_salida_button = QtWidgets.QPushButton(self.input_files_groupBox)
-        self.f_salida_button.setGeometry(QtCore.QRect(190, 170, 71, 31))
-        self.f_salida_button.setObjectName("f_salida_button")
-        self.f_especificacion_openbutton = QtWidgets.QPushButton(self.input_files_groupBox)
-        self.f_especificacion_openbutton.setGeometry(QtCore.QRect(190, 50, 61, 31))
-        self.f_especificacion_openbutton.setObjectName("f_especificacion_openbutton")
+        self.f_variables_button = QtWidgets.QPushButton(self.input_files_groupBox)
+        self.f_variables_button.setGeometry(QtCore.QRect(190, 170, 61, 31))
+        self.f_variables_button.setObjectName("f_variables_button")
+        self.f_especificacion_button = QtWidgets.QPushButton(self.input_files_groupBox)
+        self.f_especificacion_button.setGeometry(QtCore.QRect(190, 50, 61, 31))
+        self.f_especificacion_button.setObjectName("f_especificacion_button")
         self.f_especificacion_textbox = QtWidgets.QPlainTextEdit(self.input_files_groupBox)
         self.f_especificacion_textbox.setGeometry(QtCore.QRect(0, 50, 181, 31))
         self.f_especificacion_textbox.setAcceptDrops(True)
@@ -98,9 +98,9 @@ class Ui_MainWindow(object):
         self.operacion_comboBox = QtWidgets.QComboBox(self.options_groupBox)
         self.operacion_comboBox.setGeometry(QtCore.QRect(10, 120, 251, 31))
         self.operacion_comboBox.setObjectName("operacion_comboBox")
-        self.pushButton = QtWidgets.QPushButton(self.options_groupBox)
-        self.pushButton.setGeometry(QtCore.QRect(150, 210, 111, 31))
-        self.pushButton.setObjectName("pushButton")
+        self.f_ejecutar_button = QtWidgets.QPushButton(self.options_groupBox)
+        self.f_ejecutar_button.setGeometry(QtCore.QRect(150, 210, 111, 31))
+        self.f_ejecutar_button.setObjectName("f_ejecutar_button")
         self.groupBox = QtWidgets.QGroupBox(self.centralwidget)
         self.groupBox.setGeometry(QtCore.QRect(310, 20, 711, 501))
         self.groupBox.setObjectName("groupBox")
@@ -109,7 +109,7 @@ class Ui_MainWindow(object):
         self.graphicsView.setObjectName("graphicsView")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1049, 22))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1049, 21))
         self.menubar.setObjectName("menubar")
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
@@ -122,18 +122,28 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
-        self.plainTextEdit.setPlainText(_translate("MainWindow", "Formula \n"
+        self.formula.setPlainText(_translate("MainWindow", "Formula \n"
 ""))
         self.toolButton.setText(_translate("MainWindow", "Abrir"))
         self.input_files_groupBox.setTitle(_translate("MainWindow", "Input Files"))
         self.f_senial_entrada_button.setText(_translate("MainWindow", "Abrir"))
         self.label_3.setText(_translate("MainWindow", "Señales de entrada"))
-        self.f_salida_button.setText(_translate("MainWindow", "Generar"))
-        self.f_especificacion_openbutton.setText(_translate("MainWindow", "Abrir"))
-        self.label_4.setText(_translate("MainWindow", "Fichero de salida"))
+        self.f_variables_button.setText(_translate("MainWindow", "Abrir"))
+        self.f_especificacion_button.setText(_translate("MainWindow", "Abrir"))
+        self.label_4.setText(_translate("MainWindow", "Archivo de variables"))
         self.label_2.setText(_translate("MainWindow", "Archivo de especificación"))
         self.options_groupBox.setTitle(_translate("MainWindow", "Options"))
         self.label_5.setText(_translate("MainWindow", "Tipo de dato"))
         self.label_6.setText(_translate("MainWindow", "Operación"))
-        self.pushButton.setText(_translate("MainWindow", "Ejecutar"))
+        self.f_ejecutar_button.setText(_translate("MainWindow", "Ejecutar"))
         self.groupBox.setTitle(_translate("MainWindow", "Gráfico"))
+
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    MainWindow = QtWidgets.QMainWindow()
+    ui = Ui_MainWindow()
+    ui.setupUi(MainWindow)
+    MainWindow.show()
+    sys.exit(app.exec_())
