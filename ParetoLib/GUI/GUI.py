@@ -1,28 +1,43 @@
+import os
 import sys
 import tempfile
 
 import pandas as pd
 import seaborn as sns
+import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
 
 from qtpy import QtWidgets
-from PyQt5.QtWidgets import QFileDialog, QGraphicsScene, QTableWidgetItem
+from PyQt5.QtWidgets import QFileDialog, QGraphicsScene, QTableWidgetItem, QWidget, QVBoxLayout, QLabel
 
-from Window import Ui_MainWindow
-# from PareboLib.GUI.Window import Ui_MainWindow
+# from Window import Ui_MainWindow
+import ParetoLib.GUI as RootGUI
+from ParetoLib.GUI.Window import Ui_MainWindow
 from ParetoLib.Oracle.OracleSTLe import OracleSTLeLib
 from ParetoLib.Search.Search import Search2D, Search3D, SearchND_2, EPS, DELTA, STEPS
 from ParetoLib.Search.ResultSet import ResultSet
-
-# TODO: Replace print's by logger
-# TODO: Replace "from Window" by "ParetoLib.GUI"
 
 # TODO: Include more options in the GUI for reading the configuration parameters
 #  of PareboLib (e.g., EPS, DELTA, STEPS,...)
 # TODO: Extend STLe with more interporlation options
 # TODO: Implement a natural language processor that allows to write STL specifications in a nicer way
 # TODO: Reimplementen the core of ParetoLib for speeding up the computations
+
+class StandardSolutionWindow(QWidget):
+    """
+    This "window" is a QWidget. If it has no parent, it
+    will appear as a free-floating window as we want.
+    """
+    def __init__(self, result):
+        # type: (_, bool) -> None
+        super().__init__()
+        layout = QVBoxLayout()
+        self.setObjectName("Solution")
+        self.label = QLabel(str(result))
+        layout.addWidget(self.label)
+        self.setLayout(layout)
+
 
 class MplCanvas(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
@@ -42,21 +57,23 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.f_ejecutar_button.clicked.connect(self.run_stle)
         # Initialize empty Oracle
         self.oracle = OracleSTLeLib()
+        # Solution
+        self.solution = None
 
     def especificacion(self):
-        fname = QFileDialog.getOpenFileName(self, 'Select a file', "../../Tests/Oracle/OracleSTLe", "(*.stl)")
+        fname = QFileDialog.getOpenFileName(self, 'Select a file', '../../Tests/Oracle/OracleSTLe', '(*.stl)')
         self.f_especificacion_textbox.setPlainText(fname[0])
         with open(self.f_especificacion_textbox.toPlainText()) as file:
             lines = file.readlines()
         self.formula.setPlainText(''.join(lines))
 
     def senial_entrada(self):
-        fname = QFileDialog.getOpenFileName(self, 'Select a file', "../../Tests/Oracle/OracleSTLe", "(*.csv)")
+        fname = QFileDialog.getOpenFileName(self, 'Select a file', '../../Tests/Oracle/OracleSTLe', '(*.csv)')
         self.f_senial_entrada_textbox.setPlainText(fname[0])
         self.plot_csv()
 
     def variables(self):
-        fname = QFileDialog.getOpenFileName(self, 'Select a file', "../../Tests/Oracle/OracleSTLe", "(*.param)")
+        fname = QFileDialog.getOpenFileName(self, 'Select a file', '../../Tests/Oracle/OracleSTLe', '(*.param)')
         self.f_variables_textbox.setPlainText(fname[0])
         self.load_parameters(fname[0])
 
@@ -67,18 +84,17 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         width = self.graphicsView.width() / dpi
         height = self.graphicsView.height() / dpi
         sc = MplCanvas(self, width=width, height=height, dpi=dpi)
-
         # Read csvfile from self.label_3
-        # csvfile = "../../Tests/Oracle/OracleSTLe/2D/stabilization/stabilization.csv"
+        # csvfile = '../../Tests/Oracle/OracleSTLe/2D/stabilization/stabilization.csv'
         csvfile = self.f_senial_entrada_textbox.toPlainText()
         # Read CSV file
-        names = ["Time", "Signal"]
+        names = ['Time', 'Signal']
         df_signal = pd.read_csv(csvfile, names=names)
 
         # Plot the responses for different events and regions
-        sns.set_theme(style="darkgrid")
-        fig = sns.lineplot(x="Time",
-                           y="Signal",
+        sns.set_theme(style='darkgrid')
+        fig = sns.lineplot(x='Time',
+                           y='Signal',
                            data=df_signal,
                            ax=sc.axes)
         # fig.set_xlabel(None)
@@ -118,8 +134,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         stl_prop_file = self.f_especificacion_textbox.toPlainText()
         csv_signal_file = self.f_senial_entrada_textbox.toPlainText()
         # No parameters (i.e., using empty temporary file)
-        stl_param = tempfile.NamedTemporaryFile(mode='r')
+        stl_param = tempfile.NamedTemporaryFile(delete=False)
         stl_param_file = stl_param.name
+        stl_param.close()
 
         # Initialize the OracleSTLeLib
         self.oracle = OracleSTLeLib(stl_prop_file, csv_signal_file, stl_param_file)
@@ -127,82 +144,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # Evaluate the STLe expression
         stl_formula = self.oracle._load_stl_formula(stl_prop_file)
         satisfied = self.oracle.eval_stl_formula(stl_formula)
+        RootGUI.logger.debug('Satisfied? {0}'.format(satisfied))
+
+        os.remove(stl_param_file)
         return satisfied
 
     def run_parametric_stle(self):
-
-        def mining_2D(oracle, intervals):
-            # type: (OracleSTLeLib, list) -> ResultSet
-
-            # Definition of the n-dimensional space
-            min_x, max_x = intervals[0]
-            min_y, max_y = intervals[1]
-
-            # Mining the STLe expression
-            rs = Search2D(ora=oracle,
-                          min_cornerx=min_x,
-                          min_cornery=min_y,
-                          max_cornerx=max_x,
-                          max_cornery=max_y,
-                          epsilon=EPS,
-                          delta=DELTA,
-                          max_step=STEPS,
-                          blocking=False,
-                          sleep=0,
-                          opt_level=0,
-                          parallel=False,
-                          logging=False,
-                          simplify=False)
-            return rs
-
-        def mining_3D(oracle, intervals):
-            # type: (OracleSTLeLib, list) -> ResultSet
-
-            # Definition of the n-dimensional space
-            min_x, max_x = intervals[0]
-            min_y, max_y = intervals[1]
-            min_z, max_z = intervals[2]
-
-            # Mining the STLe expression
-            rs = Search3D(ora=oracle,
-                          min_cornerx=min_x,
-                          min_cornery=min_y,
-                          min_cornerz=min_z,
-                          max_cornerx=max_x,
-                          max_cornery=max_y,
-                          max_cornerz=max_z,
-                          epsilon=EPS,
-                          delta=DELTA,
-                          max_step=STEPS,
-                          blocking=False,
-                          sleep=0,
-                          opt_level=0,
-                          parallel=False,
-                          logging=True,
-                          simplify=True)
-            return rs
-
-        def mining_ND(oracle, intervals):
-            # type: (OracleSTLeLib, list) -> ResultSet
-
-            # Definition of the n-dimensional space
-            min_x, max_x = intervals[0]
-            min_y, max_y = intervals[1]
-            min_z, max_z = intervals[2]
-
-            # Mining the STLe expression
-            rs = SearchND_2(ora=oracle,
-                            list_intervals=intervals,
-                            epsilon=EPS,
-                            delta=DELTA,
-                            max_step=STEPS,
-                            blocking=False,
-                            sleep=0,
-                            opt_level=0,
-                            parallel=False,
-                            logging=True,
-                            simplify=True)
-            return rs
 
         # Running STLEval without parameters
         stl_prop_file = self.f_especificacion_textbox.toPlainText()
@@ -210,25 +157,31 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         stl_param_file = self.f_variables_textbox.toPlainText()
 
         # Initialize the OracleSTLeLib
-        print(stl_prop_file)
-        print(csv_signal_file)
-        print(stl_param_file)
+        RootGUI.logger.debug('Evaluating...')
+        RootGUI.logger.debug(stl_prop_file)
+        RootGUI.logger.debug(csv_signal_file)
+        RootGUI.logger.debug(stl_param_file)
 
         self.oracle = OracleSTLeLib(stl_prop_file, csv_signal_file, stl_param_file)
 
         # Read parameter intervals
         intervals = self.read_parameters_intervals()
-        print(intervals)
-        if len(intervals) == 2:
-            rs = mining_2D(self.oracle, intervals)
-        elif len(intervals) == 3:
-            rs = mining_3D(self.oracle, intervals)
-        elif len(intervals) > 3:
-            rs = mining_ND(self.oracle, intervals)
-        else:
-            print("Error")
-            rs = ResultSet()
+        RootGUI.logger.debug('Intervals:')
+        RootGUI.logger.debug(intervals)
 
+        # Mining the STLe expression
+        assert len(intervals) >= 2, 'Warning! Invalid number of dimensions. Returning empty ResultSet.'
+        rs = SearchND_2(ora=self.oracle,
+                        list_intervals=intervals,
+                        epsilon=EPS,
+                        delta=DELTA,
+                        max_step=STEPS,
+                        blocking=False,
+                        sleep=0,
+                        opt_level=0,
+                        parallel=False,
+                        logging=False,
+                        simplify=False)
         return rs
 
     def run_stle(self):
@@ -238,13 +191,34 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if not is_parametric:
             # Not parametric
             satisfied = self.run_non_parametric_stle()
+            self.solution = StandardSolutionWindow(satisfied)
+            self.solution.show()
         else:
             # Parametric
-            satisfied = self.run_parametric_stle()
-        return satisfied
+            rs = self.run_parametric_stle()
 
 
-if __name__ == "__main__":
+# def mining_results(rs, intervals):
+#     # plt.gcf().number
+#
+#     solution = AnotherWindow()
+#     dpi = 100
+#     width = solution.width() / dpi
+#     height = solution.height() / dpi
+#     sc = MplCanvas(solution, width=width, height=height, dpi=dpi)
+#     # scene = QGraphicsScene()
+#     # scene.addWidget(sc)
+#     solution.layout().addWidget(sc)
+#
+#     if len(intervals) == 2:
+#         rs.plot_2D_light(var_names=self.oracle.get_var_names(), fig1=sc.figure)
+#     elif len(intervals) == 3:
+#         rs.plot_3D_light(var_names=self.oracle.get_var_names(), fig1=sc.figure)
+#
+#     solution.show()
+
+
+if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)  # []
     window = MainWindow()
     window.show()
