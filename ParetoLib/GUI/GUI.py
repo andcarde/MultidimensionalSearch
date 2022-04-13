@@ -10,10 +10,19 @@ from qtpy import QtWidgets
 from PyQt5.QtWidgets import QFileDialog, QGraphicsScene, QTableWidgetItem
 
 from Window import Ui_MainWindow
+# from PareboLib.GUI.Window import Ui_MainWindow
 from ParetoLib.Oracle.OracleSTLe import OracleSTLeLib
 from ParetoLib.Search.Search import Search2D, Search3D, SearchND_2, EPS, DELTA, STEPS
 from ParetoLib.Search.ResultSet import ResultSet
 
+# TODO: Replace print's by logger
+# TODO: Replace "from Window" by "ParetoLib.GUI"
+
+# TODO: Include more options in the GUI for reading the configuration parameters
+#  of PareboLib (e.g., EPS, DELTA, STEPS,...)
+# TODO: Extend STLe with more interporlation options
+# TODO: Implement a natural language processor that allows to write STL specifications in a nicer way
+# TODO: Reimplementen the core of ParetoLib for speeding up the computations
 
 class MplCanvas(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
@@ -100,7 +109,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             min_val_text = self.tableWidget.item(row, 1)
             max_val_text = self.tableWidget.item(row, 2)
             interval = (int(min_val_text.text()), int(max_val_text.text()))
-            intervals = intervals.append(interval)
+            intervals.append(interval)
+
         return intervals
 
     def run_non_parametric_stle(self):
@@ -200,16 +210,24 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         stl_param_file = self.f_variables_textbox.toPlainText()
 
         # Initialize the OracleSTLeLib
+        print(stl_prop_file)
+        print(csv_signal_file)
+        print(stl_param_file)
+
         self.oracle = OracleSTLeLib(stl_prop_file, csv_signal_file, stl_param_file)
 
         # Read parameter intervals
         intervals = self.read_parameters_intervals()
+        print(intervals)
         if len(intervals) == 2:
             rs = mining_2D(self.oracle, intervals)
         elif len(intervals) == 3:
             rs = mining_3D(self.oracle, intervals)
-        else:
+        elif len(intervals) > 3:
             rs = mining_ND(self.oracle, intervals)
+        else:
+            print("Error")
+            rs = ResultSet()
 
         return rs
 
