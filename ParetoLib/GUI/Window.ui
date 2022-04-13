@@ -37,19 +37,6 @@
      </item>
     </layout>
    </widget>
-   <widget class="QToolButton" name="toolButton">
-    <property name="geometry">
-     <rect>
-      <x>290</x>
-      <y>710</y>
-      <width>141</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Abrir</string>
-    </property>
-   </widget>
    <widget class="Line" name="line">
     <property name="geometry">
      <rect>
@@ -113,7 +100,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>Abrir</string>
+      <string>Open</string>
      </property>
     </widget>
     <widget class="QPlainTextEdit" name="f_senial_entrada_textbox">
@@ -154,7 +141,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>Señales de entrada</string>
+      <string>Input signal</string>
      </property>
     </widget>
     <widget class="QPushButton" name="f_variables_button">
@@ -167,7 +154,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>Abrir</string>
+      <string>Open</string>
      </property>
     </widget>
     <widget class="QPushButton" name="f_especificacion_button">
@@ -180,7 +167,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>Abrir</string>
+      <string>Open</string>
      </property>
     </widget>
     <widget class="QPlainTextEdit" name="f_especificacion_textbox">
@@ -221,7 +208,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>Archivo de variables</string>
+      <string>Parameters</string>
      </property>
     </widget>
     <widget class="QLabel" name="label_2">
@@ -234,7 +221,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>Archivo de especificación</string>
+      <string>STL specification</string>
      </property>
     </widget>
    </widget>
@@ -242,7 +229,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>270</y>
+      <y>470</y>
       <width>271</width>
       <height>251</height>
      </rect>
@@ -260,7 +247,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>Tipo de dato</string>
+      <string>Interpolation</string>
      </property>
     </widget>
     <widget class="QComboBox" name="tipo_de_dato_comboBox">
@@ -278,12 +265,12 @@
       <rect>
        <x>10</x>
        <y>100</y>
-       <width>91</width>
+       <width>111</width>
        <height>16</height>
       </rect>
      </property>
      <property name="text">
-      <string>Operación</string>
+      <string>Parametric STL</string>
      </property>
     </widget>
     <widget class="QComboBox" name="operacion_comboBox">
@@ -295,6 +282,16 @@
        <height>31</height>
       </rect>
      </property>
+     <item>
+      <property name="text">
+       <string>No</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Yes</string>
+      </property>
+     </item>
     </widget>
     <widget class="QPushButton" name="f_ejecutar_button">
      <property name="geometry">
@@ -306,7 +303,7 @@
       </rect>
      </property>
      <property name="text">
-      <string>Ejecutar</string>
+      <string>Run</string>
      </property>
     </widget>
    </widget>
@@ -320,7 +317,7 @@
      </rect>
     </property>
     <property name="title">
-     <string>Gráfico</string>
+     <string>Signal</string>
     </property>
     <widget class="QGraphicsView" name="graphicsView">
      <property name="geometry">
@@ -333,6 +330,37 @@
      </property>
     </widget>
    </widget>
+   <widget class="QTableWidget" name="tableWidget">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>260</y>
+      <width>251</width>
+      <height>192</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>251</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <column>
+     <property name="text">
+      <string>param</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>min</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>max</string>
+     </property>
+    </column>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -340,7 +368,7 @@
      <x>0</x>
      <y>0</y>
      <width>1049</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>
