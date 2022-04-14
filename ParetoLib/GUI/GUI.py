@@ -4,18 +4,16 @@ import tempfile
 
 import pandas as pd
 import seaborn as sns
-import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolbar2QT
 
 from qtpy import QtWidgets
 from PyQt5.QtWidgets import QFileDialog, QGraphicsScene, QTableWidgetItem, QWidget, QVBoxLayout, QLabel
 
-# from Window import Ui_MainWindow
 import ParetoLib.GUI as RootGUI
 from ParetoLib.GUI.Window import Ui_MainWindow
 from ParetoLib.Oracle.OracleSTLe import OracleSTLeLib
-from ParetoLib.Search.Search import Search2D, Search3D, SearchND_2, EPS, DELTA, STEPS
+from ParetoLib.Search.Search import SearchND_2, EPS, DELTA, STEPS
 from ParetoLib.Search.ResultSet import ResultSet
 
 
@@ -45,14 +43,17 @@ class StandardSolutionWindow(QWidget):
 
     def set_resultset(self, rs, var_names):
         # type: (_, ResultSet, list) -> None
+        # Create the canvas
         dpi = 100
         width = self.width() / dpi
         height = self.height() / dpi
         sc = MplCanvas(self, width=width, height=height, dpi=dpi)
-        # scene = QGraphicsScene()
-        # scene.addWidget(sc)
+        # Do not create axis because rs.plot_XD will adjust them to 2D/3D
+
+        # Create toolbar, passing canvas as first parament, parent (self, the MainWindow) as second.
+        toolbar = NavigationToolbar2QT(sc, self)
+        self.layout().addWidget(toolbar)
         self.layout().addWidget(sc)
-        sc.axes = None
 
         if rs.xspace.dim() == 2:
             rs.plot_2D_light(var_names=var_names, fig1=sc.figure)
@@ -62,9 +63,12 @@ class StandardSolutionWindow(QWidget):
 
 class MplCanvas(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
+        self.axes = None
         fig = Figure(figsize=(width, height), dpi=dpi)
-        self.axes = fig.add_subplot(111)
         super(MplCanvas, self).__init__(fig)
+
+    def set_axis(self):
+        self.axes = self.figure.add_subplot(111)
 
 
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
@@ -105,6 +109,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         width = self.graphicsView.width() / dpi
         height = self.graphicsView.height() / dpi
         sc = MplCanvas(self, width=width, height=height, dpi=dpi)
+        sc.set_axis()
         # Read csvfile from self.label_3
         # csvfile = '../../Tests/Oracle/OracleSTLe/2D/stabilization/stabilization.csv'
         csvfile = self.f_senial_entrada_textbox.toPlainText()

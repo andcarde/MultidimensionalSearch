@@ -570,11 +570,19 @@ class ResultSet(object):
                 opacity=1.0,
                 fig_title='Approximation of the Pareto front',
                 fig1=None):
-        # type: (ResultSet, str, int, int, list, bool, float, float, str, Figure) -> plt
+        # type: (ResultSet, str, int, int, list, bool, float, float, str, Figure) -> Figure
+
+        embedded_fig = fig1 is not None
         if fig1 is None:
             fig1 = plt.figure()
-        # ax1 = fig1.add_subplot(111, aspect='equal')
-        ax1 = fig1.add_subplot(111)
+
+        ax1_list = fig1.axes
+        if ax1_list is None or len(ax1_list) == 0:
+            # ax1 = fig1.add_subplot(111, aspect='equal')
+            ax1 = fig1.add_subplot(111)
+        else:
+            ax1 = ax1_list[0]
+
         # ax1.set_title('Approximation of the Pareto front, Parameters (' + str(xaxe) + ', ' + str(yaxe) + ')')
         ax1.set_title(fig_title)
 
@@ -601,28 +609,26 @@ class ResultSet(object):
         ax1.set_xlim(self.xspace.min_corner[xaxe], self.xspace.max_corner[xaxe])
         ax1.set_ylim(self.xspace.min_corner[yaxe], self.xspace.max_corner[yaxe])
 
-        #
         fig1.tight_layout()
-        plt.tight_layout()
-        #
 
-        # plt.autoscale()
-        plt.xscale('linear')
-        plt.yscale('linear')
+        ax1.set_xscale('linear')
+        ax1.set_yscale('linear')
 
-        if sec > 0.0 and not blocking:
-            plt.ion()
-            plt.show()
-            plt.pause(float(sec))
-        else:
-            plt.ioff()
-            plt.show()
+        if not embedded_fig:
+            if sec > 0.0 and not blocking:
+                plt.ion()
+                plt.show()
+                plt.pause(float(sec))
+            else:
+                plt.ioff()
+                plt.show()
+
+            plt.close()
 
         if filename != '':
             fig1.savefig(filename, dpi=90, bbox_inches='tight')
 
-        plt.close()
-        return plt
+        return fig1
 
     def plot_2D_figs(self,
                      rs2,
@@ -637,11 +643,17 @@ class ResultSet(object):
                      fig1=None):
         # type: (ResultSet, ResultSet, str, int, int, list, bool, float, float, str, Figure) -> plt
 
+        embedded_fig = fig1 is not None
         if fig1 is None:
             fig1 = plt.figure()
 
-        # ax1 = fig1.add_subplot(111, aspect='equal')
-        ax1 = fig1.add_subplot(111)
+        ax1_list = fig1.axes
+        if ax1_list is None or len(ax1_list) == 0:
+            # ax1 = fig1.add_subplot(111, aspect='equal')
+            ax1 = fig1.add_subplot(111)
+        else:
+            ax1 = ax1_list[0]
+
         # ax1.set_title('Approximation of the Pareto front, Parameters (' + str(xaxe) + ', ' + str(yaxe) + ')')
         ax1.set_title(fig_title)
 
@@ -670,28 +682,26 @@ class ResultSet(object):
         ax1.set_xlim(self.xspace.min_corner[xaxe], self.xspace.max_corner[xaxe])
         ax1.set_ylim(self.xspace.min_corner[yaxe], self.xspace.max_corner[yaxe])
 
-        #
         fig1.tight_layout()
-        plt.tight_layout()
-        #
 
-        # plt.autoscale()
-        plt.xscale('linear')
-        plt.yscale('linear')
+        ax1.set_xscale('linear')
+        ax1.set_yscale('linear')
 
-        if sec > 0.0 and not blocking:
-            plt.ion()
-            plt.show()
-            plt.pause(float(sec))
-        else:
-            plt.ioff()
-            plt.show()
+        if not embedded_fig:
+            if sec > 0.0 and not blocking:
+                plt.ion()
+                plt.show()
+                plt.pause(float(sec))
+            else:
+                plt.ioff()
+                plt.show()
+
+            plt.close()
 
         if filename != '':
             fig1.savefig(filename, dpi=90, bbox_inches='tight')
 
-        plt.close()
-        return plt
+        return fig1
 
     def plot_2D_light(self,
                       filename='',
@@ -703,12 +713,19 @@ class ResultSet(object):
                       opacity=1.0,
                       fig_title='Approximation of the Pareto front',
                       fig1=None):
-        # type: (ResultSet, str, int, int, list, bool, float, float, str, Figure) -> plt
+        # type: (ResultSet, str, int, int, list, bool, float, float, str, Figure) -> Figure
 
+        embedded_fig = fig1 is not None
         if fig1 is None:
             fig1 = plt.figure()
-        # ax1 = fig1.add_subplot(111, aspect='equal')
-        ax1 = fig1.add_subplot(111)
+
+        ax1_list = fig1.axes
+        if ax1_list is None or len(ax1_list) == 0:
+            # ax1 = fig1.add_subplot(111, aspect='equal')
+            ax1 = fig1.add_subplot(111)
+        else:
+            ax1 = ax1_list[0]
+
         # ax1.set_title('Approximation of the Pareto front, Parameters (' + str(xaxe) + ', ' + str(yaxe) + ')')
         ax1.set_title(fig_title)
 
@@ -735,28 +752,26 @@ class ResultSet(object):
         ax1.set_xlim(self.xspace.min_corner[xaxe], self.xspace.max_corner[xaxe])
         ax1.set_ylim(self.xspace.min_corner[yaxe], self.xspace.max_corner[yaxe])
 
-        #
         fig1.tight_layout()
-        plt.tight_layout()
-        #
 
-        # plt.autoscale()
-        plt.xscale('linear')
-        plt.yscale('linear')
+        ax1.set_xscale('linear')
+        ax1.set_yscale('linear')
 
-        if sec > 0.0 and not blocking:
-            plt.ion()
-            plt.show()
-            plt.pause(float(sec))
-        else:
-            plt.ioff()
-            plt.show()
+        if not embedded_fig:
+            if sec > 0.0 and not blocking:
+                plt.ion()
+                plt.show()
+                plt.pause(float(sec))
+            else:
+                plt.ioff()
+                plt.show()
+
+            plt.close()
 
         if filename != '':
             fig1.savefig(filename, dpi=90, bbox_inches='tight')
 
-        plt.close()
-        return plt
+        return fig1
 
     def plot_2D_pareto(self,
                        filename='',
@@ -767,12 +782,19 @@ class ResultSet(object):
                        sec=0.0,
                        fig_title='Approximation of the Pareto front',
                        fig1=None):
-        # type: (ResultSet, str, int, int, list, bool, float, str, Figure) -> plt
+        # type: (ResultSet, str, int, int, list, bool, float, str, Figure) -> Figure
 
+        embedded_fig = fig1 is not None
         if fig1 is None:
             fig1 = plt.figure()
-        # ax1 = fig1.add_subplot(111, aspect='equal')
-        ax1 = fig1.add_subplot(111)
+
+        ax1_list = fig1.axes
+        if ax1_list is None or len(ax1_list) == 0:
+            # ax1 = fig1.add_subplot(111, aspect='equal')
+            ax1 = fig1.add_subplot(111)
+        else:
+            ax1 = ax1_list[0]
+
         # ax1.set_title('Approximation of the Pareto front, Parameters (' + str(xaxe) + ', ' + str(yaxe) + ')')
         ax1.set_title(fig_title)
 
@@ -805,28 +827,26 @@ class ResultSet(object):
         ax1.set_xlim(self.xspace.min_corner[xaxe], self.xspace.max_corner[xaxe])
         ax1.set_ylim(self.xspace.min_corner[yaxe], self.xspace.max_corner[yaxe])
 
-        #
         fig1.tight_layout()
-        plt.tight_layout()
-        #
 
-        # plt.autoscale()
-        plt.xscale('linear')
-        plt.yscale('linear')
+        ax1.set_xscale('linear')
+        ax1.set_yscale('linear')
 
-        if sec > 0.0 and not blocking:
-            plt.ion()
-            plt.show()
-            plt.pause(float(sec))
-        else:
-            plt.ioff()
-            plt.show()
+        if not embedded_fig:
+            if sec > 0.0 and not blocking:
+                plt.ion()
+                plt.show()
+                plt.pause(float(sec))
+            else:
+                plt.ioff()
+                plt.show()
+
+            plt.close()
 
         if filename != '':
             fig1.savefig(filename, dpi=90, bbox_inches='tight')
 
-        plt.close()
-        return plt
+        return fig1
 
     def _plot_space_3D(self, xaxe=0, yaxe=1, zaxe=2, opacity=1.0):
         # type: (ResultSet, int, int, int, float) -> list
@@ -860,11 +880,19 @@ class ResultSet(object):
                 fig_title='Approximation of the Pareto front',
                 clip=False,
                 fig1=None):
-        # type: (ResultSet, str, int, int, int, list, bool, float, float, str, bool, Figure) -> plt
+        # type: (ResultSet, str, int, int, int, list, bool, float, float, str, bool, Figure) -> Figure
+
+        embedded_fig = fig1 is not None
         if fig1 is None:
             fig1 = plt.figure()
-        # ax1 = fig1.add_subplot(111, aspect='equal', projection='3d')
-        ax1 = fig1.add_subplot(111, projection='3d')
+
+        ax1_list = fig1.axes
+        if ax1_list is None or len(ax1_list) == 0:
+            # ax1 = fig1.add_subplot(111, aspect='equal', projection='3d')
+            ax1 = fig1.add_subplot(111, projection='3d')
+        else:
+            ax1 = ax1_list[0]
+
         ax1.set_title(fig_title)
 
         # The name of the inferred parameters using Pareto search are written in the axes of the graphic.
@@ -897,28 +925,27 @@ class ResultSet(object):
         ax1.set_ylim(self.xspace.min_corner[yaxe], self.xspace.max_corner[yaxe])
         ax1.set_zlim(self.xspace.min_corner[zaxe], self.xspace.max_corner[zaxe])
 
-        #
         fig1.tight_layout()
-        plt.tight_layout()
-        #
 
-        # plt.autoscale()
-        plt.xscale('linear')
-        plt.yscale('linear')
-        # plt.zscale('linear')
+        ax1.set_xscale('linear')
+        ax1.set_yscale('linear')
+        # ax1.set_yscale('linear')
 
-        if sec > 0.0 and not blocking:
-            plt.ion()
-            plt.show()
-            plt.pause(float(sec))
-        else:
-            plt.ioff()
-            plt.show()
+        if not embedded_fig:
+            if sec > 0.0 and not blocking:
+                plt.ion()
+                plt.show()
+                plt.pause(float(sec))
+            else:
+                plt.ioff()
+                plt.show()
+
+            plt.close()
 
         if filename != '':
             fig1.savefig(filename, dpi=90, bbox_inches='tight')
-        plt.close()
-        return plt
+
+        return fig1
 
     def plot_3D_figs(self,
                      rs2,
@@ -972,29 +999,28 @@ class ResultSet(object):
         ax1.set_ylim(self.xspace.min_corner[yaxe], self.xspace.max_corner[yaxe])
         ax1.set_zlim(self.xspace.min_corner[zaxe], self.xspace.max_corner[zaxe])
 
-        #
         fig1.tight_layout()
-        plt.tight_layout()
-        #
 
-        # plt.autoscale()
-        plt.xscale('linear')
-        plt.yscale('linear')
-        # plt.zscale('linear')
+        ax1.set_xscale('linear')
+        ax1.set_yscale('linear')
+        # ax1.set_yscale('linear')
 
-        if sec > 0.0 and not blocking:
-            plt.ion()
-            plt.show()
-            plt.pause(float(sec))
-        else:
-            plt.ioff()
-            plt.show()
+        if not embedded_fig:
+            if sec > 0.0 and not blocking:
+                plt.ion()
+                plt.show()
+                plt.pause(float(sec))
+            else:
+                plt.ioff()
+                plt.show()
+
+            plt.close()
 
         if filename != '':
             fig1.savefig(filename, dpi=90, bbox_inches='tight')
-        plt.close()
-        return plt
-    
+
+        return fig1
+
     def plot_3D_light(self,
                       filename='',
                       xaxe=0,
@@ -1006,11 +1032,19 @@ class ResultSet(object):
                       opacity=1.0,
                       fig_title='Approximation of the Pareto front',
                       fig1=None):
-        # type: (ResultSet, str, int, int, int, list, bool, float, float, str, Figure) -> plt
+        # type: (ResultSet, str, int, int, int, list, bool, float, float, str, Figure) -> Figure
+
+        embedded_fig = fig1 is not None
         if fig1 is None:
             fig1 = plt.figure()
-        # ax1 = fig1.add_subplot(111, aspect='equal', projection='3d')
-        ax1 = fig1.add_subplot(111, projection='3d')
+
+        ax1_list = fig1.axes
+        if ax1_list is None or len(ax1_list) == 0:
+            # ax1 = fig1.add_subplot(111, aspect='equal', projection='3d')
+            ax1 = fig1.add_subplot(111, projection='3d')
+        else:
+            ax1 = ax1_list[0]
+
         ax1.set_title(fig_title)
 
         # The name of the inferred parameters using Pareto search are written in the axes of the graphic.
@@ -1038,28 +1072,27 @@ class ResultSet(object):
         ax1.set_ylim(self.xspace.min_corner[yaxe], self.xspace.max_corner[yaxe])
         ax1.set_zlim(self.xspace.min_corner[zaxe], self.xspace.max_corner[zaxe])
 
-        #
         fig1.tight_layout()
-        plt.tight_layout()
-        #
 
-        # plt.autoscale()
-        plt.xscale('linear')
-        plt.yscale('linear')
-        # plt.zscale('linear')
+        ax1.set_xscale('linear')
+        ax1.set_yscale('linear')
+        # ax1.set_yscale('linear')
 
-        if sec > 0.0 and not blocking:
-            plt.ion()
-            plt.show()
-            plt.pause(float(sec))
-        else:
-            plt.ioff()
-            plt.show()
+        if not embedded_fig:
+            if sec > 0.0 and not blocking:
+                plt.ion()
+                plt.show()
+                plt.pause(float(sec))
+            else:
+                plt.ioff()
+                plt.show()
+
+            plt.close()
 
         if filename != '':
             fig1.savefig(filename, dpi=90, bbox_inches='tight')
-        plt.close()
-        return plt
+
+        return fig1
 
     def plot_3D_pareto(self,
                        filename='',
@@ -1071,11 +1104,19 @@ class ResultSet(object):
                        sec=0.0,
                        fig_title='Approximation of the Pareto front',
                        fig1=None):
-        # type: (ResultSet, str, int, int, int, list, bool, float, str, Figure) -> plt
+        # type: (ResultSet, str, int, int, int, list, bool, float, str, Figure) -> Figure
+
+        embedded_fig = fig1 is not None
         if fig1 is None:
             fig1 = plt.figure()
-        # ax1 = fig1.add_subplot(111, aspect='equal', projection='3d')
-        ax1 = fig1.add_subplot(111, projection='3d')
+
+        ax1_list = fig1.axes
+        if ax1_list is None or len(ax1_list) == 0:
+            # ax1 = fig1.add_subplot(111, aspect='equal', projection='3d')
+            ax1 = fig1.add_subplot(111, projection='3d')
+        else:
+            ax1 = ax1_list[0]
+
         ax1.set_title(fig_title)
 
         # The name of the inferred parameters using Pareto search are written in the axes of the graphic.
@@ -1116,28 +1157,27 @@ class ResultSet(object):
         ax1.set_ylim(self.xspace.min_corner[yaxe], self.xspace.max_corner[yaxe])
         ax1.set_zlim(self.xspace.min_corner[zaxe], self.xspace.max_corner[zaxe])
 
-        #
         fig1.tight_layout()
-        plt.tight_layout()
-        #
 
-        # plt.autoscale()
-        plt.xscale('linear')
-        plt.yscale('linear')
-        # plt.zscale('linear')
+        ax1.set_xscale('linear')
+        ax1.set_yscale('linear')
+        # ax1.set_yscale('linear')
 
-        if sec > 0.0 and not blocking:
-            plt.ion()
-            plt.show()
-            plt.pause(float(sec))
-        else:
-            plt.ioff()
-            plt.show()
+        if not embedded_fig:
+            if sec > 0.0 and not blocking:
+                plt.ion()
+                plt.show()
+                plt.pause(float(sec))
+            else:
+                plt.ioff()
+                plt.show()
+
+            plt.close()
 
         if filename != '':
             fig1.savefig(filename, dpi=90, bbox_inches='tight')
-        plt.close()
-        return plt
+
+        return fig1
 
     # Saving/loading results
     def to_file_yup(self, f):
