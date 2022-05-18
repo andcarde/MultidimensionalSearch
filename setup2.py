@@ -22,7 +22,7 @@ if __name__ == '__main__':
         long_description_content_type="text/markdown",
         url='https://gricad-gitlab.univ-grenoble-alpes.fr/verimag/tempo/multidimensional_search',
         install_requires=[
-            'matplotlib>=2.0.2,<=3.0.3',
+            'matplotlib>=2.0.2',
             'numpy>=1.15',
             'pytest>=2.0',
             'sortedcontainers>=1.5.10',
@@ -35,13 +35,13 @@ if __name__ == '__main__':
             'ParetoLib.JAMT': ['*.jar'],
             'ParetoLib.STLe': ['*.bin', '*.exe', '*.so.1', '*.dll']
         },
-        classifiers=(
+        classifiers=[
             "Programming Language :: Python :: 2.7",
             "Programming Language :: Python :: 3.4",
             "License :: GNU GPL",
             "Operating System :: OS Independent",
-        ),
-        use_2to3=True,
+        ],
+        #use_2to3=True,
         test_suite=os.path.dirname(__file__) + '.Tests',
         #convert_2to3_doctests=['src/your/module/README.txt'],
         #use_2to3_fixers=['your.fixers'],

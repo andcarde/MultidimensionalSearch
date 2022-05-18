@@ -1,4 +1,4 @@
-image: python:2.7
+image: python:3.8
 
 stages:
   - build_test
@@ -15,9 +15,10 @@ build_test:
     - export DISPLAY=:99
     ## Downloading requirements
     - apt-get -y install openjdk-11-jre
-    - apt-get -y install python-pip
-    - apt-get -y install python-tk
-    - apt-get -y install python-pytest
+    - apt-get -y install python3-pip
+    - apt-get -y install python3-tk
+    - apt-get -y install python3-pytest
+    - pip3 install pytest
     ## Installing
     - ./install.sh
     ## Testing
@@ -30,10 +31,10 @@ build:
   script:
     - apt-get update
     ## Downloading requirements
-    - apt-get -y install python-pip
+    - apt-get -y install python3-pip
     ## Building
-    - python setup2.py bdist_wheel --universal
-    - python setup2.py bdist_egg
+    - python3 setup2.py bdist_wheel --universal
+    - python3 setup2.py bdist_egg
   artifacts:
     when: on_success
     paths:
@@ -52,16 +53,16 @@ test:
     - Xvfb :99 -screen 0 1280x720x24 -ac &
     - export DISPLAY=:99
     ## Downloading requirements
-    - apt-get -y install openjdk-8-jre
-    - apt-get -y install python-pip
-    - apt-get -y install python-tk
-    - apt-get -y install python-pytest
+    - apt-get -y install openjdk-11-jre
+    - apt-get -y install python3-pip
+    - apt-get -y install python3-tk
+    - apt-get -y install python3-pytest
     ## Configuring tests
-    - pip install coverage
-    - pip install pytest
-    - pip install pytest-timeout
+    - pip3 install coverage
+    - pip3 install pytest
+    - pip3 install pytest-timeout
     - cd dist/
-    - pip install *.whl --user
+    - pip3 install *.whl --user
     - cd ../Tests
     - ./coverage_all.sh
   artifacts:
