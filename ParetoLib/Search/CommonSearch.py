@@ -67,41 +67,41 @@ def binary_search(x,
             dist = y.norm()
     return y, i
 
-
-def discrete_binary_search(x,
-                           member,
-                           error):
-    # type: (Segment, callable, tuple) -> (Segment, int)
-    i = 0
-    y = x
-    if member(y.low):
-        # All the cube belongs to B1
-        y.low = x.low
-        y.high = x.low
-    elif not member(y.high):
-        # All the cube belongs to B0
-        y.low = x.high
-        y.high = x.high
-    else:
-        # We don't know. We search for a point in the diagonal
-        # dist = subtract(y.high, y.low)
-        dist = y.norm()
-        # while not less_equal(dist, error):
-        while dist > math.sqrt(2):
-            i += 1
-            # yval = div(add(y.low, y.high), 2.0)
-            yval = y.center_round()
-            # We need a oracle() for guiding the search
-            if member(yval):
-                y.high = yval
-            else:
-                y.low = yval
-            # dist = subtract(y.high, y.low)
-            dist = y.norm()
-        # Search completed
-        y.low = y.high
-
-    return y, i
+# TODO: Remove
+# def discrete_binary_search(x,
+#                            member,
+#                            error):
+#     # type: (Segment, callable, tuple) -> (Segment, int)
+#     i = 0
+#     y = x
+#     if member(y.low):
+#         # All the cube belongs to B1
+#         y.low = x.low
+#         y.high = x.low
+#     elif not member(y.high):
+#         # All the cube belongs to B0
+#         y.low = x.high
+#         y.high = x.high
+#     else:
+#         # We don't know. We search for a point in the diagonal
+#         # dist = subtract(y.high, y.low)
+#         dist = y.norm()
+#         # while not less_equal(dist, error):
+#         while dist > math.sqrt(2):
+#             i += 1
+#             # yval = div(add(y.low, y.high), 2.0)
+#             yval = y.center_round()
+#             # We need a oracle() for guiding the search
+#             if member(yval):
+#                 y.high = yval
+#             else:
+#                 y.low = yval
+#             # dist = subtract(y.high, y.low)
+#             dist = y.norm()
+#         # Search completed
+#         y.low = y.high
+#
+#     return y, i
 
 
 # No intersection: -2
@@ -113,6 +113,7 @@ def discrete_binary_search(x,
 
 
 def determine_intersection(y1, y2):
+    # type: (Segment, Segment) -> (Segment, int)
     if y2.high <= y1.low:
         return Segment(y1.high, y1.low), NO_INTER
     elif y1.high <= y2.low:
@@ -122,6 +123,7 @@ def determine_intersection(y1, y2):
 
 
 def intersection_empty_constrained(x, member1, member2, list_constraints):
+    # type: (Segment, callable, callable, list) -> bool
     low_allowed = True
     high_allowed = True
     for constraint in list_constraints:
@@ -143,6 +145,7 @@ def intersection_empty_constrained(x, member1, member2, list_constraints):
 
 
 def intersection_empty(x, member1, member2):
+    # type: (Segment, callable, callable) -> bool
     # The cube doesn't contain an intersection.
     return (not member1(x.high)) or (not member2(x.low))
 

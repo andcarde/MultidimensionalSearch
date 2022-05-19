@@ -822,19 +822,19 @@ class ResultSet(object):
         faces = [self.xspace.plot_3D('blue', xaxe, yaxe, zaxe, opacity)]
         return faces
 
-    def _plot_yup_3D(self, xaxe=0, yaxe=1, zaxe=2, opacity=1.0, clipBox=None):
-        # type: (ResultSet, int, int, int, float) -> list
-        faces = [rect.plot_3D('green', xaxe, yaxe, zaxe, opacity, clipBox) for rect in self.yup]
+    def _plot_yup_3D(self, xaxe=0, yaxe=1, zaxe=2, opacity=1.0, clip_box=None):
+        # type: (ResultSet, int, int, int, float, _) -> list
+        faces = [rect.plot_3D('green', xaxe, yaxe, zaxe, opacity, clip_box) for rect in self.yup]
         return faces
 
-    def _plot_ylow_3D(self, xaxe=0, yaxe=1, zaxe=2, opacity=1.0, clipBox=None):
-        # type: (ResultSet, int, int, int, float) -> list
-        faces = [rect.plot_3D('red', xaxe, yaxe, zaxe, opacity, clipBox) for rect in self.ylow]
+    def _plot_ylow_3D(self, xaxe=0, yaxe=1, zaxe=2, opacity=1.0, clip_box=None):
+        # type: (ResultSet, int, int, int, float, _) -> list
+        faces = [rect.plot_3D('red', xaxe, yaxe, zaxe, opacity, clip_box) for rect in self.ylow]
         return faces
 
-    def _plot_border_3D(self, xaxe=0, yaxe=1, zaxe=2, opacity=1.0, clipBox=None):
-        # type: (ResultSet, int, int, int, float) -> list
-        faces = [rect.plot_3D('blue', xaxe, yaxe, zaxe, opacity, clipBox) for rect in self.border]
+    def _plot_border_3D(self, xaxe=0, yaxe=1, zaxe=2, opacity=1.0, clip_box=None):
+        # type: (ResultSet, int, int, int, float, _) -> list
+        faces = [rect.plot_3D('blue', xaxe, yaxe, zaxe, opacity, clip_box) for rect in self.border]
         return faces
 
     def plot_3D(self,
@@ -865,12 +865,13 @@ class ResultSet(object):
         ax1.set_zlabel(var_names[zaxe % len(var_names)])
 
         if clip:
-            clipB = self.xspace
+            clip_b = self.xspace
         else:
-            clipB = None
-        faces_yup = self._plot_yup_3D(xaxe, yaxe, zaxe, opacity, clipBox=clipB)
-        faces_ylow = self._plot_ylow_3D(xaxe, yaxe, zaxe, opacity, clipBox=clipB)
-        faces_border = self._plot_border_3D(xaxe, yaxe, zaxe, opacity, clipBox=clipB)
+            clip_b = None
+
+        faces_yup = self._plot_yup_3D(xaxe, yaxe, zaxe, opacity, clip_box=clip_b)
+        faces_ylow = self._plot_ylow_3D(xaxe, yaxe, zaxe, opacity, clip_box=clip_b)
+        faces_border = self._plot_border_3D(xaxe, yaxe, zaxe, opacity, clip_box=clip_b)
 
         faces = faces_yup
         faces += faces_ylow
@@ -911,14 +912,14 @@ class ResultSet(object):
                      rs2,
                      filename='',
                      xaxe=0,
-                yaxe=1,
-                zaxe=2,
-                var_names=list(),
-                blocking=False,
-                sec=0.0,
-                opacity=1.0,
-                fig_title='Approximation of the Pareto front',
-                clip=False):
+                     yaxe=1,
+                     zaxe=2,
+                     var_names=list(),
+                     blocking=False,
+                     sec=0.0,
+                     opacity=1.0,
+                     fig_title='Approximation of the Pareto front',
+                     clip=False):
 
         # type: (ResultSet, ResultSet, str, int, int, int, list, bool, float, float, str, bool) -> plt
         fig1 = plt.figure()
@@ -936,12 +937,12 @@ class ResultSet(object):
         ax1.set_zlabel(var_names[zaxe % len(var_names)])
 
         if clip:
-            clipB = self.xspace
+            clip_b = self.xspace
         else:
-            clipB = None
-        faces_yup = self._plot_yup_3D(xaxe, yaxe, zaxe, opacity, clipBox=clipB)
-        faces_ylow = self._plot_ylow_3D(xaxe, yaxe, zaxe, opacity, clipBox=clipB)
-        faces_border = self._plot_border_3D(xaxe, yaxe, zaxe, opacity, clipBox=clipB)
+            clip_b = None
+        faces_yup = self._plot_yup_3D(xaxe, yaxe, zaxe, opacity, clip_box=clip_b)
+        faces_ylow = self._plot_ylow_3D(xaxe, yaxe, zaxe, opacity, clip_box=clip_b)
+        faces_border = self._plot_border_3D(xaxe, yaxe, zaxe, opacity, clip_box=clip_b)
 
         faces = faces_yup
         faces += faces_ylow

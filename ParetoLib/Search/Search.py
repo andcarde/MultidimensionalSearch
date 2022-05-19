@@ -85,7 +85,7 @@ def create_3D_space(minx, miny, minz, maxx, maxy, maxz):
     return xyspace
 
 
-#def create_ND_space(*args):
+# def create_ND_space(*args):
 def create_ND_space(args):
     # type: (iter) -> Rectangle
     # args = [(minx, maxx), (miny, maxy),..., (minz, maxz)]
@@ -98,6 +98,7 @@ def create_ND_space(args):
     time0 = end - start
     RootSearch.logger.debug('Time creating Space: {0}'.format(str(time0)))
     return xyspace
+
 
 # Dimensional tests
 def Search2D(ora,
@@ -242,63 +243,111 @@ def SearchND_2(ora,
         rs.fusion()
     return rs
 
-def SearchIntersection2D(oracle1, oracle2,
-             min_cornerx=0.0,
-             min_cornery=0.0,
-             max_cornerx=1.0,
-             max_cornery=1.0,
-             epsilon=EPS,
-             delta=DELTA,
-             max_step=STEPS,
-             blocking=False,
-             sleep=0.0,
-             opt_level=1,
-             parallel=False,
-             logging=True,
-             simplify=True):
+
+def SearchIntersection2D(ora1, ora2,
+                         min_cornerx=0.0,
+                         min_cornery=0.0,
+                         max_cornerx=1.0,
+                         max_cornery=1.0,
+                         epsilon=EPS,
+                         delta=DELTA,
+                         max_step=STEPS,
+                         blocking=False,
+                         sleep=0.0,
+                         opt_level=1,
+                         parallel=False,
+                         logging=True,
+                         simplify=True):
+    # type: (Oracle, Oracle, float, float, float, float, float, float, int, bool, float, int, bool, bool, bool) -> ResultSet
+    assert (ora1.dim() == ora1.dim()), 'Oracle 1 and Oracle 2 have different dimensions'
 
     xyspace = create_2D_space(min_cornerx, min_cornery, max_cornerx, max_cornery)
-    intersection_result = SeqSearch.multidim_intersection_search(xyspace, [], oracle1, oracle2, epsilon, delta, max_step,
-                                       blocking, sleep, opt_level, logging)
+    intersection_result = SeqSearch.multidim_intersection_search(xyspace, [], ora1, ora2, epsilon, delta, max_step,
+                                                                 blocking, sleep, opt_level, logging)
+    if simplify:
+        intersection_result.simplify()
+        intersection_result.fusion()
     return intersection_result
 
-def SearchIntersection3D(oracle1, oracle2,
-             min_cornerx=0.0,
-             min_cornery=0.0,
-             min_cornerz=0.0,
-             max_cornerx=1.0,
-             max_cornery=1.0,
-             max_cornerz=1.0,
-             epsilon=EPS,
-             delta=DELTA,
-             max_step=STEPS,
-             blocking=False,
-             sleep=0.0,
-             opt_level=1,
-             parallel=False,
-             logging=True,
-             simplify=True):
+
+def SearchIntersection3D(ora1, ora2,
+                         min_cornerx=0.0,
+                         min_cornery=0.0,
+                         min_cornerz=0.0,
+                         max_cornerx=1.0,
+                         max_cornery=1.0,
+                         max_cornerz=1.0,
+                         epsilon=EPS,
+                         delta=DELTA,
+                         max_step=STEPS,
+                         blocking=False,
+                         sleep=0.0,
+                         opt_level=1,
+                         parallel=False,
+                         logging=True,
+                         simplify=True):
+    # type: (Oracle, Oracle, float, float, float, float, float, float, float, float, int, bool, float, int, bool, bool, bool) -> ResultSet
+    assert (ora1.dim() == ora1.dim()), 'Oracle 1 and Oracle 2 have different dimensions'
 
     xyspace = create_3D_space(min_cornerx, min_cornery, min_cornerz, max_cornerx, max_cornery, max_cornerz)
-    intersection_result = SeqSearch.multidim_intersection_search(xyspace, [], oracle1, oracle2, epsilon, delta, max_step, blocking, sleep, opt_level, logging)
+    intersection_result = SeqSearch.multidim_intersection_search(xyspace, [], ora1, ora2, epsilon, delta, max_step,
+                                                                 blocking, sleep, opt_level, logging)
+    if simplify:
+        intersection_result.simplify()
+        intersection_result.fusion()
     return intersection_result
 
-def SearchIntersectionND_2(oracle1, oracle2,
-               list_intervals,
-               list_constraints=[],
-               epsilon=EPS,
-               delta=DELTA,
-               max_step=STEPS,
-               blocking=False,
-               sleep=0.0,
-               opt_level=2,
-               parallel=False,
-               logging=True,
-               simplify=True):
-    # type: (Oracle, list, float, float, int, bool, float, int, bool, bool, bool) -> ResultSet
+
+def SearchIntersectionND(ora1, ora2,
+                         min_corner=0.0,
+                         max_corner=1.0,
+                         epsilon=EPS,
+                         delta=DELTA,
+                         max_step=STEPS,
+                         blocking=False,
+                         sleep=0.0,
+                         opt_level=2,
+                         parallel=False,
+                         logging=True,
+                         simplify=True):
+    # type: (Oracle, Oracle, float, float, float, float, int, bool, float, int, bool, bool, bool) -> ResultSet
+    assert (ora1.dim() == ora1.dim()), 'Oracle 1 and Oracle 2 have different dimensions'
+
+    d = ora1.dim()
+
+    minc = (min_corner,) * d
+    maxc = (max_corner,) * d
+    xyspace = Rectangle(minc, maxc)
+
+    intersection_result = SeqSearch.multidim_intersection_search(xyspace, [], ora1, ora2, epsilon, delta, max_step,
+                                                                 blocking, sleep, opt_level, logging)
+    if simplify:
+        intersection_result.simplify()
+        intersection_result.fusion()
+    return intersection_result
+
+
+def SearchIntersectionND_2(ora1, ora2,
+                           list_intervals,
+                           list_constraints=[],
+                           epsilon=EPS,
+                           delta=DELTA,
+                           max_step=STEPS,
+                           blocking=False,
+                           sleep=0.0,
+                           opt_level=2,
+                           parallel=False,
+                           logging=True,
+                           simplify=True):
+    # type: (Oracle, Oracle, list, list, float, float, int, bool, float, int, bool, bool, bool) -> ResultSet
+    assert (ora1.dim() == ora1.dim()), 'Oracle 1 and Oracle 2 have different dimensions'
 
     # list_intervals = [(minx, maxx), (miny, maxy),..., (minz, maxz)]
     xyspace = create_ND_space(list_intervals)
 
-    intersection_result = SeqSearch.multidim_intersection_search(xyspace, list_constraints, oracle1, oracle2, epsilon, delta, max_step, blocking, sleep, opt_level, logging)
+    intersection_result = SeqSearch.multidim_intersection_search(xyspace, list_constraints, ora1, ora2, epsilon, delta,
+                                                                 max_step, blocking, sleep, opt_level, logging)
+    if simplify:
+        intersection_result.simplify()
+        intersection_result.fusion()
     return intersection_result

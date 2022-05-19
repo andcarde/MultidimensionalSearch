@@ -9,9 +9,16 @@
 This module implements the sequential version of the learning
 algorithms described in [1] for searching the Pareto front.
 
+Paper in [2] introduces a variant of the algorithm presented in [1],
+which allows the intersection of two Pareto fronts according to some epsilon count.
+
 [1] Learning Monotone Partitions of Partially-Ordered Domains,
 Nicolas Basset, Oded Maler, J.I Requeno, in
 doc/article.pdf.
+
+[2] Learning Specifications for Labelled Patterns,
+Nicolas Basset, Thao Dang, Akshay Mambakam, J.I Requeno, in
+FORMATS 2020: 76-93
 """
 
 import os
@@ -23,16 +30,16 @@ from sortedcontainers import SortedListWithKey, SortedSet
 
 import ParetoLib.Search as RootSearch
 
-# (INTERFULL, INTER, DKNOW, NO_INTER, INTERNULL) = (2, 1, -1, -2, -3)
-
-from ParetoLib.Search.CommonSearch import EPS, DELTA, STEPS, INTERFULL, INTERNULL, INTER, DKNOW, NO_INTER, binary_search, intersection_empty, \
-    intersection_empty_constrained, intersection_expansion_search, discrete_binary_search
+from ParetoLib.Search.CommonSearch import EPS, DELTA, STEPS, INTERFULL, INTERNULL, INTER, DKNOW, NO_INTER, \
+    binary_search, intersection_empty, \
+    intersection_empty_constrained, intersection_expansion_search
 from ParetoLib.Search.ResultSet import ResultSet
 
 from ParetoLib.Oracle.Oracle import Oracle
-from ParetoLib.Geometry.Rectangle import Rectangle, interirect, irect, idwc, iuwc, comp, incomp, incomp_segment
-from ParetoLib.Geometry.Rectangle import incomp_segmentpos, incomp_segmentNegRemoveDown, incomp_segmentNegRemoveUp
+from ParetoLib.Geometry.Rectangle import Rectangle, interirect, irect, idwc, iuwc, comp, incomp, incomp_segment, \
+    incomp_segmentpos, incomp_segment_neg_remove_down, incomp_segment_neg_remove_up
 from ParetoLib.Geometry.Lattice import Lattice
+
 
 ################################
 ####### STANDARD METHOD ########
@@ -67,7 +74,7 @@ def multidim_search(xspace,
                               logging=logging)
     end = time.time()
     time0 = end - start
-    RootSearch.logger.info('Time multidim search (pareto front): ' + str(time0))
+    RootSearch.logger.info('Time multidim search (Pareto front): ' + str(time0))
 
     return rs
 
@@ -748,13 +755,13 @@ def multidim_search_opt_1(xspace,
 # Cubes from the boundary are partially dominated by Pareto points in Ylow/Ylup, while opt_inf searches for
 # cubes that are fully dominated.
 def multidim_search_opt_inf(xspace,
-                          oracle,
-                          epsilon=EPS,
-                          delta=DELTA,
-                          max_step=STEPS,
-                          blocking=False,
-                          sleep=0.0,
-                          logging=True):
+                            oracle,
+                            epsilon=EPS,
+                            delta=DELTA,
+                            max_step=STEPS,
+                            blocking=False,
+                            sleep=0.0,
+                            logging=True):
     # type: (Rectangle, Oracle, float, float, float, bool, float, bool) -> ResultSet
 
     # Xspace is a particular case of maximal rectangle
@@ -1027,10 +1034,6 @@ def multidim_search_opt_0(xspace,
             name = os.path.join(tempdir, str(step))
             rs.to_file(name)
 
-    RootSearch.logger.debug('For pareto front construction algorithm:')
-    RootSearch.logger.debug('remaining volume: {0}'.format(vol_border))
-    RootSearch.logger.debug('total volume: {0}'.format(vol_total))
-    RootSearch.logger.info('percentage unexplored: {0}'.format((100.0 * vol_border) / vol_total))
     return ResultSet(border, ylow, yup, xspace)
 
 
@@ -1097,7 +1100,7 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
 
     # List of incomparable rectangles
     # border = [xspace]
-    border = SortedListWithKey(key=Rectangle.adjustedVolume)
+    border = SortedListWithKey(key=Rectangle.adjusted_volume)
     # border = SortedSet(key=Rectangle.volume)
     border.add(xspace)
 
@@ -1138,7 +1141,7 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
         min_bound, max_bound = bound_box_with_constraints(xrectangle, list_constraints)
         flag = 0
         rect_diag = xrectangle.diag()
-        if (max_bound < 0) or (min_bound > 1) or (min_bound > max_bound) or (min_bound + (epsilon/100) > max_bound):
+        if (max_bound < 0) or (min_bound > 1) or (min_bound > max_bound) or (min_bound + (epsilon / 100) > max_bound):
             intersect_indicator = INTERNULL
             continue
         else:
@@ -1147,23 +1150,23 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
             if max_bound > 1:
                 max_bound = 1
             if min_bound > 0 or max_bound < 1:
-                min_bound += (epsilon/100)
-                max_bound -= (epsilon/100)
+                min_bound += (epsilon / 100)
+                max_bound -= (epsilon / 100)
                 end_min = tuple(i + (j - i) * min_bound for i, j in zip(xrectangle.min_corner, xrectangle.max_corner))
                 end_max = tuple(i + (j - i) * max_bound for i, j in zip(xrectangle.min_corner, xrectangle.max_corner))
                 mod_rectangle = Rectangle(end_min, end_max)
                 rect_diag = mod_rectangle.diag()
                 flag = 1
-                yIn, yCover, intersect_indicator, steps_binsearch = intersection_expansion_search(rect_diag, f1, f2,
-                                                                                                  error, False)
+                y_in, y_cover, intersect_indicator, steps_binsearch = intersection_expansion_search(rect_diag, f1, f2,
+                                                                                                    error, False)
             else:
-                yIn, yCover, intersect_indicator, steps_binsearch = intersection_expansion_search(rect_diag, f1, f2,
-                                                                                                  error, False)
-        y = yCover
+                y_in, y_cover, intersect_indicator, steps_binsearch = intersection_expansion_search(rect_diag, f1, f2,
+                                                                                                    error, False)
+        y = y_cover
         RootSearch.logger.debug('y: {0}'.format(y))
 
         if intersect_indicator >= INTER:
-            intersect_box = [Rectangle(yIn.low, yIn.high)]
+            intersect_box = [Rectangle(y_in.low, y_in.high)]
             intersect_region = [xrectangle]
             break
         elif intersect_indicator == INTERNULL:
@@ -1225,40 +1228,42 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
     RootSearch.logger.info('total volume: {0}'.format(vol_total))
     RootSearch.logger.info('percentage unexplored: {0}'.format((100.0 * vol_border) / vol_total))
 
-    return ResultSet(border, intersection_region, intersect_box, xspace)
+    return ResultSet(border, intersect_region, intersect_box, xspace)
 
 
-def posNegBoxGen(incompPos, incompNegDown, incompNegUp, yIn, yCover, xrectangle):
-    incomp1 = incompPos[2:]
-    incompListDown = [incompPos[0]]
-    incompListUp = [incompPos[1]]
-    yrectMid = Rectangle(yIn.low, yIn.high)
-    i1 = interirect(incomp1, yrectMid, xrectangle)
-    i2 = interirect(incompListDown, yrectMid, xrectangle)
-    i3 = interirect(incompListUp, yrectMid, xrectangle)
-    iDown = []
-    iUp = []
+def pos_neg_box_gen(incomp_pos, incomp_neg_down, incomp_neg_up, y_in, y_cover, xrectangle):
+    # type: (list, list, list, Segment, Segment, Rectangle) -> list
+    incomp1 = incomp_pos[2:]
+    incomp_list_down = [incomp_pos[0]]
+    incomp_list_up = [incomp_pos[1]]
+    yrect_mid = Rectangle(y_in.low, y_in.high)
+    i1 = interirect(incomp1, yrect_mid, xrectangle)
+    i2 = interirect(incomp_list_down, yrect_mid, xrectangle)
+    i3 = interirect(incomp_list_up, yrect_mid, xrectangle)
+    i_down = []
+    i_up = []
     for rect in i2:
-        yRectDown = Rectangle(yCover.low, rect.max_corner)
-        iDown += interirect(incompNegDown, yRectDown, rect)
+        y_rect_down = Rectangle(y_cover.low, rect.max_corner)
+        i_down += interirect(incomp_neg_down, y_rect_down, rect)
     for rect in i3:
-        yRectUp = Rectangle(yCover.high, rect.max_corner)
-        iUp += interirect(incompNegUp, yRectUp, rect)
-    i = iDown + iUp + i1
+        y_rect_up = Rectangle(y_cover.high, rect.max_corner)
+        i_up += interirect(incomp_neg_up, y_rect_up, rect)
+    i = i_down + i_up + i1
     return i
 
 
-def posOverlapBoxGen(incomparable, incomparable_segment, yIn, yCover, xrectangle):
-    yRectIn = Rectangle(yIn.low, yIn.high)
-    i1 = interirect(incomparable_segment, yRectIn, xrectangle)
+def pos_overlap_box_gen(incomparable, incomparable_segment, yIn, yCover, xrectangle):
+    # type: (list, list, Segment, Segment, Rectangle) -> list
+    y_rect_in = Rectangle(yIn.low, yIn.high)
+    i1 = interirect(incomparable_segment, y_rect_in, xrectangle)
 
-    yRectDown = Rectangle(yCover.low, yIn.low)
-    xRectDown = Rectangle(xrectangle.min_corner, yIn.high)
-    i2 = irect(incomparable, yRectDown, xRectDown)
+    y_rect_down = Rectangle(yCover.low, yIn.low)
+    x_rect_down = Rectangle(xrectangle.min_corner, yIn.high)
+    i2 = irect(incomparable, y_rect_down, x_rect_down)
 
-    yRectUp = Rectangle(yIn.high, yCover.high)
-    xRectUp = Rectangle(yIn.low, xrectangle.max_corner)
-    i3 = irect(incomparable, yRectUp, xRectUp)
+    y_rect_up = Rectangle(yIn.high, yCover.high)
+    x_rect_up = Rectangle(yIn.low, xrectangle.max_corner)
+    i3 = irect(incomparable, y_rect_up, x_rect_up)
 
     i = i1 + i2 + i3
 
@@ -1273,6 +1278,7 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
                                        blocking=False,
                                        sleep=0.0,
                                        logging=True):
+    # type: (Rectangle, list, Oracle, Oracle, float, float, float, bool, float, bool) -> ResultSet
     # Xspace is a particular case of maximal rectangle
     # Xspace = [min_corner, max_corner]^n = [0, 1]^n
     # xspace.min_corner = (0,) * n
@@ -1285,9 +1291,9 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
     comparable = comp(n)
     incomparable = incomp(n)
     incomparable_segment = incomp_segment(n)
-    incompPos = incomp_segmentpos(n)
-    incompNegDown = incomp_segmentNegRemoveDown(n)
-    incompNegUp = incomp_segmentNegRemoveUp(n)
+    incomp_pos = incomp_segmentpos(n)
+    incomp_neg_down = incomp_segment_neg_remove_down(n)
+    incomp_neg_up = incomp_segment_neg_remove_up(n)
     # comparable = [zero, one]
     # incomparable = list(set(alpha) - set(comparable))
     # with:
@@ -1296,7 +1302,7 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
 
     # List of incomparable rectangles
     # border = [xspace]
-    border = SortedListWithKey(key=Rectangle.adjustedVolume)
+    border = SortedListWithKey(key=Rectangle.adjusted_volume)
     border.add(xspace)
 
     # oracle functions
@@ -1331,20 +1337,20 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
         xrectangle = border.pop()
         vol_boxes -= xrectangle.volume()
 
-        currentPrivilege = xrectangle.privilege
+        current_privilege = xrectangle.privilege
 
         RootSearch.logger.debug('xrectangle: {0}'.format(xrectangle))
         RootSearch.logger.debug('xrectangle.volume: {0}'.format(xrectangle.volume()))
         RootSearch.logger.debug('xrectangle.norm: {0}'.format(xrectangle.norm()))
 
-        wantToExpand = True
-        yIn, yCover, intersect_indicator, steps_binsearch = intersection_expansion_search(xrectangle.diag(), f1, f2,
-                                                                                          error, wantToExpand)
+        want_to_expand = True
+        y_in, y_cover, intersect_indicator, steps_binsearch = intersection_expansion_search(xrectangle.diag(), f1, f2,
+                                                                                            error, want_to_expand)
 
         if intersect_indicator == NO_INTER:
-            y = yIn
+            y = y_in
         else:
-            y = yCover
+            y = y_cover
 
         yrectangle = Rectangle(y.low, y.high)
         RootSearch.logger.debug('y: {0}'.format(y))
@@ -1359,15 +1365,15 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
                                                  steps_binsearch))
             continue
         elif intersect_indicator == INTER:
-            posBox = Rectangle(yIn.low, yIn.high)
-            negBox1 = Rectangle(xrectangle.min_corner, yCover.low)
-            negBox2 = Rectangle(yCover.high, xrectangle.max_corner)
-            intersect_box.append(posBox)
+            pos_box = Rectangle(y_in.low, y_in.high)
+            neg_box1 = Rectangle(xrectangle.min_corner, y_cover.low)
+            neg_box2 = Rectangle(y_cover.high, xrectangle.max_corner)
+            intersect_box.append(pos_box)
             intersect_region.append(xrectangle)
 
-            i = posNegBoxGen(incompPos, incompNegDown, incompNegUp, yIn, yCover, xrectangle)
+            i = pos_neg_box_gen(incomp_pos, incomp_neg_down, incomp_neg_up, y_in, y_cover, xrectangle)
 
-            vol_xrest += posBox.volume() + negBox1.volume() + negBox2.volume()
+            vol_xrest += pos_box.volume() + neg_box1.volume() + neg_box2.volume()
         elif intersect_indicator == NO_INTER:
             i = interirect(incomparable_segment, yrectangle, xrectangle)
             lower_rect = Rectangle(xrectangle.min_corner, yrectangle.max_corner)
@@ -1396,7 +1402,7 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
             if intersection_empty(rect.diag(), f1, f2):
                 vol_xrest += rect.volume()
             else:
-                rect.privilege = currentPrivilege + 1
+                rect.privilege = current_privilege + 1
                 border.add(rect)
                 vol_boxes += rect.volume()
 
@@ -1429,7 +1435,7 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
     RootSearch.logger.info('total volume: {0}'.format(vol_total))
     RootSearch.logger.info('percentage unexplored: {0}'.format((100.0 * vol_border) / vol_total))
 
-    return ResultSet(border, intersection_region, intersect_box, xspace)
+    return ResultSet(border, intersect_region, intersect_box, xspace)
 
 
 def multidim_intersection_search_opt_2(xspace, list_constraints,
@@ -1462,7 +1468,7 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
 
     # List of incomparable rectangles
     # border = [xspace]
-    border = SortedListWithKey(key=Rectangle.adjustedVolume)
+    border = SortedListWithKey(key=Rectangle.adjusted_volume)
     border.add(xspace)
 
     # oracle functions
@@ -1497,20 +1503,20 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
         xrectangle = border.pop()
         vol_boxes -= xrectangle.volume()
 
-        currentPrivilege = xrectangle.privilege
+        current_privilege = xrectangle.privilege
 
         RootSearch.logger.debug('xrectangle: {0}'.format(xrectangle))
         RootSearch.logger.debug('xrectangle.volume: {0}'.format(xrectangle.volume()))
         RootSearch.logger.debug('xrectangle.norm: {0}'.format(xrectangle.norm()))
 
-        wantToExpand = True
-        yIn, yCover, intersect_indicator, steps_binsearch = intersection_expansion_search(xrectangle.diag(), f1, f2,
-                                                                                          error, wantToExpand)
+        want_to_expand = True
+        y_in, y_cover, intersect_indicator, steps_binsearch = intersection_expansion_search(xrectangle.diag(), f1, f2,
+                                                                                            error, want_to_expand)
 
         if intersect_indicator == NO_INTER:
-            y = yIn
+            y = y_in
         else:
-            y = yCover
+            y = y_cover
         yrectangle = Rectangle(y.low, y.high)
         RootSearch.logger.debug('y: {0}'.format(y))
 
@@ -1524,15 +1530,15 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
                                                  steps_binsearch))
             continue
         elif intersect_indicator == INTER:
-            posBox = Rectangle(yIn.low, yIn.high)
-            negBox1 = Rectangle(xrectangle.min_corner, yCover.low)
-            negBox2 = Rectangle(yCover.high, xrectangle.max_corner)
-            intersect_box.append(posBox)
+            pos_box = Rectangle(y_in.low, y_in.high)
+            neg_box1 = Rectangle(xrectangle.min_corner, y_cover.low)
+            neg_box2 = Rectangle(y_cover.high, xrectangle.max_corner)
+            intersect_box.append(pos_box)
             intersect_region.append(xrectangle)
 
-            i = posOverlapBoxGen(incomparable, incomparable_segment, yIn, yCover, xrectangle)
+            i = pos_overlap_box_gen(incomparable, incomparable_segment, y_in, y_cover, xrectangle)
 
-            vol_xrest += posBox.volume() + negBox1.volume() + negBox2.volume()
+            vol_xrest += pos_box.volume() + neg_box1.volume() + neg_box2.volume()
         elif intersect_indicator == NO_INTER:
             i = interirect(incomparable_segment, yrectangle, xrectangle)
             lower_rect = Rectangle(xrectangle.min_corner, yrectangle.max_corner)
@@ -1561,7 +1567,7 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
             if intersection_empty(rect.diag(), f1, f2):
                 vol_xrest += rect.volume()
             else:
-                rect.privilege = currentPrivilege + 1
+                rect.privilege = current_privilege + 1
                 border.add(rect)
                 vol_boxes += rect.volume()
 

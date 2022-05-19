@@ -347,7 +347,8 @@ class Rectangle(object):
             self.vol = self._volume()
         return self.vol
 
-    def adjustedVolume(self):
+    def adjusted_volume(self):
+        # type: (Rectangle) -> float
         return self.volume() / (1 + self.privilege)
 
     def num_vertices(self):
@@ -1122,8 +1123,8 @@ class Rectangle(object):
         self.max_corner = max_c
 
     # Matplot functions
-    def plot_2D(self, c='red', xaxe=0, yaxe=1, opacity=1.0):
-        # type: (Rectangle, str, int, int, float) -> patches.Rectangle
+    def plot_2D(self, c='red', xaxe=0, yaxe=1, opacity=1.0, clip_box=None):
+        # type: (Rectangle, str, int, int, float, _) -> patches.Rectangle
         """
          Function that creates a graphical representation of the rectangle in 2D.
          In case that the rectangle has dimension higher than 2,
@@ -1140,11 +1141,27 @@ class Rectangle(object):
 
         """
         assert (self.dim() >= 2), 'Dimension required >= 2'
-        mc = (self.min_corner[xaxe], self.min_corner[yaxe],)
-        width = self.diag_vector()[xaxe]
-        height = self.diag_vector()[yaxe]
+        minc = (self.min_corner[xaxe], self.min_corner[yaxe],)
+
+        if clip_box is not None:
+            maxc = (self.max_corner[xaxe], self.max_corner[yaxe],)
+
+            clipminc = (clip_box.min_corner[xaxe], clip_box.min_corner[yaxe],)
+            clipmaxc = (clip_box.max_corner[xaxe], clip_box.max_corner[yaxe],)
+
+            a = maximum(minc, clipminc)
+            minc = minimum(a, clipmaxc)
+            b = maximum(maxc, clipminc)
+            maxc = minimum(b, clipmaxc)
+            rect = Rectangle(minc, maxc)
+
+            width = rect.diag_vector()[xaxe]
+            height = rect.diag_vector()[yaxe]
+        else:
+            width = self.diag_vector()[xaxe]
+            height = self.diag_vector()[yaxe]
         return patches.Rectangle(
-            mc,  # (x,y)
+            minc,  # (x,y)
             width,  # width
             height,  # height
             # color = c, #color
@@ -1153,8 +1170,8 @@ class Rectangle(object):
             alpha=opacity
         )
 
-    def plot_3D(self, c='red', xaxe=0, yaxe=1, zaxe=2, opacity=1.0, clipBox=None):
-        # type: (Rectangle, str, int, int, int, float) -> Poly3DCollection
+    def plot_3D(self, c='red', xaxe=0, yaxe=1, zaxe=2, opacity=1.0, clip_box=None):
+        # type: (Rectangle, str, int, int, int, float, _) -> Poly3DCollection
         """
          Function that creates a graphical representation of the rectangle in 3D.
          In case that the rectangle has dimension higher than 3,
@@ -1174,23 +1191,13 @@ class Rectangle(object):
 
         minc = (self.min_corner[xaxe], self.min_corner[yaxe], self.min_corner[zaxe],)
         maxc = (self.max_corner[xaxe], self.max_corner[yaxe], self.max_corner[zaxe],)
-        if not (clipBox is None):
-            clipminc = (clipBox.min_corner[xaxe], clipBox.min_corner[yaxe], clipBox.min_corner[zaxe],)
-            clipmaxc = (clipBox.max_corner[xaxe], clipBox.max_corner[yaxe], clipBox.max_corner[zaxe],)
-            a = [self.min_corner[xaxe], self.min_corner[yaxe], self.min_corner[zaxe]]
-            b = [self.max_corner[xaxe], self.max_corner[yaxe], self.max_corner[zaxe]]
-            for i in range(len(a)):
-                if a[i] < clipminc[i]:
-                    a[i] = clipminc[i]
-                elif a[i] > clipmaxc[i]:
-                    a[i] = clipmaxc[i]
-            for i in range(len(b)):
-                if b[i] < clipminc[i]:
-                    b[i] = clipminc[i]
-                elif b[i] > clipmaxc[i]:
-                    b[i] = clipmaxc[i]
-            minc = (a[0], a[1], a[2],)
-            maxc = (b[0], b[1], b[2],)
+        if clip_box is not None:
+            clipminc = (clip_box.min_corner[xaxe], clip_box.min_corner[yaxe], clip_box.min_corner[zaxe],)
+            clipmaxc = (clip_box.max_corner[xaxe], clip_box.max_corner[yaxe], clip_box.max_corner[zaxe],)
+            a = maximum(minc, clipminc)
+            minc = minimum(a, clipmaxc)
+            b = maximum(maxc, clipminc)
+            maxc = minimum(b, clipmaxc)
 
         rect = Rectangle(minc, maxc)
 
@@ -1359,9 +1366,9 @@ class Rectangle(object):
 # Alpha generators
 ##################
 
-###########
+###################
 # Standard subclass
-###########
+###################
 
 def comp(d):
     # Set of comparable rectangles
@@ -1381,13 +1388,12 @@ def incomp(d, opt=True):
     else:
         return incomp_expanded(d)
 
-###########
+#######################
 # Intersection subclass
-###########
+#######################
 
-# TODO: @Akshay, explain this 'NOTE'
 '''
-NOTE:
+Numerical codification of (in)comparable segments:
 0 -> a
 1 -> b
 2 -> c
@@ -1397,86 +1403,96 @@ NOTE:
 '''
 
 
-def incomp_segmentNegRemoveDown(d):
+def incomp_segment_neg_remove_down(d):
+    # type: (int) -> list
     if d > 0:
-        return incomp_segmentNegRemoveDownE(d)
+        return incomp_segment_neg_remove_down_e(d)
     else:
         return []
 
 
-def incomp_segmentNegRemoveDownE(d):
+def incomp_segment_neg_remove_down_e(d):
+    # type: (int) -> list
     if d == 0:
         return []
     else:
-        elist = ["0" + i for i in incomp_segmentNegRemoveDownE(d - 1)]
-        elist += ["1" + ('3') * (d - 1)]
+        elist = ["0" + i for i in incomp_segment_neg_remove_down_e(d - 1)]
+        elist += ["1" + "3" * (d - 1)]
         return elist
 
 
-def incomp_segmentNegRemoveUp(d):
+def incomp_segment_neg_remove_up(d):
+    # type: (int) -> list
     if d > 0:
-        return incomp_segmentNegRemoveUpE(d)
+        return incomp_segment_neg_remove_up_e(d)
     else:
         return []
 
 
-def incomp_segmentNegRemoveUpE(d):
-    if (d == 0):
+def incomp_segment_neg_remove_up_e(d):
+    # type: (int) -> list
+    if d == 0:
         return []
     else:
-        elist = ["1" + i for i in incomp_segmentNegRemoveUpE(d - 1)]
-        elist += ["0" + '3' * (d - 1)]
+        elist = ["1" + i for i in incomp_segment_neg_remove_up_e(d - 1)]
+        elist += ["0" + "3" * (d - 1)]
         return elist
 
 
 def incomp_segmentpos(d):
+    # type: (int) -> list
     if d > 0:
-        return incomp_segmentposE(d)
+        return incomp_segmentpos_e(d)
     else:
         return []
 
 
-def incomp_segmentposE(d):
+def incomp_segmentpos_e(d):
+    # type: (int) -> list
     if d == 0:
         return []
     else:
-        elist1 = ["1" + i for i in incomp_segmentposE(d - 1)]
-        elistDown = ["0" + '5' * (d - 1)]
-        elistUp = ["2" + '5' * (d - 1)]
+        elist1 = ["1" + i for i in incomp_segmentpos_e(d - 1)]
+        elistDown = ["0" + "5" * (d - 1)]
+        elistUp = ["2" + "5" * (d - 1)]
         return elistDown + elistUp + elist1
 
 
 def incomp_segment(d):
+    # type: (int) -> list
     if d > 0:
-        return incomp_segmentE(d)
+        return incomp_segment_e(d)
     else:
         return []
 
 
-def incomp_segmentE(d):
+def incomp_segment_e(d):
+    # type: (int) -> list
     if d == 1:
         return []
     else:
-        elist = ["0" + i for i in incomp_segmentC(d - 1)] + ["2" + i for i in incomp_segmentA(d - 1)]
-        elist += ["1" + i for i in incomp_segmentE(d - 1)]
+        elist = ["0" + i for i in incomp_segment_c(d - 1)] + ["2" + i for i in incomp_segment_a(d - 1)]
+        elist += ["1" + i for i in incomp_segment_e(d - 1)]
         return elist
 
 
-def incomp_segmentA(d):
+def incomp_segment_a(d):
+    # type: (int) -> list
     if d == 1:
         return ["0"]
     else:
-        alist = ["0" + '5' * (d - 1)]
-        alist += ["4" + i for i in incomp_segmentA(d - 1)]
+        alist = ["0" + "5" * (d - 1)]
+        alist += ["4" + i for i in incomp_segment_a(d - 1)]
         return alist
 
 
-def incomp_segmentC(d):
+def incomp_segment_c(d):
+    # type: (int) -> list
     if d == 1:
         return ["2"]
     else:
-        clist = ["2" + '5' * (d - 1)]
-        clist += ["3" + i for i in incomp_segmentC(d - 1)]
+        clist = ["2" + "5" * (d - 1)]
+        clist += ["3" + i for i in incomp_segment_c(d - 1)]
         return clist
 
 ###########
