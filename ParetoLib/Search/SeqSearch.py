@@ -1512,7 +1512,6 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
         want_to_expand = True
         y_in, y_cover, intersect_indicator, steps_binsearch = intersection_expansion_search(xrectangle.diag(), f1, f2,
                                                                                             error, want_to_expand)
-
         if intersect_indicator == NO_INTER:
             y = y_in
         else:

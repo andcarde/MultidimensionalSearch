@@ -384,7 +384,7 @@ class OracleSTLe(Oracle):
         See Oracle.member().
         """
         RootOracle.logger.debug('Running membership function')
-        # Cleaning the cache of STLe after MAX_ORACLE_CALLS (i.e., 'gargage collector')
+        # Cleaning the cache of STLe after MAX_STLE_CALLS (i.e., 'gargage collector')
         if self.num_oracle_calls > MAX_STLE_CALLS:
             self.num_oracle_calls = 0
             self._clean_cache()
@@ -464,7 +464,9 @@ class OracleSTLe(Oracle):
                 if not os.path.isfile(fname):
                     RootOracle.logger.info('File {0} does not exists or it is not a file'.format(fname))
 
-            self.__init__(stl_prop_file=stl_prop_file, stl_param_file=stl_param_file, csv_signal_file=csv_signal_file)
+            self.stl_prop_file=stl_prop_file
+            self.stl_param_file=stl_param_file
+            self.csv_signal_file=csv_signal_file
 
         except EOFError:
             RootOracle.logger.error('Unexpected error when loading {0}: {1}'.format(finput, sys.exc_info()[0]))
@@ -737,3 +739,41 @@ class OracleSTLeLib(OracleSTLe):
         # Return the result of evaluating the STL formula.
         return OracleSTLeLib._parse_stle_result(res)
 
+    def eps_separate_stl_formula(self, stl_formula, epsilon):
+        # type: (OracleSTLeLib, str, double) -> bool
+        """
+        Evaluates the instance of a parametrized STL formula.
+
+        Args:
+            self (OracleSTLeLib): The Oracle.
+            stl_formula: String representing the instance of the parametrized STL formula that will be evaluated.
+        Returns:
+            bool: True if the stl_formula is satisfied.
+
+        Example:
+        >>> ora = OracleSTLeLib()
+        >>> stl_formula = '(< (On (0 inf) (- (Max x0) (Min x0))) 0.5)'
+        >>> ora.eval_stl_formula(stl_formula)
+        >>> False
+        """
+        assert self.stle is not None
+        assert self.monitor is not None
+        assert self.signal is not None
+        assert self.signalvars is not None
+        assert self.exprset is not None
+
+        RootOracle.logger.debug('Evaluating: {0}'.format(stl_formula))
+
+        # Add STLe formula to the expression set
+        expr = self.stle.stl_parse_sexpr_str(self.exprset, stl_formula)
+
+        RootOracle.logger.debug('STLe formula parsed: {0}'.format(expr))
+
+        # Evaluating formula
+        stl_series = self.stle.stl_offlinepcmonitor_make_output(self.monitor, expr)
+        RootOracle.logger.debug('STLe series: {0}'.format(stl_series))
+
+        res = self.stle.stl_eps_separation_size(stl_series, epsilon)
+        RootOracle.logger.debug('Result: {0}'.format(res))
+
+        return res

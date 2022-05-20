@@ -125,7 +125,7 @@ STLE_EVAL = 'eval'
 STLE_RESET = 'clear-monitor'
 STLE_OK = 'ok'
 STLE_VERSION = 'version'
-MAX_STLE_CALLS = 50
+MAX_STLE_CALLS = 5
 
 # -------------------------------------------------------------------------------
 # API for interacting with STLe via C functions
@@ -154,6 +154,7 @@ class STLeLibInterface:
         self._stl_offlinepcmonitor_make_output = None
         self._stl_delete_offlinepcmonitor = None
         self._stl_pcseries_value0 = None
+        self._stl_eps_separation_size = None
 
         # Initialize C interfaze with STLe
         self._initialize_c_interfaze()
@@ -258,6 +259,10 @@ class STLeLibInterface:
         self._stl_pcseries_value0.argtypes = [c_void_p]
         self._stl_pcseries_value0.restype = c_double
 
+        self._stl_eps_separation_size = self._stle.stle_pcseries_get_eps_separation_size
+        self._stl_eps_separation_size.argtypes = [c_void_p, c_double]
+        self._stl_eps_separation_size.restype = c_int
+
     def __copy__(self):
         # type: (STLeLibInterface) -> STLeLibInterface
         return STLeLibInterface()
@@ -334,3 +339,7 @@ class STLeLibInterface:
     def stl_pcseries_value0(self, stle_series):
         # type: (STLeLibInterface, c_void_p) -> c_double
         return self._stl_pcseries_value0(stle_series)
+
+    def stl_eps_separation_size(self, stle_series, epsilon):
+        # type: (STLeLibInterface, c_void_p, c_double) -> c_int
+        return self._stl_eps_separation_size(stle_series, epsilon)
