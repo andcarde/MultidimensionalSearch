@@ -43,7 +43,6 @@ build:
 
 test:
   stage: test
-  image: python:3.4
   dependencies:
     - build
   script:
