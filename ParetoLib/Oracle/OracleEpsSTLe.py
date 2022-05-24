@@ -4,7 +4,7 @@ from ParetoLib.STLe.STLe import MAX_STLE_CALLS
 
 
 class OracleEpsSTLe(OracleSTLeLib):
-    def __init__(self, boundOnCount, intvlEpsilon=5, stl_prop_file='', csv_signal_file='', stl_param_file=''):
+    def __init__(self, bound_on_count, intvl_epsilon=5, stl_prop_file='', csv_signal_file='', stl_param_file=''):
         # type: (OracleEpsSTLe, int, int, str, str, str) -> None
         """
         Initialization of Oracle.
@@ -15,8 +15,8 @@ class OracleEpsSTLe(OracleSTLeLib):
         """
 
         OracleSTLeLib.__init__(self, stl_prop_file, csv_signal_file, stl_param_file)
-        self.epsilon = intvlEpsilon
-        self.bound = boundOnCount
+        self.epsilon = intvl_epsilon
+        self.bound = bound_on_count
 
     def member(self, xpoint):
         # type: (OracleEpsSTLe, tuple) -> bool
@@ -35,5 +35,5 @@ class OracleEpsSTLe(OracleSTLeLib):
         self.num_oracle_calls = self.num_oracle_calls + 1
 
         # Invoke STLe for solving the STL formula for the current values for the parameters
-        epsSeparationSize = self.eps_separate_stl_formula(val_stl_formula, self.epsilon)
-        return epsSeparationSize <= self.bound
+        eps_separation_size = self.eps_separate_stl_formula(val_stl_formula, self.epsilon)
+        return eps_separation_size <= self.bound
