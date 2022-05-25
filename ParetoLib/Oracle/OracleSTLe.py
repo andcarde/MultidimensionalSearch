@@ -464,9 +464,10 @@ class OracleSTLe(Oracle):
                 if not os.path.isfile(fname):
                     RootOracle.logger.info('File {0} does not exists or it is not a file'.format(fname))
 
-            self.stl_prop_file=stl_prop_file
-            self.stl_param_file=stl_param_file
-            self.csv_signal_file=csv_signal_file
+            self.stl_prop_file = stl_prop_file
+            self.stl_param_file = stl_param_file
+            self.csv_signal_file = csv_signal_file
+            # self.__init__(stl_prop_file=stl_prop_file, stl_param_file=stl_param_file, csv_signal_file=csv_signal_file)
 
         except EOFError:
             RootOracle.logger.error('Unexpected error when loading {0}: {1}'.format(finput, sys.exc_info()[0]))

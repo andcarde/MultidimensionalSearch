@@ -962,6 +962,8 @@ class ResultSet(object):
                      fig1=None):
 
         # type: (ResultSet, ResultSet, str, int, int, int, list, bool, float, float, str, bool, Figure) -> plt
+
+        embedded_fig = fig1 is not None
         if fig1 is None:
             fig1 = plt.figure()
         # ax1 = fig1.add_subplot(111, aspect='equal', projection='3d')
