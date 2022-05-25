@@ -7,6 +7,8 @@ stages:
 
 build_test:
   stage: build_test
+  variables:
+    QT_QPA_PLATFORM: "offscreen"
   script:
     - apt-get update
     ## Configuring graphical interface
@@ -44,6 +46,8 @@ build:
 
 test:
   stage: test
+  variables:
+    QT_QPA_PLATFORM: "offscreen"
   dependencies:
     - build
   script:
