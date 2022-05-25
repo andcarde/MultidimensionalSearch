@@ -7,8 +7,7 @@ import seaborn as sns
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolbar2QT
 
-from qtpy import QtWidgets
-from PyQt5.QtWidgets import QFileDialog, QGraphicsScene, QTableWidgetItem, QWidget, QVBoxLayout, QLabel
+from PyQt5.QtWidgets import QApplication, QFileDialog, QGraphicsScene, QMainWindow, QTableWidgetItem, QWidget, QVBoxLayout, QLabel
 
 import ParetoLib.GUI as RootGUI
 from ParetoLib.GUI.Window import Ui_MainWindow
@@ -65,9 +64,9 @@ class MplCanvas(FigureCanvasQTAgg):
         self.axes = self.figure.add_subplot(111)
 
 
-class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
+class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, *args, **kwargs):
-        QtWidgets.QMainWindow.__init__(self, *args, **kwargs)
+        QMainWindow.__init__(self, *args, **kwargs)
         self.setupUi(self)
         # Conectamos los eventos con sus acciones
         self.f_especificacion_button.clicked.connect(self.especificacion)
@@ -225,7 +224,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
 
 if __name__ == '__main__':
-    app = QtWidgets.QApplication(sys.argv)  # []
+    app = QApplication(sys.argv)  # []
     window = MainWindow()
     window.show()
     window.centralwidget.adjustSize()

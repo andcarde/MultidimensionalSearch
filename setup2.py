@@ -24,7 +24,10 @@ if __name__ == '__main__':
         install_requires=[
             'matplotlib>=2.0.2',
             'numpy>=1.15',
+            'pandas>=1.3.0',
+            'PyQt5>=5.15.6',
             'pytest>=2.0',
+            'seaborn>=0.11.2',
             'sortedcontainers>=1.5.10',
             'sympy>=1.1.1'
         ],

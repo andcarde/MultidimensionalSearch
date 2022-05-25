@@ -76,6 +76,14 @@ def check_dependencies():
         print('Numerical Python (NumPy) is not installed.\nThis package is required for ' \
               'ParetoLib.\n\nYou can find NumPy at http://www.numpy.org')
         return (False)
+    if (not can_import('pandas')):
+        print('Pandas is not installed.\nThis package is required for ' \
+              'ParetoLib.\n\nYou can find pandas at https://pandas.pydata.org/')
+        return (False)
+    if (not can_import('PyQt5')):
+        print('PyQt5 is not installed.\nThis package is required for ' \
+              'ParetoLib.\n\nYou can find PyQt5 at https://pypi.org/project/PyQt5/')
+        return (False)
     if (not can_import('sortedcontainers')):
         print('SortedContainers is not installed.\nThis package is required for ' \
               'ParetoLib.\n\nYou can find SortedContainers at https://pypi.org/project/sortedcontainers/')
@@ -83,6 +91,10 @@ def check_dependencies():
     if (not can_import('sympy')):
         print('Symbolic Python (SymPy) is not installed.\nThis package is required for ' \
               'ParetoLib.\n\nYou can find SymPy at http://www.sympy.org')
+        return (False)
+    if (not can_import('seaborn')):
+        print('Statistical Data Visualization (seaborn) is not installed.\nThis package is required for ' \
+              'ParetoLib.\n\nYou can find seaborn at https://seaborn.pydata.org/')
         return (False)
     # Exit automatically if running as part of some script
     # if (not sys.stdout.isatty()):
