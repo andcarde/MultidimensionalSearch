@@ -17,12 +17,6 @@ from ParetoLib.Search.Search import SearchND_2, EPS, DELTA, STEPS
 from ParetoLib.Search.ResultSet import ResultSet
 
 
-# TODO: Include more options in the GUI for reading the configuration parameters
-#  of PareboLib (e.g., EPS, DELTA, STEPS,...)
-# TODO: Extend STLe with more interporlation options
-# TODO: Implement a natural language processor that allows to write STL specifications in a nicer way
-# TODO: Reimplementen the core of ParetoLib for speeding up the computations
-
 class StandardSolutionWindow(QWidget):
     """
     This "window" is a QWidget. If it has no parent, it

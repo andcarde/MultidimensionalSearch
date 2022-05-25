@@ -67,42 +67,6 @@ def binary_search(x,
             dist = y.norm()
     return y, i
 
-# TODO: Remove
-# def discrete_binary_search(x,
-#                            member,
-#                            error):
-#     # type: (Segment, callable, tuple) -> (Segment, int)
-#     i = 0
-#     y = x
-#     if member(y.low):
-#         # All the cube belongs to B1
-#         y.low = x.low
-#         y.high = x.low
-#     elif not member(y.high):
-#         # All the cube belongs to B0
-#         y.low = x.high
-#         y.high = x.high
-#     else:
-#         # We don't know. We search for a point in the diagonal
-#         # dist = subtract(y.high, y.low)
-#         dist = y.norm()
-#         # while not less_equal(dist, error):
-#         while dist > math.sqrt(2):
-#             i += 1
-#             # yval = div(add(y.low, y.high), 2.0)
-#             yval = y.center_round()
-#             # We need a oracle() for guiding the search
-#             if member(yval):
-#                 y.high = yval
-#             else:
-#                 y.low = yval
-#             # dist = subtract(y.high, y.low)
-#             dist = y.norm()
-#         # Search completed
-#         y.low = y.high
-#
-#     return y, i
-
 
 # No intersection: -2
 # There exists an intersection: +1
