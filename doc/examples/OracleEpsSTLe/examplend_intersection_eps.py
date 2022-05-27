@@ -41,7 +41,7 @@ def pareto_ND_Intersection_eps(ecg_name, num_params, stl_template1, stl_template
 
 
 if __name__ == "__main__":
-    # python3 ./exampleNd_intersection_eps.py 5 0 10
+    # python3 ./examplend_intersection_eps.py 5 0 10
     # Work without constraints on parameters.
     list_intervals = [(0, 30), (0, 20), (-10, 10), (-10, 10), (-10, 10), (0, 100), (0, 100)]
     list_constraints = []

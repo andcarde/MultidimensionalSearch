@@ -96,5 +96,5 @@ if __name__ == "__main__":
     intersection = rs1.yup
     print("num intersection boxes:", len(intersection))
     print('TRESIMP: Time taken for intersection pareto (1):', t1 - t0)
-    rs1.plot_3D(opacity=0.1, fig_title='Intersection of pareto fronts', var_names=['p1', 'p2', 'p3'], clip=True)
+    rs1.plot_3D(opacity=0.1, fig_title='Intersection of pareto fronts', var_names=['p1', 'p2', 'p3'])
     rs1.to_file(ecg_name + "_characterizeOnlyOne" + sys.argv[5] + ".zip")

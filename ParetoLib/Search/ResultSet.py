@@ -878,7 +878,7 @@ class ResultSet(object):
                 sec=0.0,
                 opacity=1.0,
                 fig_title='Approximation of the Pareto front',
-                clip=False,
+                clip_box=None,
                 fig1=None):
         # type: (ResultSet, str, int, int, int, list, bool, float, float, str, bool, Figure) -> Figure
 
@@ -904,14 +904,9 @@ class ResultSet(object):
         ax1.set_ylabel(var_names[yaxe % len(var_names)])
         ax1.set_zlabel(var_names[zaxe % len(var_names)])
 
-        if clip:
-            clip_b = self.xspace
-        else:
-            clip_b = None
-
-        faces_yup = self._plot_yup_3D(xaxe, yaxe, zaxe, opacity, clip_box=clip_b)
-        faces_ylow = self._plot_ylow_3D(xaxe, yaxe, zaxe, opacity, clip_box=clip_b)
-        faces_border = self._plot_border_3D(xaxe, yaxe, zaxe, opacity, clip_box=clip_b)
+        faces_yup = self._plot_yup_3D(xaxe, yaxe, zaxe, opacity, clip_box=clip_box)
+        faces_ylow = self._plot_ylow_3D(xaxe, yaxe, zaxe, opacity, clip_box=clip_box)
+        faces_border = self._plot_border_3D(xaxe, yaxe, zaxe, opacity, clip_box=clip_box)
 
         faces = faces_yup
         faces += faces_ylow
@@ -958,7 +953,7 @@ class ResultSet(object):
                      sec=0.0,
                      opacity=1.0,
                      fig_title='Approximation of the Pareto front',
-                     clip=False,
+                     clip_box=None,
                      fig1=None):
 
         # type: (ResultSet, ResultSet, str, int, int, int, list, bool, float, float, str, bool, Figure) -> plt
@@ -979,13 +974,9 @@ class ResultSet(object):
         ax1.set_ylabel(var_names[yaxe % len(var_names)])
         ax1.set_zlabel(var_names[zaxe % len(var_names)])
 
-        if clip:
-            clip_b = self.xspace
-        else:
-            clip_b = None
-        faces_yup = self._plot_yup_3D(xaxe, yaxe, zaxe, opacity, clip_box=clip_b)
-        faces_ylow = self._plot_ylow_3D(xaxe, yaxe, zaxe, opacity, clip_box=clip_b)
-        faces_border = self._plot_border_3D(xaxe, yaxe, zaxe, opacity, clip_box=clip_b)
+        faces_yup = self._plot_yup_3D(xaxe, yaxe, zaxe, opacity, clip_box=clip_box)
+        faces_ylow = self._plot_ylow_3D(xaxe, yaxe, zaxe, opacity, clip_box=clip_box)
+        faces_border = self._plot_border_3D(xaxe, yaxe, zaxe, opacity, clip_box=clip_box)
 
         faces = faces_yup
         faces += faces_ylow
