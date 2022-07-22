@@ -22,7 +22,7 @@
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout_2">
+     <layout class="QVBoxLayout" name="left_verticalLayout">
       <item alignment="Qt::AlignLeft|Qt::AlignTop">
        <widget class="QGroupBox" name="input_files_groupBox">
         <property name="sizePolicy">
@@ -42,49 +42,49 @@
         </property>
         <layout class="QFormLayout" name="formLayout">
          <item row="0" column="0">
-          <widget class="QLabel" name="label_2">
+          <widget class="QLabel" name="spec_label">
            <property name="text">
             <string>STL specification</string>
            </property>
           </widget>
          </item>
          <item row="3" column="0">
-          <widget class="QLabel" name="label_3">
+          <widget class="QLabel" name="signal_label">
            <property name="text">
             <string>Input signal</string>
            </property>
           </widget>
          </item>
          <item row="6" column="0">
-          <widget class="QLabel" name="label_4">
+          <widget class="QLabel" name="param_label">
            <property name="text">
             <string>Parameters</string>
            </property>
           </widget>
          </item>
          <item row="0" column="1">
-          <widget class="QPushButton" name="f_especificacion_button">
+          <widget class="QPushButton" name="open_spec_file_button">
            <property name="text">
             <string>Open</string>
            </property>
           </widget>
          </item>
          <item row="3" column="1">
-          <widget class="QPushButton" name="f_senial_entrada_button">
+          <widget class="QPushButton" name="open_signal_file_button">
            <property name="text">
             <string>Open</string>
            </property>
           </widget>
          </item>
          <item row="6" column="1">
-          <widget class="QPushButton" name="f_variables_button">
+          <widget class="QPushButton" name="open_param_file_button">
            <property name="text">
             <string>Open</string>
            </property>
           </widget>
          </item>
          <item row="8" column="0" colspan="2">
-          <widget class="QPlainTextEdit" name="f_variables_textbox">
+          <widget class="QPlainTextEdit" name="param_filepath_textbox">
            <property name="acceptDrops">
             <bool>true</bool>
            </property>
@@ -106,7 +106,7 @@
           </widget>
          </item>
          <item row="5" column="0" colspan="2">
-          <widget class="QPlainTextEdit" name="f_senial_entrada_textbox">
+          <widget class="QPlainTextEdit" name="signal_filepath_textbox">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
              <horstretch>0</horstretch>
@@ -134,7 +134,7 @@
           </widget>
          </item>
          <item row="2" column="0" colspan="2">
-          <widget class="QPlainTextEdit" name="f_especificacion_textbox">
+          <widget class="QPlainTextEdit" name="spec_filepath_textbox">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
              <horstretch>0</horstretch>
@@ -165,7 +165,7 @@
        </widget>
       </item>
       <item alignment="Qt::AlignLeft|Qt::AlignVCenter">
-       <widget class="QTableWidget" name="tableWidget">
+       <widget class="QTableWidget" name="param_tableWidget">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
           <horstretch>0</horstretch>
@@ -218,26 +218,16 @@
         <property name="alignment">
          <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
         </property>
-        <layout class="QVBoxLayout" name="verticalLayout_6">
-         <item alignment="Qt::AlignLeft">
-          <widget class="QLabel" name="label_5">
+        <layout class="QGridLayout" name="gridLayout">
+         <item row="0" column="0" alignment="Qt::AlignLeft">
+          <widget class="QLabel" name="interpolation_label">
            <property name="text">
             <string>Interpolation</string>
            </property>
           </widget>
          </item>
-         <item alignment="Qt::AlignLeft">
-          <widget class="QComboBox" name="tipo_de_dato_comboBox"/>
-         </item>
-         <item alignment="Qt::AlignLeft">
-          <widget class="QLabel" name="label_6">
-           <property name="text">
-            <string>Parametric STL</string>
-           </property>
-          </widget>
-         </item>
-         <item alignment="Qt::AlignLeft">
-          <widget class="QComboBox" name="operacion_comboBox">
+         <item row="3" column="0" alignment="Qt::AlignLeft">
+          <widget class="QComboBox" name="param_stl_selection_comboBox">
            <item>
             <property name="text">
              <string>No</string>
@@ -250,11 +240,53 @@
            </item>
           </widget>
          </item>
+         <item row="2" column="0" alignment="Qt::AlignLeft">
+          <widget class="QLabel" name="param_stl_selection_label">
+           <property name="text">
+            <string>Parametric STL</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0" alignment="Qt::AlignLeft">
+          <widget class="QComboBox" name="interpolation_comboBox">
+           <item>
+            <property name="text">
+             <string>Constant</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Linear</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="0" column="1" alignment="Qt::AlignRight">
+          <widget class="QLabel" name="mining_label">
+           <property name="text">
+            <string>Mining method</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1" alignment="Qt::AlignRight">
+          <widget class="QComboBox" name="mining_comboBox">
+           <item>
+            <property name="text">
+             <string>BBMJ19</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>BDMJ20</string>
+            </property>
+           </item>
+          </widget>
+         </item>
         </layout>
        </widget>
       </item>
       <item alignment="Qt::AlignRight|Qt::AlignBottom">
-       <widget class="QPushButton" name="f_ejecutar_button">
+       <widget class="QPushButton" name="pareto_execution_button">
         <property name="text">
          <string>Run</string>
         </property>
@@ -263,9 +295,9 @@
      </layout>
     </item>
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout_4">
+     <layout class="QVBoxLayout" name="right_verticalLayout">
       <item>
-       <widget class="QGroupBox" name="groupBox">
+       <widget class="QGroupBox" name="signal_groupBox">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
           <horstretch>0</horstretch>
@@ -283,13 +315,13 @@
         </property>
         <layout class="QVBoxLayout" name="verticalLayout">
          <item>
-          <layout class="QVBoxLayout" name="verticalLayout_3"/>
+          <layout class="QVBoxLayout" name="signal_layout"/>
          </item>
         </layout>
        </widget>
       </item>
       <item alignment="Qt::AlignBottom">
-       <widget class="QGroupBox" name="groupBox_2">
+       <widget class="QGroupBox" name="formula_groupBox">
         <property name="enabled">
          <bool>true</bool>
         </property>
@@ -304,7 +336,7 @@
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_5">
          <item>
-          <widget class="QPlainTextEdit" name="formula">
+          <widget class="QPlainTextEdit" name="formula_textEdit">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
              <horstretch>0</horstretch>

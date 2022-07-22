@@ -74,11 +74,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, *args, **kwargs):
         QMainWindow.__init__(self, *args, **kwargs)
         self.setupUi(self)
-        # Conectamos los eventos con sus acciones
-        self.f_especificacion_button.clicked.connect(self.especificacion)
-        self.f_senial_entrada_button.clicked.connect(self.senial_entrada)
-        self.f_variables_button.clicked.connect(self.variables)
-        self.f_ejecutar_button.clicked.connect(self.run_stle)
+        # Connecting events and actions
+        self.open_spec_file_button.clicked.connect(self.read_spec_filepath)
+        self.open_signal_file_button.clicked.connect(self.read_signal_filepath)
+        self.open_param_file_button.clicked.connect(self.read_param_filepath)
+        self.pareto_execution_button.clicked.connect(self.run_stle)
         # Initialize empty Oracle
         self.oracle = OracleSTLeLib()
         # Solution
@@ -91,24 +91,24 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if child.widget():
                 child.widget().deleteLater()
 
-    def especificacion(self):
+    def read_spec_filepath(self):
         # type: (_) -> None
         fname = QFileDialog.getOpenFileName(self, 'Select a file', '../../Tests/Oracle/OracleSTLe', '(*.stl)')
-        self.f_especificacion_textbox.setPlainText(fname[0])
-        with open(self.f_especificacion_textbox.toPlainText()) as file:
+        self.spec_filepath_textbox.setPlainText(fname[0])
+        with open(self.spec_filepath_textbox.toPlainText()) as file:
             lines = file.readlines()
-        self.formula.setPlainText(''.join(lines))
+        self.formula_textEdit.setPlainText(''.join(lines))
 
-    def senial_entrada(self):
+    def read_signal_filepath(self):
         # type: (_) -> None
         fname = QFileDialog.getOpenFileName(self, 'Select a file', '../../Tests/Oracle/OracleSTLe', '(*.csv)')
-        self.f_senial_entrada_textbox.setPlainText(fname[0])
+        self.signal_filepath_textbox.setPlainText(fname[0])
         self.plot_csv()
 
-    def variables(self):
+    def read_param_filepath(self):
         # type: (_) -> None
         fname = QFileDialog.getOpenFileName(self, 'Select a file', '../../Tests/Oracle/OracleSTLe', '(*.param)')
-        self.f_variables_textbox.setPlainText(fname[0])
+        self.param_filepath_textbox.setPlainText(fname[0])
         self.load_parameters(fname[0])
 
     def plot_csv(self):
@@ -120,7 +120,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         # Read csvfile from self.label_3
         # csvfile = '../../Tests/Oracle/OracleSTLe/2D/stabilization/stabilization.csv'
-        csvfile = self.f_senial_entrada_textbox.toPlainText()
+        csvfile = self.signal_filepath_textbox.toPlainText()
 
         # Read CSV file
         names = ['Time', 'Signal']
@@ -136,30 +136,30 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         ax.set(ylabel=None)
         canvas.figure.tight_layout(pad=0)
 
-        self.clearLayout(self.verticalLayout_3)
-        # self.verticalLayout_3.layout().addWidget(canvas)
-        self.verticalLayout_3.addWidget(canvas)
+        self.clearLayout(self.signal_layout)
+        # self.signal_layout.layout().addWidget(canvas)
+        self.signal_layout.addWidget(canvas)
         self.show()
 
     def load_parameters(self, stl_param_file):
         # type: (_, str) -> None
         params = self.oracle._get_parameters_stl(stl_param_file)
-        self.tableWidget.clearContents()
+        self.param_tableWidget.clearContents()
 
         num_params = len(params)
-        self.tableWidget.setRowCount(num_params)
+        self.param_tableWidget.setRowCount(num_params)
         for row, param in enumerate(params):
-            self.tableWidget.setItem(row, 0, QTableWidgetItem(param))
+            self.param_tableWidget.setItem(row, 0, QTableWidgetItem(param))
 
     def read_parameters_intervals(self):
         # type: (_) -> list
         # intervals = [(0.0, 0.0)] * num_params
         intervals = []
-        num_params = self.tableWidget.rowCount()
-        self.tableWidget.setRowCount(num_params)
+        num_params = self.param_tableWidget.rowCount()
+        self.param_tableWidget.setRowCount(num_params)
         for row in range(num_params):
-            min_val_text = self.tableWidget.item(row, 1)
-            max_val_text = self.tableWidget.item(row, 2)
+            min_val_text = self.param_tableWidget.item(row, 1)
+            max_val_text = self.param_tableWidget.item(row, 2)
             interval = (int(min_val_text.text()), int(max_val_text.text()))
             intervals.append(interval)
         return intervals
@@ -167,8 +167,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def run_non_parametric_stle(self):
         # type: (_) -> bool
         # Running STLEval without parameters
-        stl_prop_file = self.f_especificacion_textbox.toPlainText()
-        csv_signal_file = self.f_senial_entrada_textbox.toPlainText()
+        stl_prop_file = self.spec_filepath_textbox.toPlainText()
+        csv_signal_file = self.signal_filepath_textbox.toPlainText()
         # No parameters (i.e., using empty temporary file)
         stl_param = tempfile.NamedTemporaryFile(delete=False)
         stl_param_file = stl_param.name
@@ -188,9 +188,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def run_parametric_stle(self):
         # type: (_) -> ResultSet
         # Running STLEval without parameters
-        stl_prop_file = self.f_especificacion_textbox.toPlainText()
-        csv_signal_file = self.f_senial_entrada_textbox.toPlainText()
-        stl_param_file = self.f_variables_textbox.toPlainText()
+        stl_prop_file = self.spec_filepath_textbox.toPlainText()
+        csv_signal_file = self.signal_filepath_textbox.toPlainText()
+        stl_param_file = self.param_filepath_textbox.toPlainText()
 
         # Initialize the OracleSTLeLib
         RootGUI.logger.debug('Evaluating...')
@@ -223,7 +223,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def run_stle(self):
         # type: (_) -> None
         # Running STLEval
-        index = self.operacion_comboBox.currentIndex()
+        index = self.param_stl_selection_comboBox.currentIndex()
         is_parametric = (index == 1)
         if not is_parametric:
             # Not parametric
