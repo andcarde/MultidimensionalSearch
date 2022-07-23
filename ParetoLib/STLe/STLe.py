@@ -47,7 +47,7 @@ import os
 import stat
 import platform
 
-from ctypes import CDLL, c_int, c_double, c_char_p, c_void_p, pointer
+from ctypes import CDLL, c_int, c_double, c_char_p, c_void_p, pointer, Structure
 
 
 def get_stle_path():
@@ -132,6 +132,11 @@ MAX_STLE_CALLS = 5
 STLE_LIB = get_stle_lib()
 
 
+class PCSignal(Structure):
+    _fields_ = [('v', c_double),
+                ('t', c_int)]
+
+
 class STLeLibInterface:
     def __init__(self):
         # type: (STLeLibInterface) -> None
@@ -154,6 +159,8 @@ class STLeLibInterface:
         self._stl_offlinepcmonitor_make_output = None
         self._stl_delete_offlinepcmonitor = None
         self._stl_pcseries_value0 = None
+        self._stl_pcseries_value = None
+        self._stl_pcseries_size = None
         self._stl_eps_separation_size = None
 
         # Initialize C interfaze with STLe
@@ -254,11 +261,24 @@ class STLeLibInterface:
         self._stl_delete_offlinepcmonitor.restype = None
 
         # Get the value of the output at time 0
-        # double stle_pcseries_value0(const struct stle_pcseries *series)
+        # double stle_pcseries_value0(const stle_pcseries *series)
         self._stl_pcseries_value0 = self._stle.stle_pcseries_value0
         self._stl_pcseries_value0.argtypes = [c_void_p]
         self._stl_pcseries_value0.restype = c_double
 
+        # Get the value of the output at time i
+        # double stle_pcseries_value(const stle_pcseries *series, int i)
+        self._stl_pcseries_value = self._stle.stle_pcseries_value
+        self._stl_pcseries_value.argtypes = [c_void_p, c_int]
+        self._stl_pcseries_value.restype = c_double
+
+        # Get the number of parameters (n) of the time series
+        # int stle_pcseries_size(const stle_pcseries *series)
+        self._stl_pcseries_size = self._stle.stle_pcseries_size
+        self._stl_pcseries_size.argtypes = [c_void_p]
+        self._stl_pcseries_size.restype = c_int
+
+        # Epsilon size
         self._stl_eps_separation_size = self._stle.stle_pcseries_get_eps_separation_size
         self._stl_eps_separation_size.argtypes = [c_void_p, c_double]
         self._stl_eps_separation_size.restype = c_int
@@ -339,6 +359,14 @@ class STLeLibInterface:
     def stl_pcseries_value0(self, stle_series):
         # type: (STLeLibInterface, c_void_p) -> c_double
         return self._stl_pcseries_value0(stle_series)
+
+    def stl_pcseries_value(self, stle_series, i):
+        # type: (STLeLibInterface, c_void_p, c_int) -> c_double
+        return self._stl_pcseries_value(stle_series, i)
+
+    def stl_pcseries_size(self, stle_series):
+        # type: (STLeLibInterface, c_void_p) -> c_int
+        return self._stl_pcseries_size(stle_series)
 
     def stl_eps_separation_size(self, stle_series, epsilon):
         # type: (STLeLibInterface, c_void_p, c_double) -> c_int
