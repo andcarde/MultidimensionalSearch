@@ -778,3 +778,48 @@ class OracleSTLeLib(OracleSTLe):
         RootOracle.logger.debug('Result: {0}'.format(res))
 
         return res
+
+    def get_stle_pcseries(self, stl_formula):
+        # type: (OracleSTLeLib, str) -> dict
+        """
+        Evaluates the instance of a parametrized STL formula.
+
+        Args:
+            self (OracleSTLeLib): The Oracle.
+            stl_formula: String representing the instance of the parametrized STL formula that will be evaluated.
+        Returns:
+            dict: Dictonary (timestamp, value) containing the Boolean signal resulting from the evaluation
+            of the STL formula.
+
+        Example:
+        >>> ora = OracleSTLeLib()
+        >>> stl_formula = '(< (On (0 inf) (- (Max x0) (Min x0))) 0.5)'
+        >>> d = ora.get_stle_pcseries(stl_formula)
+        >>> {0: 0, 1: 0, ...}
+        """
+        assert self.stle is not None
+        assert self.monitor is not None
+        assert self.signal is not None
+        assert self.signalvars is not None
+        assert self.exprset is not None
+
+        RootOracle.logger.debug('Evaluating: {0}'.format(stl_formula))
+
+        # Add STLe formula to the expression set
+        expr = self.stle.stl_parse_sexpr_str(self.exprset, stl_formula)
+
+        RootOracle.logger.debug('STLe formula parsed: {0}'.format(expr))
+
+        # Evaluating formula
+        stl_series = self.stle.stl_offlinepcmonitor_make_output(self.monitor, expr)
+        RootOracle.logger.debug('STLe series: {0}'.format(stl_series))
+
+        pcseries_size = self.stle.stl_pcseries_size(stl_series)
+        stl_series_dict = {i: self.stle.stl_pcseries_value(stl_series, i)
+                           for i in range(pcseries_size)}
+
+        # Remove STLe formula from the expression set
+        self.stle.stl_unref_expr(expr)
+
+        # Return the Boolean signal resulting of the evaluation of the STL formula.
+        return stl_series_dict

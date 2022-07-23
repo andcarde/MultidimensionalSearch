@@ -8,7 +8,7 @@ import matplotlib
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolbar2QT
 
-from PyQt5.QtWidgets import QApplication, QFileDialog, QGraphicsScene, QMainWindow, QTableWidgetItem, QWidget, QVBoxLayout, QLabel
+from PyQt5.QtWidgets import QApplication, QFileDialog, QMainWindow, QTableWidgetItem, QWidget, QVBoxLayout, QLabel
 
 import ParetoLib.GUI as RootGUI
 from ParetoLib.GUI.Window import Ui_MainWindow
@@ -56,6 +56,16 @@ class StandardSolutionWindow(QWidget):
             rs.plot_2D_light(var_names=var_names, fig1=canvas.figure)
         elif rs.xspace.dim() == 3:
             rs.plot_3D_light(var_names=var_names, fig1=canvas.figure)
+
+    def set_bool_signal(self, bool_signal):
+        # type: (_, dict) -> None
+        x = bool_signal.keys()
+        y = bool_signal.values()
+        canvas = MplCanvas(parent=self)
+        canvas.set_axis()
+        canvas.axes.step(x, y)
+        canvas.figure.tight_layout(pad=0)
+        self.layout().addWidget(canvas)
 
 
 class MplCanvas(FigureCanvasQTAgg):
@@ -165,7 +175,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         return intervals
 
     def run_non_parametric_stle(self):
-        # type: (_) -> bool
+        # type: (_) -> (bool, dict)
         # Running STLEval without parameters
         stl_prop_file = self.spec_filepath_textbox.toPlainText()
         csv_signal_file = self.signal_filepath_textbox.toPlainText()
@@ -182,8 +192,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         satisfied = self.oracle.eval_stl_formula(stl_formula)
         RootGUI.logger.debug('Satisfied? {0}'.format(satisfied))
 
+        # Generate Boolean signal
+        stl_formula = self.oracle._load_stl_formula(stl_prop_file)
+        bool_signal = self.oracle.get_stle_pcseries(stl_formula)
+
         os.remove(stl_param_file)
-        return satisfied
+        return satisfied, bool_signal
 
     def run_parametric_stle(self):
         # type: (_) -> ResultSet
@@ -227,9 +241,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         is_parametric = (index == 1)
         if not is_parametric:
             # Not parametric
-            satisfied = self.run_non_parametric_stle()
+            satisfied, bool_signal = self.run_non_parametric_stle()
             # Visualization
             self.solution = StandardSolutionWindow()
+            self.solution.set_bool_signal(bool_signal)
             self.solution.set_message(satisfied)
         else:
             # Parametric
