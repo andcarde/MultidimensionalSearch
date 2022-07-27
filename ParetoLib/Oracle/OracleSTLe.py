@@ -815,7 +815,7 @@ class OracleSTLeLib(OracleSTLe):
         RootOracle.logger.debug('STLe series: {0}'.format(stl_series))
 
         pcseries_size = self.stle.stl_pcseries_size(stl_series)
-        stl_series_dict = {i: self.stle.stl_pcseries_value(stl_series, i)
+        stl_series_dict = {self.stle.stl_pcseries_start_time(stl_series, i): self.stle.stl_pcseries_value(stl_series, i)
                            for i in range(pcseries_size)}
 
         # Remove STLe formula from the expression set

@@ -160,6 +160,7 @@ class STLeLibInterface:
         self._stl_delete_offlinepcmonitor = None
         self._stl_pcseries_value0 = None
         self._stl_pcseries_value = None
+        self._stl_pcseries_start_time = None
         self._stl_pcseries_size = None
         self._stl_eps_separation_size = None
 
@@ -266,13 +267,19 @@ class STLeLibInterface:
         self._stl_pcseries_value0.argtypes = [c_void_p]
         self._stl_pcseries_value0.restype = c_double
 
-        # Get the value of the output at time i
+        # Get the value of the output at interval i
         # double stle_pcseries_value(const stle_pcseries *series, int i)
         self._stl_pcseries_value = self._stle.stle_pcseries_value
         self._stl_pcseries_value.argtypes = [c_void_p, c_int]
         self._stl_pcseries_value.restype = c_double
 
-        # Get the number of parameters (n) of the time series
+        # Get the timestamp for the interval i
+        # double stle_pcseries_start_time(const stle_pcseries *series, int i)
+        self._stl_pcseries_start_time = self._stle.stle_pcseries_start_time
+        self._stl_pcseries_start_time.argtypes = [c_void_p, c_int]
+        self._stl_pcseries_start_time.restype = c_double
+
+        # Get the number of intervals (n) of the time series
         # int stle_pcseries_size(const stle_pcseries *series)
         self._stl_pcseries_size = self._stle.stle_pcseries_size
         self._stl_pcseries_size.argtypes = [c_void_p]
@@ -363,6 +370,10 @@ class STLeLibInterface:
     def stl_pcseries_value(self, stle_series, i):
         # type: (STLeLibInterface, c_void_p, c_int) -> c_double
         return self._stl_pcseries_value(stle_series, i)
+
+    def stl_pcseries_start_time(self, stle_series, i):
+        # type: (STLeLibInterface, c_void_p, c_int) -> c_double
+        return self._stl_pcseries_start_time(stle_series, i)
 
     def stl_pcseries_size(self, stle_series):
         # type: (STLeLibInterface, c_void_p) -> c_int

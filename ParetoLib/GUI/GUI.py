@@ -63,7 +63,7 @@ class StandardSolutionWindow(QWidget):
         y = bool_signal.values()
         canvas = MplCanvas(parent=self)
         canvas.set_axis()
-        canvas.axes.step(x, y)
+        canvas.axes.step(x, y, where='post') # where='pre'
         canvas.figure.tight_layout(pad=0)
         self.layout().addWidget(canvas)
 
