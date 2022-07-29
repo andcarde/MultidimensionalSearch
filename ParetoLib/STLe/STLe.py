@@ -50,6 +50,10 @@ import platform
 from ctypes import CDLL, c_int, c_double, c_char_p, c_void_p, pointer, Structure
 
 
+
+@cython.ccall
+@cython.locals(folder=str)
+@cython.returns(str)
 def get_stle_path():
     return os.path.dirname(os.path.realpath(__file__))
 
@@ -75,6 +79,9 @@ def get_stle_bin():
     return path
 
 
+@cython.ccall
+@cython.locals(ext=str, folder=list, file_list=list, lib_file=str)
+@cython.returns(str)
 def get_stle_lib_name():
     # Selecting STLe binary file depending on the OS
     ext = ''

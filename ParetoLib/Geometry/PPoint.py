@@ -17,6 +17,7 @@ optimising vector operations.
 import numpy as np
 from numpy import linalg as la
 from numpy import array as point
+import cython
 
 import ParetoLib.Geometry
 from ParetoLib._py3k import red
@@ -25,6 +26,9 @@ from ParetoLib._py3k import red
 # Auxiliary functions for computing the algebraic properties
 # of a vector (e.g., norm, distance, etc.)
 
+@cython.ccall
+@cython.returns(cython.double)
+@cython.locals(i=cython.double)
 def r(i):
     # type: (float) -> float
     """
@@ -50,7 +54,8 @@ def r(i):
     """
     return round(i, ParetoLib.Geometry.__numdigits__)
 
-
+@cython.ccall
+@cython.returns(cython.ushort)
 def dim(x):
     # type: (point) -> int
     """
@@ -69,7 +74,7 @@ def dim(x):
     """
     return len(x)
 
-
+@cython.returns(cython.double)
 def norm(x):
     # type: (point) -> float
     """
@@ -88,7 +93,8 @@ def norm(x):
     """
     return la.norm(x)
 
-
+@cython.ccall
+@cython.returns(cython.double)
 def distance(x, xprime):
     # type: (point, point) -> float
     """
@@ -111,6 +117,8 @@ def distance(x, xprime):
     return norm(temp)
 
 
+@cython.returns(cython.double)
+@cython.locals(_sum=cython.double)
 def hamming_distance(x, xprime):
     # type: (point, point) -> float
     """
@@ -179,6 +187,9 @@ def add(x, xprime):
     return x + xprime
 
 
+# Cythonizing 'mult' produce (0.0, ..., 0.0) as output, even though i != 0
+# @cython.returns(tuple)
+@cython.locals(i=cython.double)
 def mult(x, i):
     # type: (point, float) -> point
     """
@@ -200,6 +211,9 @@ def mult(x, i):
     return x * i
 
 
+# Cythonizing 'div' produce 'Division by zero' error, even though i != 0
+# @cython.returns(tuple)
+# @cython.locals(i=cython.double)
 def div(x, i):
     # type: (point, float) -> point
     """
@@ -222,6 +236,7 @@ def div(x, i):
 
 
 # Comparison of two points
+@cython.returns(cython.bint)
 def greater(x, xprime):
     # type: (point, point) -> bool
     """
@@ -243,6 +258,7 @@ def greater(x, xprime):
     return all(x > xprime)
 
 
+@cython.returns(cython.bint)
 def greater_equal(x, xprime):
     # type: (point, point) -> bool
     """
@@ -264,6 +280,7 @@ def greater_equal(x, xprime):
     return all(x >= xprime)
 
 
+@cython.returns(cython.bint)
 def less(x, xprime):
     # type: (point, point) -> bool
     """
@@ -285,6 +302,7 @@ def less(x, xprime):
     return all(x < xprime)
 
 
+@cython.returns(cython.bint)
 def less_equal(x, xprime):
     # type: (point, point) -> bool
     """
@@ -306,6 +324,8 @@ def less_equal(x, xprime):
     return all(x <= xprime)
 
 
+@cython.ccall
+@cython.returns(cython.bint)
 def equal(x, xprime):
     # type: (point, point) -> bool
     """
@@ -327,6 +347,8 @@ def equal(x, xprime):
     return all(x == xprime)
 
 
+@cython.ccall
+@cython.returns(cython.bint)
 def incomparables(x, xprime):
     # type: (point, point) -> bool
     """
@@ -350,6 +372,7 @@ def incomparables(x, xprime):
     >>> incomparables(x, xprime)
     >>> True
     """
+
     return (not greater_equal(x, xprime)) and (not greater_equal(xprime, x))
 
 
@@ -443,6 +466,9 @@ def minimum(x, xprime):
     return np.minimum(x, xprime)
 
 
+@cython.ccall
+@cython.locals(i=cython.ushort,
+               n=cython.ushort, m=cython.ushort)
 def subt(i, x, xprime):
     # type: (int, point, point) -> point
     """
@@ -472,6 +498,7 @@ def subt(i, x, xprime):
     return out
 
 
+@cython.locals(n=cython.ushort, m=cython.ushort)
 def select(x, xprime):
     # type: (point, point) -> point
     """
@@ -498,6 +525,9 @@ def select(x, xprime):
 
 
 # Integer to binary notation
+@cython.ccall
+@cython.returns(list)
+@cython.locals(x=cython.ulonglong, pad=cython.ushort, pad_temp=cython.ushort, i=str, temp1=list, temp2=list)
 def int_to_bin_list(x, pad=0):
     # type: (int, int) -> list
     """
@@ -524,6 +554,8 @@ def int_to_bin_list(x, pad=0):
     return temp2
 
 
+@cython.ccall
+@cython.locals(x=cython.ulonglong, pad=cython.ushort)
 def int_to_bin_tuple(x, pad=0):
     # type: (int, int) -> point
     """ Equivalent to int_to_bin_list(x, pad=0).
@@ -548,6 +580,8 @@ def int_to_bin_tuple(x, pad=0):
 
 
 # Domination
+@cython.ccall
+@cython.returns(cython.bint)
 def dominates(x, xprime):
     # type: (point, point) -> bool
     """
@@ -556,6 +590,8 @@ def dominates(x, xprime):
     return less_equal(x, xprime)
 
 
+@cython.ccall
+@cython.returns(cython.bint)
 def is_dominated(x, xprime):
     # type: (point, point) -> bool
     """

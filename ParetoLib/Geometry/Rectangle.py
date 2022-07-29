@@ -78,8 +78,9 @@ import numpy as np
 import matplotlib.patches as patches
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from itertools import product, tee
+import cython
 
-import ParetoLib.Geometry as RootGeom
+# import ParetoLib.Geometry as RootGeom
 from ParetoLib.Geometry.Segment import Segment
 from ParetoLib.Geometry.Point import greater, greater_equal, less, less_equal, equal, add, subtract, div, mult, \
     distance, dim, \
@@ -87,7 +88,10 @@ from ParetoLib.Geometry.Point import greater, greater_equal, less, less_equal, e
 from ParetoLib._py3k import red
 
 
+@cython.cclass
 class Rectangle(object):
+    cython.declare(min_corner=tuple, max_corner=tuple, vol=cython.double, vertx=list)
+
     def __init__(self,
                  min_corner=(float('-inf'),) * 2,
                  max_corner=(float('+inf'),) * 2):
@@ -120,7 +124,10 @@ class Rectangle(object):
 
         assert greater_equal(self.max_corner, self.min_corner) or incomparables(self.min_corner, self.max_corner)
 
+    @cython.ccall
+    @cython.returns(cython.void)
     def reset(self):
+        # type: (Rectangle) -> None
         self.vol = None
         self.nInf = None
         self.snInf = None
@@ -175,6 +182,8 @@ class Rectangle(object):
         object.__setattr__(self, name, value)
 
     #
+    @cython.locals(xpoint=tuple)
+    @cython.returns(cython.bint)
     def __contains__(self, xpoint):
         # type: (Rectangle, tuple) -> bool
         """
@@ -199,6 +208,9 @@ class Rectangle(object):
         return (greater(xpoint, self.min_corner) and
                 less(xpoint, self.max_corner))
 
+    @cython.ccall
+    @cython.locals(xpoint=tuple)
+    @cython.returns(cython.bint)
     def inside(self, xpoint):
         # type: (Rectangle, tuple) -> bool
         """
@@ -224,6 +236,8 @@ class Rectangle(object):
         return (greater_equal(xpoint, self.min_corner) and
                 less_equal(xpoint, self.max_corner))
 
+    @cython.ccall
+    @cython.returns(str)
     def _to_str(self):
         # type: (Rectangle) -> str
         """
@@ -232,6 +246,7 @@ class Rectangle(object):
         _string = '[{0}, {1}]'.format(self.min_corner, self.max_corner)
         return _string
 
+    @cython.returns(str)
     def __repr__(self):
         # type: (Rectangle) -> str
         """
@@ -239,6 +254,7 @@ class Rectangle(object):
         """
         return self._to_str()
 
+    @cython.returns(str)
     def __str__(self):
         # type: (Rectangle) -> str
         """
@@ -246,6 +262,7 @@ class Rectangle(object):
         """
         return self._to_str()
 
+    @cython.returns(cython.bint)
     def __eq__(self, other):
         # type: (Rectangle, Rectangle) -> bool
         """
@@ -254,6 +271,7 @@ class Rectangle(object):
         # return (other.min_corner == self.min_corner) and (other.max_corner == self.max_corner)
         return equal(other.min_corner, self.min_corner) and equal(other.max_corner, self.max_corner)
 
+    @cython.returns(cython.bint)
     def __ne__(self, other):
         # type: (Rectangle, Rectangle) -> bool
         """
@@ -261,6 +279,7 @@ class Rectangle(object):
         """
         return not self.__eq__(other)
 
+    @cython.returns(cython.bint)
     def __lt__(self, other):
         # type: (Rectangle, Rectangle) -> bool
         """
@@ -268,6 +287,7 @@ class Rectangle(object):
         """
         return less(self.max_corner, other.max_corner)
 
+    @cython.returns(cython.bint)
     def __le__(self, other):
         # type: (Rectangle, Rectangle) -> bool
         """
@@ -275,6 +295,7 @@ class Rectangle(object):
         """
         return less_equal(self.max_corner, other.max_corner)
 
+    @cython.returns(cython.bint)
     def __gt__(self, other):
         # type: (Rectangle, Rectangle) -> bool
         """
@@ -282,6 +303,7 @@ class Rectangle(object):
         """
         return not self.__le__(other)
 
+    @cython.returns(cython.bint)
     def __ge__(self, other):
         # type: (Rectangle, Rectangle) -> bool
         """
@@ -289,6 +311,7 @@ class Rectangle(object):
         """
         return not self.__lt__(other)
 
+    @cython.returns(cython.bint)
     def __hash__(self):
         # type: (Rectangle) -> int
         """
@@ -298,6 +321,8 @@ class Rectangle(object):
         # return hash((tuple(self.min_corner), tuple(self.max_corner)))
 
     # Rectangle properties
+    @cython.ccall
+    @cython.returns(cython.ushort)
     def dim(self):
         # type: (Rectangle) -> int
         """
@@ -318,12 +343,16 @@ class Rectangle(object):
         """
         return dim(self.min_corner)
 
+    @cython.locals(diagonal_length=tuple, _prod=cython.double)
+    @cython.returns(cython.double)
     def _volume(self):
         # type: (Rectangle) -> float
         diagonal_length = self.diag_vector()
         _prod = red(lambda si, sj: si * sj, diagonal_length)
         return abs(_prod)
 
+    @cython.ccall
+    @cython.returns(cython.double)
     def volume(self):
         # type: (Rectangle) -> float
         """
@@ -347,10 +376,14 @@ class Rectangle(object):
             self.vol = self._volume()
         return self.vol
 
+    @cython.ccall
+    @cython.returns(cython.double)
     def adjusted_volume(self):
         # type: (Rectangle) -> float
-        return self.volume() / (1 + self.privilege)
+        return self.volume() / (1.0 + self.privilege)
 
+    @cython.ccall
+    @cython.returns(cython.ulong)
     def num_vertices(self):
         # type: (Rectangle) -> int
         """
@@ -371,6 +404,9 @@ class Rectangle(object):
         """
         return int(math.pow(2, self.dim()))
 
+    @cython.ccall
+    @cython.locals(deltas=tuple, deltai=tuple, vertex=tuple, vertices=list)
+    @cython.returns(list)
     def _vertices(self):
         # type: (Rectangle) -> list
         deltas = self.diag_vector()
@@ -388,6 +424,10 @@ class Rectangle(object):
         assert (len(vertices) == self.num_vertices()), 'Error in the number of vertices'
         return vertices
 
+    @cython.ccall
+    @cython.locals(deltas=tuple, vertex=tuple, num_vertex=cython.ulong, d=cython.ushort, vertices=list, i=cython.ulong,
+                   delta_index=tuple, deltai=tuple)
+    @cython.returns(list)
     def _vertices_func(self):
         # type: (Rectangle) -> list
         deltas = self.diag_vector()
@@ -402,6 +442,8 @@ class Rectangle(object):
         assert (len(vertices) == num_vertex), 'Error in the number of vertices'
         return vertices
 
+    @cython.ccall
+    @cython.returns(list)
     def vertices(self):
         # type: (Rectangle) -> list
         """
@@ -425,6 +467,8 @@ class Rectangle(object):
             self.vertx = self._vertices()
         return self.vertx
 
+    @cython.ccall
+    @cython.returns(object)
     def diag(self):
         # type: (Rectangle) -> Segment
         """
@@ -445,6 +489,8 @@ class Rectangle(object):
         """
         return Segment(self.min_corner, self.max_corner)
 
+    @cython.ccall
+    @cython.returns(tuple)
     def diag_vector(self):
         # type: (Rectangle) -> tuple
         """
@@ -465,6 +511,9 @@ class Rectangle(object):
         """
         return subtract(self.max_corner, self.min_corner)
 
+    @cython.ccall
+    @cython.locals(diagonal=object)
+    @cython.returns(cython.double)
     def norm(self):
         # type: (Rectangle) -> float
         """
@@ -486,6 +535,9 @@ class Rectangle(object):
         diagonal = self.diag()
         return diagonal.norm()
 
+    @cython.ccall
+    @cython.locals(offset=tuple)
+    @cython.returns(tuple)
     def center(self):
         # type: (Rectangle) -> tuple
         """
@@ -507,6 +559,9 @@ class Rectangle(object):
         offset = div(self.diag_vector(), 2.0)
         return add(self.min_corner, offset)
 
+    @cython.ccall
+    @cython.locals(xpoint=tuple, middle_point=tuple, eucledian_dist=cython.double)
+    @cython.returns(cython.double)
     def distance_to_center(self, xpoint):
         # type: (Rectangle, tuple) -> float
         """
@@ -530,6 +585,9 @@ class Rectangle(object):
         euclidean_dist = distance(xpoint, middle_point)
         return euclidean_dist
 
+    # @cython.ccall
+    @cython.locals(n=cython.long, m=cython.double, diag_step=tuple, min_point=tuple, point_list=list)
+    @cython.returns(list)
     def get_points(self, n):
         # type: (Rectangle, int) -> list
         """
@@ -557,8 +615,11 @@ class Rectangle(object):
         return point_list
 
     # Geometric operations between two rectangles
+    # @cython.ccall
+    @cython.locals(concatenable=cython.bint, corner_eq=list, mismatching_index=cython.ushort)
+    @cython.returns(cython.bint)
     def is_concatenable(self, other):
-        # type: (Rectangle, Rectangle) -> Rectangle
+        # type: (Rectangle, Rectangle) -> bool
         """
          Adjacency of two rectangles.
 
@@ -592,12 +653,15 @@ class Rectangle(object):
             # Besides, the mismatching coordinate must have continuous interval
             mismatching_index = corner_eq.index(False)
             concatenable = (self.max_corner[mismatching_index] == other.min_corner[mismatching_index]) or \
-                         (other.max_corner[mismatching_index] == self.min_corner[mismatching_index])
+                           (other.max_corner[mismatching_index] == self.min_corner[mismatching_index])
 
         return concatenable
 
+    @cython.ccall
+    @cython.locals(d=cython.ushort, vert_self=set, vert_other=set, inter=set)
+    @cython.returns(cython.bint)
     def is_concatenable_func(self, other):
-        # type: (Rectangle, Rectangle) -> Rectangle
+        # type: (Rectangle, Rectangle) -> bool
         """
          Adjacency of two rectangles.
 
@@ -630,6 +694,9 @@ class Rectangle(object):
                and len(vert_self) == pow(2, d) \
                and len(inter) == pow(2, d - 1)
 
+    @cython.ccall
+    @cython.locals(rect=object)
+    @cython.returns(object)
     def concatenate(self, other):
         # type: (Rectangle, Rectangle) -> Rectangle
         """
@@ -754,6 +821,9 @@ class Rectangle(object):
             self.max_corner = max_corner
         return self
 
+    @cython.ccall
+    @cython.locals(other=object, vert_self=set, vert_other=set, inter=set, new_union_vertices=set)
+    @cython.returns(object)
     def concatenate_update_func(self, other):
         # type: (Rectangle, Rectangle) -> Rectangle
         """
@@ -799,6 +869,9 @@ class Rectangle(object):
             self.max_corner = max(new_union_vertices)
         return self
 
+    @cython.ccall
+    @cython.locals(minc=tuple, maxc=tuple)
+    @cython.returns(cython.bint)
     def overlaps(self, other):
         # type: (Rectangle, Rectangle) -> bool
         """
@@ -828,6 +901,9 @@ class Rectangle(object):
         maxc = minimum(self.max_corner, other.max_corner)
         return less(minc, maxc)
 
+    @cython.ccall
+    @cython.locals(minc=tuple, maxc=tuple)
+    @cython.returns(object)
     def intersection(self, other):
         # type: (Rectangle, Rectangle) -> Rectangle
         """
@@ -861,6 +937,9 @@ class Rectangle(object):
         # else:
         #     return Rectangle(self.min_corner, self.max_corner)
 
+    @cython.ccall
+    @cython.locals(minc=tuple, maxc=tuple)
+    @cython.returns(object)
     def intersection_update(self, other):
         # type: (Rectangle, Rectangle) -> Rectangle
         """
@@ -902,6 +981,9 @@ class Rectangle(object):
     """
     Synonym of intersection(self, other).
     """
+    @cython.locals(other=object, diff_set=set, inter=object, i=cython.ushort, ground=tuple, ceil=tuple,
+                   inner_ground=tuple, inner_ceil=tuple, r1=object, r2=object)
+    @cython.returns(list)
     def difference(self, other):
         # type: (Rectangle, Rectangle) -> iter
         """
@@ -969,6 +1051,12 @@ class Rectangle(object):
                 ceil = ceil[:i] + (min(ceil[i], inter.max_corner[i]),) + ceil[i+1:]
         return list(diff_set)
 
+    # @cython.ccall
+    # @cython.locals(other=object, inter=object, dimension=cython.ushort, d=list, i=cython.ushort, vertex=tuple,
+    #                minc=tuple, maxc=tuple, instance=object)
+    @cython.locals(other=object, inter=object, dimension=cython.ushort, i=cython.ushort, minc=tuple, maxc=tuple,
+                   instance=object)
+    @cython.returns(list)
     def difference_func(self, other):
         # type: (Rectangle, Rectangle) -> iter
         """
@@ -1045,6 +1133,9 @@ class Rectangle(object):
             # At maximum, len(vertex) = product of len(elem[i]) for i in range(d) = 3**d
             # The maximum number of sub-cubes is 3**d - 1 because the intersection is removed
 
+    @cython.ccall
+    @cython.locals(other=object)
+    @cython.returns(list)
     def min_set_difference(self, other):
         # type: (Rectangle, Rectangle) -> list
         """
@@ -1062,6 +1153,9 @@ class Rectangle(object):
     """
 
     # Domination
+    @cython.ccall
+    @cython.locals(xpoint=tuple)
+    @cython.returns(cython.bint)
     def dominates_point(self, xpoint):
         # type: (Rectangle, tuple) -> bool
         """
@@ -1069,6 +1163,9 @@ class Rectangle(object):
         """
         return less_equal(self.max_corner, xpoint)
 
+    @cython.ccall
+    @cython.locals(xpoint=tuple)
+    @cython.returns(cython.bint)
     def is_dominated_by_point(self, xpoint):
         # type: (Rectangle, tuple) -> bool
         """
@@ -1076,6 +1173,9 @@ class Rectangle(object):
         """
         return less_equal(xpoint, self.min_corner)
 
+    @cython.ccall
+    @cython.locals(other=object)
+    @cython.returns(cython.bint)
     def dominates_rect(self, other):
         # type: (Rectangle, Rectangle) -> bool
         """
@@ -1084,6 +1184,9 @@ class Rectangle(object):
         return less_equal(self.max_corner, other.min_corner)  # testing. Strict dominance and not overlap
         # return less_equal(self.min_corner, other.min_corner) and less_equal(self.max_corner, other.max_corner) # working
 
+    @cython.ccall
+    @cython.locals(other=object)
+    @cython.returns(cython.bint)
     def is_dominated_by_rect(self, other):
         # type: (Rectangle, Rectangle) -> bool
         """
@@ -1092,6 +1195,8 @@ class Rectangle(object):
         return other.dominates_rect(self)
 
     # Scaling functions
+    # @cython.ccall
+    @cython.returns(cython.void)
     def scale(self, f=lambda x: x):
         # type: (Rectangle, callable) -> None
         """
@@ -1170,6 +1275,16 @@ class Rectangle(object):
             alpha=opacity
         )
 
+    @cython.ccall
+    @cython.locals(c=str, xaxe=cython.ushort, yaxe=cython.ushort, zaxe=cython.ushort, opacity=cython.double,
+                   clip_box=object,
+                   a=(cython.double, cython.double, cython.double), b=(cython.double, cython.double, cython.double),
+                   clipminc=(cython.double, cython.double, cython.double),
+                   clipmaxc=(cython.double, cython.double, cython.double),
+                   minc=(cython.double, cython.double, cython.double),
+                   maxc=(cython.double, cython.double, cython.double), rect=object, points=object, edges=list,
+                   faces=object)
+    @cython.returns(object)
     def plot_3D(self, c='red', xaxe=0, yaxe=1, zaxe=2, opacity=1.0, clip_box=None):
         # type: (Rectangle, str, int, int, int, float, _) -> Poly3DCollection
         """
@@ -1226,6 +1341,8 @@ class Rectangle(object):
     #####################
 
     @staticmethod
+    @cython.locals(not_processed=set, output=list, r1=object, r2=object, processed=set)
+    @cython.returns(list)
     def fusion_rectangles(list_rect):
         # type: (iter) -> list
         """
@@ -1268,6 +1385,8 @@ class Rectangle(object):
         return output
 
     @staticmethod
+    @cython.locals(list_out=list, keep_merging=cython.bint, i=cython.ulong, j=cython.ulong)
+    @cython.returns(list)
     def fusion_rectangles_func(list_rect):
         # type: (iter) -> list
         """
@@ -1317,6 +1436,9 @@ class Rectangle(object):
 
     # Difference of cubes in a list
     @staticmethod
+    # @cython.locals(rect=object, new_rect=set, temp=set, a=object, b=object)
+    @cython.locals(rect=object, new_rect=set, temp=set)
+    @cython.returns(list)
     def difference_rectangles(rect, list_rect):
         # type: (Rectangle, iter) -> list
         """
@@ -1344,7 +1466,8 @@ class Rectangle(object):
           >>> []
          """
         new_rect = {rect}
-
+        a = cython.declare(Rectangle)
+        b = cython.declare(Rectangle)
         for b in list_rect:
             temp = set()
             for a in new_rect:
@@ -1352,7 +1475,8 @@ class Rectangle(object):
                 temp.add(a)
                 if b.overlaps(a):
                     # Add the set of cubes 'a' - 'b'
-                    temp = temp.union(a - b)
+                    # temp = temp.union(a - b)
+                    temp = temp.union(a.min_set_difference(b))
                     # temp = temp.union(a.difference(b))
                     # Remove 'a'
                     temp.discard(a)
@@ -1370,7 +1494,18 @@ class Rectangle(object):
 # Standard subclass
 ###################
 
+'''
+Numerical codification of (in)comparable segments:
+0 -> a
+1 -> b
+* -> c
+'''
+
+@cython.ccall
+@cython.locals(d=cython.ushort, zero=tuple, one=tuple)
+@cython.returns(list)
 def comp(d):
+    # type: (int) -> list
     # Set of comparable rectangles
     # Particular cases of alpha
     # zero = (0_1,...,0_d)
@@ -1380,6 +1515,9 @@ def comp(d):
     return [zero, one]
 
 
+@cython.ccall
+@cython.locals(d=cython.ushort, opt=cython.bint)
+@cython.returns(list)
 def incomp(d, opt=True):
     # type: (int, bool) -> list
     # # Set of incomparable rectangles
@@ -1403,6 +1541,9 @@ Numerical codification of (in)comparable segments:
 '''
 
 
+@cython.ccall
+@cython.locals(d=cython.ushort)
+@cython.returns(list)
 def incomp_segment_neg_remove_down(d):
     # type: (int) -> list
     if d > 0:
@@ -1411,6 +1552,9 @@ def incomp_segment_neg_remove_down(d):
         return []
 
 
+@cython.ccall
+@cython.locals(d=cython.ushort)
+@cython.returns(list)
 def incomp_segment_neg_remove_down_e(d):
     # type: (int) -> list
     if d == 0:
@@ -1421,6 +1565,9 @@ def incomp_segment_neg_remove_down_e(d):
         return elist
 
 
+@cython.ccall
+@cython.locals(d=cython.ushort)
+@cython.returns(list)
 def incomp_segment_neg_remove_up(d):
     # type: (int) -> list
     if d > 0:
@@ -1429,6 +1576,9 @@ def incomp_segment_neg_remove_up(d):
         return []
 
 
+@cython.ccall
+@cython.locals(d=cython.ushort)
+@cython.returns(list)
 def incomp_segment_neg_remove_up_e(d):
     # type: (int) -> list
     if d == 0:
@@ -1439,6 +1589,9 @@ def incomp_segment_neg_remove_up_e(d):
         return elist
 
 
+@cython.ccall
+@cython.locals(d=cython.ushort)
+@cython.returns(list)
 def incomp_segmentpos(d):
     # type: (int) -> list
     if d > 0:
@@ -1447,6 +1600,9 @@ def incomp_segmentpos(d):
         return []
 
 
+@cython.ccall
+@cython.locals(d=cython.ushort, elist1=list, elistDown=list, elistUp=list)
+@cython.returns(list)
 def incomp_segmentpos_e(d):
     # type: (int) -> list
     if d == 0:
@@ -1458,6 +1614,9 @@ def incomp_segmentpos_e(d):
         return elistDown + elistUp + elist1
 
 
+@cython.ccall
+@cython.locals(d=cython.ushort)
+@cython.returns(list)
 def incomp_segment(d):
     # type: (int) -> list
     if d > 0:
@@ -1466,6 +1625,9 @@ def incomp_segment(d):
         return []
 
 
+@cython.ccall
+@cython.locals(d=cython.ushort, elist=list)
+@cython.returns(list)
 def incomp_segment_e(d):
     # type: (int) -> list
     if d == 1:
@@ -1476,6 +1638,9 @@ def incomp_segment_e(d):
         return elist
 
 
+@cython.ccall
+@cython.locals(d=cython.ushort, alist=list)
+@cython.returns(list)
 def incomp_segment_a(d):
     # type: (int) -> list
     if d == 1:
@@ -1486,6 +1651,9 @@ def incomp_segment_a(d):
         return alist
 
 
+@cython.ccall
+@cython.locals(d=cython.ushort, clist=list)
+@cython.returns(list)
 def incomp_segment_c(d):
     # type: (int) -> list
     if d == 1:
@@ -1497,6 +1665,9 @@ def incomp_segment_c(d):
 
 ###########
 
+@cython.ccall
+@cython.locals(d=cython.ushort, alphaprime=tuple, comparable=list, incomparable=list)
+@cython.returns(list)
 def incomp_expanded(d):
     # type: (int) -> list
     alphaprime = (range(2),) * d
@@ -1508,6 +1679,8 @@ def incomp_expanded(d):
     return incomparable
 
 
+@cython.locals(d=cython.ushort, lin=list, lout=list)
+@cython.returns(list)
 def incomp_compressed(d):
     # type: (int) -> list
     # Returns E(d) in alpha format
@@ -1526,6 +1699,8 @@ def incomp_compressed(d):
     return lout
 
 
+@cython.locals(d=cython.ushort)
+@cython.returns(list)
 def E(d):
     # type: (int) -> list
     # Compressed version for a set of alpha indices representing incomparable rectangles
@@ -1540,8 +1715,11 @@ def E(d):
 #################
 
 # inter-functions are the reimplementation of the standard cube generators for the intersection algorithm
+@cython.ccall
+@cython.locals(i=cython.ushort, alphai=cython.ushort, ypoint=tuple, xspace=Rectangle)
+@cython.returns(object)
 def intercpoint(i, alphai, yspace, xspace):
-    # type: (int, int, tuple, Rectangle) -> Rectangle
+    # type: (int, int, Rectangle, Rectangle) -> Rectangle
     result_xspace = Rectangle(xspace.min_corner, xspace.max_corner)
     if alphai == '0':
         # result_xspace.min_corner = subt(i, xspace.min_corner, xspace.min_corner)
@@ -1563,7 +1741,9 @@ def intercpoint(i, alphai, yspace, xspace):
     # result_xspace.max_corner = subt(i, xspace.max_corner, xspace.max_corner)
     return result_xspace
 
-
+@cython.ccall
+@cython.locals(i=cython.ushort, alphai=cython.ushort, ypoint=tuple, xspace=Rectangle)
+@cython.returns(object)
 def cpoint(i, alphai, ypoint, xspace):
     # type: (int, int, tuple, Rectangle) -> Rectangle
     result_xspace = Rectangle(xspace.min_corner, xspace.max_corner)
@@ -1576,12 +1756,18 @@ def cpoint(i, alphai, ypoint, xspace):
     return result_xspace
 
 
+@cython.ccall
+@cython.locals(i=cython.ushort, alphai=cython.ushort, yrectangle=Rectangle, xspace=Rectangle)
+@cython.returns(object)
 def intercrect(i, alphai, yrectangle, xspace):
     # type: (int, int, Rectangle, Rectangle) -> Rectangle
     result_xspace = intercpoint(i, alphai, yrectangle, xspace)
     return result_xspace
 
 
+@cython.ccall
+@cython.locals(i=cython.ushort, alphai=cython.ushort, yrectangle=Rectangle, xspace=Rectangle)
+@cython.returns(object)
 def crect(i, alphai, yrectangle, xspace):
     # type: (int, int, Rectangle, Rectangle) -> Rectangle
     result_xspace = Rectangle(xspace.min_corner, xspace.max_corner)
@@ -1592,6 +1778,9 @@ def crect(i, alphai, yrectangle, xspace):
     return result_xspace
 
 
+@cython.ccall
+@cython.locals(alpha=tuple, ypoint=tuple, xspace=Rectangle, temp=Rectangle, i=cython.ushort, alphai=cython.ushort)
+@cython.returns(object)
 def bpoint(alpha, ypoint, xspace):
     # type: (tuple, tuple, Rectangle) -> Rectangle
     assert (dim(xspace.min_corner) == dim(xspace.max_corner)), \
@@ -1606,6 +1795,10 @@ def bpoint(alpha, ypoint, xspace):
     return temp
 
 
+@cython.ccall
+@cython.locals(alpha=tuple, yrectangle=Rectangle, xspace=Rectangle, temp=Rectangle, i=cython.ushort,
+               alphai=cython.ushort)
+@cython.returns(object)
 def interbrect(alpha, yrectangle, xspace):
     # type: (tuple, Rectangle, Rectangle) -> Rectangle
     assert (dim(yrectangle.min_corner) == dim(yrectangle.max_corner)), \
@@ -1623,7 +1816,10 @@ def interbrect(alpha, yrectangle, xspace):
         temp = intercrect(i, alphai, yrectangle, temp)
     return temp
 
-
+@cython.ccall
+@cython.locals(alpha=tuple, yrectangle=Rectangle, xspace=Rectangle, temp=Rectangle, i=cython.ushort,
+               alphai=cython.ushort)
+@cython.returns(object)
 def brect(alpha, yrectangle, xspace):
     # type: (tuple, Rectangle, Rectangle) -> Rectangle
     assert (dim(yrectangle.min_corner) == dim(yrectangle.max_corner)), \
@@ -1642,6 +1838,9 @@ def brect(alpha, yrectangle, xspace):
     return temp
 
 
+@cython.ccall
+@cython.locals(alphaincomp=list, yrectangle=Rectangle, xspace=Rectangle, alphaincomp_i=tuple)
+@cython.returns(list)
 def interirect(alphaincomp, yrectangle, xspace):
     # type: (list, Rectangle, Rectangle) -> list
     assert (dim(yrectangle.min_corner) == dim(yrectangle.max_corner)), \
@@ -1655,6 +1854,9 @@ def interirect(alphaincomp, yrectangle, xspace):
     return [interbrect(alphaincomp_i, yrectangle, xspace) for alphaincomp_i in alphaincomp]
 
 
+@cython.ccall
+@cython.locals(alphaincomp=list, yrectangle=Rectangle, xspace=Rectangle, alphaincomp_i=tuple)
+@cython.returns(list)
 def irect(alphaincomp, yrectangle, xspace):
     # type: (list, Rectangle, Rectangle) -> list
     assert (dim(yrectangle.min_corner) == dim(yrectangle.max_corner)), \
@@ -1668,6 +1870,9 @@ def irect(alphaincomp, yrectangle, xspace):
     return [brect(alphaincomp_i, yrectangle, xspace) for alphaincomp_i in alphaincomp]
 
 
+# @cython.locals(y=Rectangle, z=Rectangle, d=cython.ushort, m=cython.ushort, yp=Rectangle, result=list, ws=list, w=str,
+@cython.locals(m=cython.ushort, yp=Rectangle, result=list, ws=list, w=str, alpha=tuple)
+@cython.returns(list)
 def idwc(y, z):
     # type: (Rectangle, Rectangle) -> iter
     assert z.dim() == y.dim(), 'Rectangles should have the same dimension'
@@ -1681,11 +1886,15 @@ def idwc(y, z):
     assert less_equal(z.min_corner, y.max_corner) or incomparables(z.min_corner, y.max_corner), \
         'Rectangles {0} and {1} must intersect'.format(y, z)
 
+    @cython.locals(m=cython.ushort, j=cython.ushort)
+    @cython.returns(list)
     def w_set(m):
         # type: (int) -> iter
         # { 0^{j-1} 1 *^{m-j} } for j in [1, m]
         return ["0"*(j-1) + "1" + "*"*(m-j) for j in range(1, m+1)]
 
+    @cython.locals(y=object, z=object, d=cython.ushort, j=cython.ushort, i=cython.ushort)
+    @cython.returns(tuple)
     def gamma(w, y, z):
         # type: (iter, Rectangle, Rectangle) -> tuple
         d = z.dim()
@@ -1716,6 +1925,9 @@ def idwc(y, z):
     return result
 
 
+# @cython.locals(y=Rectangle, z=Rectangle, d=cython.ushort, m=cython.ushort, yp=Rectangle, result=list, ws=list, w=str,
+@cython.locals(m=cython.ushort, yp=Rectangle, result=list, ws=list, w=str, alpha=tuple)
+@cython.returns(list)
 def iuwc(y, z):
     # type: (Rectangle, Rectangle) -> iter
     assert z.dim() == y.dim(), 'Rectangles should have the same dimension'
@@ -1729,11 +1941,15 @@ def iuwc(y, z):
     assert less_equal(y.min_corner, z.max_corner) or incomparables(y.min_corner, z.max_corner), \
         'Rectangles {0} and {1} must intersect'.format(y, z)
 
+    @cython.locals(m=cython.ushort, j=cython.ushort)
+    @cython.returns(list)
     def w_set(m):
         # type: (int) -> iter
         # { 1^{j-1} 0 *^{m-j} } for j in [1, m]
         return ["1"*(j-1) + "0" + "*"*(m-j) for j in range(1, m+1)]
 
+    @cython.locals(y=object, z=object, d=cython.ushort, j=cython.ushort, i=cython.ushort)
+    @cython.returns(tuple)
     def gamma(w, y, z):
         # type: (iter, Rectangle, Rectangle) -> tuple
         d = z.dim()

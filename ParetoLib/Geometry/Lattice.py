@@ -12,9 +12,18 @@ operations for creating and handling partial ordered sets.
 
 from sortedcontainers import SortedSet
 from operator import getitem
+import cython
 
 
+@cython.cclass
 class Lattice(object):
+    key = cython.declare(object)
+    list_of_sets = cython.declare(list)
+
+    # cython.declare(low=tuple, high=tuple)
+
+    @cython.locals(dim=cython.ushort)
+    @cython.returns(cython.void)
     def __init__(self,
                  dim,
                  key=lambda x: x):
@@ -24,6 +33,7 @@ class Lattice(object):
         # self.list_of_lists = [SortedSet([], key=lambda x, j=i: self.key(x)[j]) for i in range(dim)]
         self.list_of_sets = [SortedSet([], key=lambda x, j=i: getitem(self.key(x), j)) for i in range(dim)]
 
+    @cython.returns(str)
     def _to_str(self):
         # type: (Lattice) -> str
         """
@@ -31,6 +41,7 @@ class Lattice(object):
         """
         return str(self.list_of_sets)
 
+    @cython.returns(str)
     def __repr__(self):
         # type: (Lattice) -> str
         """
@@ -38,6 +49,7 @@ class Lattice(object):
         """
         return self._to_str()
 
+    @cython.returns(str)
     def __str__(self):
         # type: (Lattice) -> str
         """
@@ -45,6 +57,7 @@ class Lattice(object):
         """
         return self._to_str()
 
+    @cython.returns(cython.bint)
     def __eq__(self, other):
         # type: (Lattice, Lattice) -> bool
         """
@@ -52,6 +65,7 @@ class Lattice(object):
         """
         return (other.list_of_lists == self.list_of_sets) and (other.key == self.key)
 
+    @cython.returns(cython.bint)
     def __ne__(self, other):
         # type: (Lattice, Lattice) -> bool
         """
@@ -59,6 +73,7 @@ class Lattice(object):
         """
         return not self.__eq__(other)
 
+    @cython.returns(int)
     def __hash__(self):
         # type: (Lattice) -> int
         """
@@ -66,6 +81,7 @@ class Lattice(object):
         """
         return hash((tuple(self.list_of_sets), self.key))
 
+    @cython.returns(int)
     def __len__(self):
         # type: (Lattice) -> int
         """
@@ -75,6 +91,8 @@ class Lattice(object):
         return len(s)
 
     # Lattice properties
+    @cython.ccall
+    @cython.returns(cython.ushort)
     def dim(self):
         # type: (Lattice) -> int
         """

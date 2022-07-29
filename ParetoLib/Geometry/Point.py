@@ -12,6 +12,7 @@ of n components.
 """
 
 import math
+import cython
 
 import ParetoLib.Geometry
 from ParetoLib._py3k import red
@@ -20,6 +21,9 @@ from ParetoLib._py3k import red
 # Auxiliary functions for computing the algebraic properties
 # of a vector (e.g., norm, distance, etc.)
 
+@cython.ccall
+@cython.returns(cython.double)
+@cython.locals(i=cython.double)
 def r(i):
     # type: (float) -> float
     """
@@ -45,7 +49,9 @@ def r(i):
     """
     return round(i, ParetoLib.Geometry.__numdigits__)
 
-
+@cython.ccall
+@cython.returns(cython.ushort)
+@cython.locals(x=tuple)
 def dim(x):
     # type: (tuple) -> int
     """
@@ -64,7 +70,8 @@ def dim(x):
     """
     return len(x)
 
-
+@cython.returns(cython.double)
+@cython.locals(xi=cython.double, square_element_i=tuple, _sum=cython.double)
 def norm(x):
     # type: (tuple) -> float
     """
@@ -85,7 +92,9 @@ def norm(x):
     _sum = sum(square_element_i)
     return math.sqrt(_sum)
 
-
+@cython.ccall
+@cython.returns(cython.double)
+@cython.locals(x=tuple, xprime=tuple, temp=tuple)
 def distance(x, xprime):
     # type: (tuple, tuple) -> float
     """
@@ -108,6 +117,8 @@ def distance(x, xprime):
     return norm(temp)
 
 
+@cython.returns(cython.double)
+@cython.locals(x=tuple, xprime=tuple, temp=tuple, _sum=cython.double, si=cython.double, sj=cython.double)
 def hamming_distance(x, xprime):
     # type: (tuple, tuple) -> float
     """
@@ -134,6 +145,8 @@ def hamming_distance(x, xprime):
 # Arithmetic operations between two Cartesian points or between
 # a Cartesian point and a scale factor.
 
+@cython.returns(tuple)
+@cython.locals(xi=tuple)
 def subtract(x, xprime):
     # type: (tuple, tuple) -> tuple
     """
@@ -155,18 +168,20 @@ def subtract(x, xprime):
     return tuple(xi[0] - xi[1] for xi in zip(x, xprime))
 
 
+@cython.returns(tuple)
+@cython.locals(xi=tuple)
 def add(x, xprime):
     # type: (tuple, tuple) -> tuple
     """
     Component wise addition of two Cartesian points.
-    
+
     Args:
         x (tuple): The first point.
         xprime (tuple): The second point.
 
     Returns:
         tuple: x[i] + xprime[i] for i = 0..dim(x)-1.
-        
+
     Example:
     >>> x = (5, 6, 7)
     >>> xprime = (3, 2, 1)
@@ -176,18 +191,21 @@ def add(x, xprime):
     return tuple(xi[0] + xi[1] for xi in zip(x, xprime))
 
 
+# Cythonizing 'mult' produce (0.0, ..., 0.0) as output, even though i != 0
+# @cython.returns(tuple)
+@cython.locals(i=cython.double, xi=cython.double)
 def mult(x, i):
     # type: (tuple, float) -> tuple
     """
     Multiplication of a Cartesian point by a scale factor.
-    
+
     Args:
         x (tuple): A Cartesian point.
         i (float): The scale factor.
 
     Returns:
         tuple: x[j]*i for j = 0..dim(x)-1.
-        
+
     Example:
     >>> x = (5, 6, 7)
     >>> i = 2.0
@@ -197,6 +215,9 @@ def mult(x, i):
     return tuple(xi * i for xi in x)
 
 
+# Cythonizing 'div' produce 'Division by zero' error, even though i != 0
+# @cython.returns(tuple)
+# @cython.locals(xi=cython.double, i=cython.double)
 def div(x, i):
     # type: (tuple, float) -> tuple
     """
@@ -215,10 +236,13 @@ def div(x, i):
     >>> div(x, i)
     >>> (2.5, 3.0, 3.5)
     """
+    assert (i != 0.0), 'Division by zero: {0}, {1}'.format(x, i)
     return tuple(xi / i for xi in x)
 
 
 # Comparison of two points
+@cython.returns(cython.bint)
+@cython.locals(xi=tuple)
 def greater(x, xprime):
     # type: (tuple, tuple) -> bool
     """
@@ -240,6 +264,8 @@ def greater(x, xprime):
     return all(xi[0] > xi[1] for xi in zip(x, xprime))
 
 
+@cython.returns(cython.bint)
+@cython.locals(xi=tuple)
 def greater_equal(x, xprime):
     # type: (tuple, tuple) -> bool
     """
@@ -261,6 +287,8 @@ def greater_equal(x, xprime):
     return all(xi[0] >= xi[1] for xi in zip(x, xprime))
 
 
+@cython.returns(cython.bint)
+@cython.locals(xi=tuple)
 def less(x, xprime):
     # type: (tuple, tuple) -> bool
     """
@@ -282,6 +310,8 @@ def less(x, xprime):
     return all(xi[0] < xi[1] for xi in zip(x, xprime))
 
 
+@cython.returns(cython.bint)
+@cython.locals(xi=tuple)
 def less_equal(x, xprime):
     # type: (tuple, tuple) -> bool
     """
@@ -303,6 +333,9 @@ def less_equal(x, xprime):
     return all(xi[0] <= xi[1] for xi in zip(x, xprime))
 
 
+@cython.ccall
+@cython.returns(cython.bint)
+@cython.locals(x=tuple, xprime=tuple)
 def equal(x, xprime):
     # type: (tuple, tuple) -> bool
     """
@@ -325,6 +358,9 @@ def equal(x, xprime):
     return x == xprime
 
 
+@cython.ccall
+@cython.returns(cython.bint)
+@cython.locals(x=tuple, xprime=tuple)
 def incomparables(x, xprime):
     # type: (tuple, tuple) -> bool
     """
@@ -352,6 +388,9 @@ def incomparables(x, xprime):
     return (not greater_equal(x, xprime)) and (not greater_equal(xprime, x))
 
 
+@cython.ccall
+@cython.returns(tuple)
+@cython.locals(x=tuple, xprime=tuple)
 def maxi(x, xprime):
     # type: (tuple, tuple) -> tuple
     """
@@ -376,6 +415,9 @@ def maxi(x, xprime):
         return xprime
 
 
+@cython.ccall
+@cython.returns(tuple)
+@cython.locals(x=tuple, xprime=tuple)
 def mini(x, xprime):
     # type: (tuple, tuple) -> tuple
     """
@@ -400,6 +442,8 @@ def mini(x, xprime):
         return xprime
 
 
+@cython.returns(tuple)
+@cython.locals(xi=tuple)
 def maximum(x, xprime):
     # type: (tuple, tuple) -> tuple
     """
@@ -421,6 +465,8 @@ def maximum(x, xprime):
     return tuple(max(xi[0], xi[1]) for xi in zip(x, xprime))
 
 
+@cython.returns(tuple)
+@cython.locals(xi=tuple)
 def minimum(x, xprime):
     # type: (tuple, tuple) -> tuple
     """
@@ -442,6 +488,10 @@ def minimum(x, xprime):
     return tuple(min(xi[0], xi[1]) for xi in zip(x, xprime))
 
 
+@cython.ccall
+@cython.returns(tuple)
+@cython.locals(i=cython.ushort, x=tuple, xprime=tuple,
+               n=cython.ushort, m=cython.ushort, tup1=tuple, tup2=tuple, tup3=tuple)
 def subt(i, x, xprime):
     # type: (int, tuple, tuple) -> tuple
     """
@@ -473,6 +523,8 @@ def subt(i, x, xprime):
     return tup1 + tup2 + tup3
 
 
+@cython.returns(tuple)
+@cython.locals(n=cython.ushort, m=cython.ushort, xi=cython.double, yi=cython.double)
 def select(x, xprime):
     # type: (tuple, tuple) -> tuple
     """
@@ -492,6 +544,7 @@ def select(x, xprime):
     >>> select(x, xprime)
     >>> (0, 0, 7)
     """
+
     n = len(x)
     m = len(xprime)
     assert (n == m), 'index out of range'
@@ -499,6 +552,9 @@ def select(x, xprime):
 
 
 # Integer to binary notation
+@cython.ccall
+@cython.returns(list)
+@cython.locals(x=cython.ulonglong, pad=cython.ushort, pad_temp=cython.ushort, i=str, temp1=list, temp2=list)
 def int_to_bin_list(x, pad=0):
     # type: (int, int) -> list
     """
@@ -526,6 +582,9 @@ def int_to_bin_list(x, pad=0):
     return temp2
 
 
+@cython.ccall
+@cython.returns(tuple)
+@cython.locals(x=cython.ulonglong, pad=cython.ushort)
 def int_to_bin_tuple(x, pad=0):
     # type: (int, int) -> tuple
     """ Equivalent to int_to_bin_list(x, pad=0).
@@ -550,6 +609,9 @@ def int_to_bin_tuple(x, pad=0):
 
 
 # Domination
+@cython.ccall
+@cython.returns(cython.bint)
+@cython.locals(x=tuple, xprime=tuple)
 def dominates(x, xprime):
     # type: (tuple, tuple) -> bool
     """
@@ -558,6 +620,9 @@ def dominates(x, xprime):
     return less_equal(x, xprime)
 
 
+@cython.ccall
+@cython.returns(cython.bint)
+@cython.locals(x=tuple, xprime=tuple)
 def is_dominated(x, xprime):
     # type: (tuple, tuple) -> bool
     """
