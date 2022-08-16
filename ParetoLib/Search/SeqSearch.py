@@ -25,6 +25,7 @@ import os
 import time
 import tempfile
 import itertools
+import cython
 
 from sortedcontainers import SortedListWithKey, SortedSet
 
@@ -47,6 +48,11 @@ from ParetoLib.Geometry.Lattice import Lattice
 
 # Multidimensional search
 # The search returns a set of Rectangles in Yup, Ylow and Border
+@cython.ccall
+@cython.returns(object)
+@cython.locals(xspace=object, oracle=object, epsilon=cython.double, delta=cython.double, max_step=cython.ulonglong,
+               blocking=cython.bint, sleep=cython.double, opt_level=cython.uint, logging=cython.bint, md_search=list,
+               start=cython.double, end=cython.double, time0=cython.double, rs=object)
 def multidim_search(xspace,
                     oracle,
                     epsilon=EPS,
@@ -81,6 +87,11 @@ def multidim_search(xspace,
 
 # Multidimensional search
 # The search returns a rectangle containing a solution and a Border
+@cython.ccall
+@cython.returns(object)
+@cython.locals(xspace=object, list_constraints=list, oracle1=object, oracle2=object, epsilon=cython.double, delta=cython.double, max_step=cython.ulonglong,
+               blocking=cython.bint, sleep=cython.double, opt_level=cython.uint, logging=cython.bint, md_search=list,
+               start=cython.double, end=cython.double, time0=cython.double, intersect_result=object)
 def multidim_intersection_search(xspace, list_constraints,
                                  oracle1, oracle2,
                                  epsilon=EPS,
@@ -118,6 +129,15 @@ def multidim_intersection_search(xspace, list_constraints,
 ##############################
 
 ########################################################################################################################
+@cython.returns(object)
+@cython.locals(xspace=object, oracle=object, epsilon=cython.double, delta=cython.double, max_step=cython.ulonglong,
+               blocking=cython.bint, sleep=cython.double, logging=cython.bint, n=cython.ushort, comparable=list,
+               incomparable=list, border=object, lattice=object, ylow=list, yup=list, ylow_minimal=list,
+               yup_minimal=list, error=tuple, vol_total=cython.double, vol_yup=cython.double, vol_ylow=cython.double,
+               vol_border=cython.double, step=cython.ulonglong, tempdir=str, xrectangle=object, y=object,
+               steps_binsearch=cython.ushort, ylow_rectangle=object, border_nondominatedby_b0=set, yup_rectangle=object,
+               border_nondominatedby_b1=set, vol_db0=cython.double, vol_db1=cython.double, boxes_null_vol=list,
+               yrectangle=object, i=list, name=str)
 def multidim_search_opt_3(xspace,
                           oracle,
                           epsilon=EPS,
@@ -169,8 +189,8 @@ def multidim_search_opt_3(xspace,
 
     error = (epsilon,) * n
     vol_total = xspace.volume()
-    vol_yup = 0
-    vol_ylow = 0
+    vol_yup = 0.0
+    vol_ylow = 0.0
     vol_border = vol_total
     step = 0
 
@@ -345,6 +365,14 @@ def multidim_search_opt_3(xspace,
     return ResultSet(border, ylow, yup, xspace)
 
 
+@cython.returns(object)
+@cython.locals(xspace=object, oracle=object, epsilon=cython.double, delta=cython.double, max_step=cython.ulonglong,
+               blocking=cython.bint, sleep=cython.double, logging=cython.bint, n=cython.ushort, comparable=list,
+               incomparable=list, border=object, ylow=list, yup=list, ylow_minimal=list, yup_minimal=list, error=tuple,
+               vol_total=cython.double, vol_yup=cython.double, vol_ylow=cython.double, vol_border=cython.double,
+               step=cython.ulonglong, tempdir=str, xrectangle=object, y=object, steps_binsearch=cython.ushort,
+               border_nondominatedby_b0=set, border_nondominatedby_b1=set, vol_db0=cython.double, vol_db1=cython.double,
+               yrectangle=object, i=list, name=str)
 def multidim_search_opt_2(xspace,
                           oracle,
                           epsilon=EPS,
@@ -390,8 +418,8 @@ def multidim_search_opt_2(xspace,
 
     error = (epsilon,) * n
     vol_total = xspace.volume()
-    vol_yup = 0
-    vol_ylow = 0
+    vol_yup = 0.0
+    vol_ylow = 0.0
     vol_border = vol_total
     step = 0
 
@@ -539,6 +567,16 @@ def multidim_search_opt_2(xspace,
     return ResultSet(border, ylow, yup, xspace)
 
 
+@cython.returns(object)
+@cython.locals(xspace=object, oracle=object, epsilon=cython.double, delta=cython.double, max_step=cython.ulonglong,
+               blocking=cython.bint, sleep=cython.double, logging=cython.bint, n=cython.ushort, comparable=list,
+               incomparable=list, border=object, ylow=list, yup=list, error=tuple, vol_total=cython.double,
+               vol_yup=cython.double, vol_ylow=cython.double, vol_border=cython.double, step=cython.ulonglong,
+               tempdir=str, xrectangle=object, y=object, steps_binsearch=cython.ushort, b0=object, b1=object,
+               b0_extended=object, b1_extended=object, border_overlapping_ylow=list, border_overlapping_yup=list,
+               border_overlapping_b0=list, border_dominatedby_b0_shadow=list, border_nondominatedby_b0=list,
+               border_overlapping_b1=list, border_dominatedby_b1_shadow=list, border_nondominatedby_b1=list,
+               yrectangle=object, i=list, name=str)
 def multidim_search_opt_1(xspace,
                           oracle,
                           epsilon=EPS,
@@ -580,8 +618,8 @@ def multidim_search_opt_1(xspace,
 
     error = (epsilon,) * n
     vol_total = xspace.volume()
-    vol_yup = 0
-    vol_ylow = 0
+    vol_yup = 0.0
+    vol_ylow = 0.0
     vol_border = vol_total
     step = 0
 
@@ -795,8 +833,8 @@ def multidim_search_opt_inf(xspace,
 
     error = (epsilon,) * n
     vol_total = xspace.volume()
-    vol_yup = 0
-    vol_ylow = 0
+    vol_yup = 0.0
+    vol_ylow = 0.0
     vol_border = vol_total
     step = 0
 
@@ -914,6 +952,14 @@ def multidim_search_opt_inf(xspace,
     return ResultSet(border, ylow, yup, xspace)
 
 
+@cython.ccall
+@cython.returns(object)
+@cython.locals(xspace=object, oracle=object, epsilon=cython.double, delta=cython.double, max_step=cython.ulonglong,
+               blocking=cython.bint, sleep=cython.double, logging=cython.bint, n=cython.ushort, comparable=list,
+               incomparable=list, border=object, ylow=list, yup=list, error=tuple, vol_total=cython.double,
+               vol_yup=cython.double, vol_ylow=cython.double, vol_border=cython.double, step=cython.ulonglong,
+               tempdir=str, xrectangle=object, y=object, steps_binsearch=cython.ushort, b0=object, b1=object,
+               yrectangle=object, i=list, name=str)
 def multidim_search_opt_0(xspace,
                           oracle,
                           epsilon=EPS,
@@ -955,8 +1001,8 @@ def multidim_search_opt_0(xspace,
 
     error = (epsilon,) * n
     vol_total = xspace.volume()
-    vol_yup = 0
-    vol_ylow = 0
+    vol_yup = 0.0
+    vol_ylow = 0.0
     vol_border = vol_total
     step = 0
 
@@ -1041,16 +1087,22 @@ def multidim_search_opt_0(xspace,
 ######## EPSILON METHOD ########
 ################################
 
+@cython.ccall
+@cython.returns((cython.double, cython.double))
+@cython.locals(box=object, list_constraints=list, d=cython.ushort, max_bound=cython.double, min_bound=cython.double,
+               flag_max=cython.bint, flag_min=cython.bint, constraint=object, coeff_sum=cython.double,
+               const_sum=cython.double, i=cython.ushort, current_bound=cython.double)
 def bound_box_with_constraints(box, list_constraints):
     # type: (Rectangle, list) -> tuple
-    max_bound = 1
-    min_bound = 0
-    flag_max = 0
-    flag_min = 0
+    d = box.dim()
+    max_bound = 1.0
+    min_bound = 0.0
+    flag_max = False
+    flag_min = False
     for constraint in list_constraints:
         coeff_sum = 0.0
         const_sum = 0.0
-        for i in range(box.dim()):
+        for i in range(d):
             coeff_sum += constraint[i] * (box.max_corner[i] - box.min_corner[i])
             const_sum -= constraint[i] * (box.min_corner[i])
         const_sum += constraint[-1]
@@ -1060,13 +1112,13 @@ def bound_box_with_constraints(box, list_constraints):
                 min_bound = max(min_bound, current_bound)
             else:
                 min_bound = current_bound
-                flag_min = 1
+                flag_min = True
         else:
             if flag_max:
                 max_bound = min(max_bound, current_bound)
             else:
                 max_bound = current_bound
-                flag_max = 1
+                flag_max = True
     return min_bound, max_bound
 
 
@@ -1110,7 +1162,7 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
 
     error = (epsilon,) * n
     vol_total = xspace.volume()
-    vol_xrest = 0
+    vol_xrest = 0.0
     vol_border = vol_total
     step = 0
 
@@ -1231,6 +1283,11 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
     return ResultSet(border, intersect_region, intersect_box, xspace)
 
 
+@cython.ccall
+@cython.returns(list)
+@cython.locals(incomp_pos=list, incomp_neg_down=list, incomp_neg_up=list, y_in=object, y_cover=object,
+               xrectangle=object, incomp1=list, incomp_list_down=list, incomp_list_up=list, yrect_mid=object,
+               y_rect_up=object, i_rect_down=object, i1=list, i2=list, i3=list, i_down=list, i_up=list, i=list)
 def pos_neg_box_gen(incomp_pos, incomp_neg_down, incomp_neg_up, y_in, y_cover, xrectangle):
     # type: (list, list, list, Segment, Segment, Rectangle) -> list
     incomp1 = incomp_pos[2:]
@@ -1252,6 +1309,11 @@ def pos_neg_box_gen(incomp_pos, incomp_neg_down, incomp_neg_up, y_in, y_cover, x
     return i
 
 
+@cython.ccall
+@cython.returns(list)
+@cython.locals(incomparable=list, incomparable_segment=list, yIn=object, yCover=object, xrectangle=object,
+               y_rect_in=object, x_rect_up=object, x_rect_down=object, y_rect_up=object, y_rect_down=object,
+               i1=list, i2=list, i3=list, i=list)
 def pos_overlap_box_gen(incomparable, incomparable_segment, yIn, yCover, xrectangle):
     # type: (list, list, Segment, Segment, Rectangle) -> list
     y_rect_in = Rectangle(yIn.low, yIn.high)
@@ -1311,7 +1373,7 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
 
     error = (epsilon,) * n
     vol_total = xspace.volume()
-    vol_xrest = 0
+    vol_xrest = 0.0
     vol_border = vol_total
     vol_boxes = vol_border
     step = 0
@@ -1477,7 +1539,7 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
 
     error = (epsilon,) * n
     vol_total = xspace.volume()
-    vol_xrest = 0
+    vol_xrest = 0.0
     vol_border = vol_total
     vol_boxes = vol_border
     step = 0

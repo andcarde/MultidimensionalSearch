@@ -17,12 +17,21 @@ Pareto point is located.
 """
 
 import math
+import cython
 
 from ParetoLib.Geometry.Point import maxi, mini, greater_equal, less_equal, div, mult, add, r
 import ParetoLib.Geometry.Point as Point
 
 
-class Segment (object):
+@cython.cclass
+class Segment(object):
+
+    low = cython.declare(tuple, visibility='public')
+    high = cython.declare(tuple, visibility='public')
+    # cython.declare(low=tuple, high=tuple)
+
+    @cython.locals(low=tuple, high=tuple)
+    @cython.returns(cython.void)
     def __init__(self, low, high):
         # type: (Segment, tuple, tuple) -> None
         """
@@ -60,6 +69,8 @@ class Segment (object):
         assert greater_equal(self.high, self.low)
 
     # Membership function
+    @cython.locals(xpoint=tuple)
+    @cython.returns(cython.bint)
     def __contains__(self, xpoint):
         # type: (Segment, tuple) -> bool
         """
@@ -85,6 +96,9 @@ class Segment (object):
         return (greater_equal(xpoint, self.low) and
                 less_equal(xpoint, self.high))
 
+    # Legacy code __setattr__: used for rounding floating tuples when assigning them to .low/.high attributes
+    @cython.locals(name=str)
+    @cython.returns(cython.void)
     def __setattr__(self, name, value):
         # type: (Segment, str, iter) -> None
         """
@@ -109,6 +123,9 @@ class Segment (object):
         # self.__dict__[name] = val
         object.__setattr__(self, name, value)
 
+    @cython.cfunc
+    @cython.locals(_string=str)
+    @cython.returns(str)
     def _to_str(self):
         # type: (Segment) -> str
         """
@@ -117,6 +134,7 @@ class Segment (object):
         _string = '<{0}, {1}>'.format(self.low, self.high)
         return _string
 
+    @cython.returns(str)
     def __repr__(self):
         # type: (Segment) -> str
         """
@@ -124,6 +142,7 @@ class Segment (object):
         """
         return self._to_str()
 
+    @cython.returns(str)
     def __str__(self):
         # type: (Segment) -> str
         """
@@ -131,6 +150,7 @@ class Segment (object):
         """
         return self._to_str()
 
+    @cython.returns(cython.bint)
     def __eq__(self, other):
         # type: (Segment) -> bool
         """
@@ -138,6 +158,7 @@ class Segment (object):
         """
         return (other.low == self.low) and (other.high == self.high)
 
+    @cython.returns(cython.bint)
     def __ne__(self, other):
         # type: (Segment) -> bool
         """
@@ -145,14 +166,17 @@ class Segment (object):
         """
         return not self.__eq__(other)
 
+    @cython.returns(int)
     def __hash__(self):
-        # type: (Segment) -> float
+        # type: (Segment) -> int
         """
         Identity function (via hashing).
         """
         return hash((self.low, self.high))
 
     # Segment properties
+    @cython.ccall
+    @cython.returns(cython.ushort)
     def dim(self):
         # type: (Segment) -> int
         """
@@ -173,6 +197,8 @@ class Segment (object):
         """
         return Point.dim(self.low)
 
+    @cython.ccall
+    @cython.returns(tuple)
     def diag(self):
         # type: (Segment) -> tuple
         """
@@ -194,6 +220,9 @@ class Segment (object):
         """
         return Point.subtract(self.high, self.low)
 
+    @cython.ccall
+    @cython.locals(diagonal=tuple)
+    @cython.returns(cython.double)
     def norm(self):
         # type: (Segment) -> float
         """
@@ -215,6 +244,9 @@ class Segment (object):
         diagonal = self.diag()
         return Point.norm(diagonal)
 
+    @cython.ccall
+    @cython.locals(offset=tuple, eps=cython.double)
+    @cython.returns(tuple)
     def center_eps(self, eps):
         # type: (Segment, float) -> tuple
         """
@@ -237,6 +269,9 @@ class Segment (object):
         offset = mult(self.diag(), eps)
         return add(self.center(), offset)
 
+    @cython.ccall
+    @cython.locals(offset=tuple)
+    @cython.returns(tuple)
     def center(self):
         # type: (Segment) -> tuple
         """
@@ -258,6 +293,9 @@ class Segment (object):
         offset = div(self.diag(), 2.0)
         return add(self.low, offset)
 
+    @cython.ccall
+    @cython.locals(offset=tuple)
+    @cython.returns(tuple)
     def center_round(self):
         # type: (Segment) -> tuple
         """

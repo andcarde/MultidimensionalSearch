@@ -84,7 +84,7 @@ import cython
 from ParetoLib.Geometry.Segment import Segment
 from ParetoLib.Geometry.Point import greater, greater_equal, less, less_equal, equal, add, subtract, div, mult, \
     distance, dim, \
-    incomparables, select, subt, int_to_bin_tuple, minimum, maximum#, r
+    incomparables, select, subt, int_to_bin_tuple, minimum, maximum
 from ParetoLib._py3k import red
 
 
@@ -1042,9 +1042,9 @@ class Rectangle(object):
                 r1 = Rectangle(ground, inner_ceil)
                 r2 = Rectangle(inner_ground, ceil)
 
-                if r1.volume() > 0:
+                if r1.volume() > 0.0:
                     diff_set.add(r1)
-                if r2.volume() > 0:
+                if r2.volume() > 0.0:
                     diff_set.add(r2)
 
                 ground = ground[:i] + (max(ground[i], inter.min_corner[i]),) + ground[i+1:]
@@ -1228,6 +1228,15 @@ class Rectangle(object):
         self.max_corner = max_c
 
     # Matplot functions
+    @cython.ccall
+    @cython.locals(c=str, xaxe=cython.ushort, yaxe=cython.ushort, opacity=cython.double,
+                   clip_box=object, rect=object,
+                   a=(cython.double, cython.double), b=(cython.double, cython.double),
+                   clipminc=(cython.double, cython.double),
+                   clipmaxc=(cython.double, cython.double),
+                   minc=(cython.double, cython.double), maxc=(cython.double, cython.double),
+                   width=cython.double, height=cython.double)
+    @cython.returns(object)
     def plot_2D(self, c='red', xaxe=0, yaxe=1, opacity=1.0, clip_box=None):
         # type: (Rectangle, str, int, int, float, _) -> patches.Rectangle
         """
@@ -1879,8 +1888,8 @@ def idwc(y, z):
     # y = [0, y_]
     # assert y.min_corner <= z.min_corner, 'Minimal corner of {0} must be at the origin of the xspace ' \
     #                                      '(i.e., {0} <= {1})'.format(y.min_corner, z.min_corner)
-    assert less_equal(y.min_corner, z.min_corner) or incomparables(y.min_corner, z.min_corner),\
-        'Minimal corner of {0} must be at the origin of the xspace (i.e., {0} <= {1})'\
+    assert less_equal(y.min_corner, z.min_corner) or incomparables(y.min_corner, z.min_corner), \
+        'Minimal corner of {0} must be at the origin of the xspace (i.e., {0} <= {1})' \
             .format(y.min_corner, z.min_corner)
     # assert z.min_corner <= y.max_corner, 'Rectangles {0} and {1} must intersect'.format(y, z)
     assert less_equal(z.min_corner, y.max_corner) or incomparables(z.min_corner, y.max_corner), \
@@ -1891,7 +1900,7 @@ def idwc(y, z):
     def w_set(m):
         # type: (int) -> iter
         # { 0^{j-1} 1 *^{m-j} } for j in [1, m]
-        return ["0"*(j-1) + "1" + "*"*(m-j) for j in range(1, m+1)]
+        return ["0" * (j - 1) + "1" + "*" * (m - j) for j in range(1, m + 1)]
 
     @cython.locals(y=object, z=object, d=cython.ushort, j=cython.ushort, i=cython.ushort)
     @cython.returns(tuple)
@@ -1900,7 +1909,7 @@ def idwc(y, z):
         d = z.dim()
         j = 0
 
-        alpha = ["*"]*d
+        alpha = ["*"] * d
         for i in range(d):
             if y.max_corner[i] < z.max_corner[i]:
                 alpha[i] = w[j]
@@ -1935,7 +1944,7 @@ def iuwc(y, z):
     # assert z.max_corner <= y.max_corner, 'Maximal corner of {1} must be the highest value of the xspace ' \
     #                                      '(i.e., {0} <= {1})'.format(y.min_corner, z.min_corner)
     assert less_equal(z.max_corner, y.max_corner) or incomparables(z.max_corner, y.max_corner), \
-        'Maximal corner of {1} must be the highest value of the xspace (i.e., {0} <= {1})'\
+        'Maximal corner of {1} must be the highest value of the xspace (i.e., {0} <= {1})' \
             .format(y.min_corner, z.min_corner)
     # assert y.min_corner <= z.max_corner, 'Rectangles {0} and {1} must intersect'.format(y, z)
     assert less_equal(y.min_corner, z.max_corner) or incomparables(y.min_corner, z.max_corner), \
@@ -1946,7 +1955,7 @@ def iuwc(y, z):
     def w_set(m):
         # type: (int) -> iter
         # { 1^{j-1} 0 *^{m-j} } for j in [1, m]
-        return ["1"*(j-1) + "0" + "*"*(m-j) for j in range(1, m+1)]
+        return ["1" * (j - 1) + "0" + "*" * (m - j) for j in range(1, m + 1)]
 
     @cython.locals(y=object, z=object, d=cython.ushort, j=cython.ushort, i=cython.ushort)
     @cython.returns(tuple)
@@ -1955,7 +1964,7 @@ def iuwc(y, z):
         d = z.dim()
         j = 0
 
-        alpha = ["*"]*d
+        alpha = ["*"] * d
         for i in range(d):
             # if y.min_corner[i] < z.max_corner[i]:
             if z.min_corner[i] < y.min_corner[i]:

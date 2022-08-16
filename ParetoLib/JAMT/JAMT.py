@@ -13,15 +13,21 @@ evaluating properties written in Signal Temporal Logic (STL) over them.
 
 import os
 import stat
-
+from pkg_resources import resource_listdir, resource_filename
+import cython
 
 # JAMT requires java to be installed
 # -------------------------------------------------------------------------------
 
+@cython.ccall
+@cython.returns(str)
 def get_java_exec_name():
     return 'java'
 
 
+@cython.ccall
+@cython.locals(java_path=str)
+@cython.returns(str)
 def get_java_path():
     java_path = ''
     # java_exec_name = get_java_exec_name()
@@ -34,6 +40,9 @@ def get_java_path():
     return java_path
 
 
+@cython.ccall
+@cython.locals(java_path=str, java_exec_name=str)
+@cython.returns(str)
 def get_java_bin():
     java_path = get_java_path()
     java_exec_name = get_java_exec_name()
@@ -42,14 +51,24 @@ def get_java_bin():
 
 # -------------------------------------------------------------------------------
 
+@cython.ccall
+# @cython.locals(ext=str, folder=list, file_list=list, exec_name=str, jar_file=str)
+@cython.returns(str)
 def get_jamt_exec_name():
     return [fname for fname in os.listdir(os.path.dirname(__file__)) if fname.endswith('.jar')][0]
 
 
+@cython.ccall
+#@cython.locals(folder=str)
+@cython.returns(str)
 def get_jamt_path():
     return os.path.dirname(os.path.realpath(__file__))
 
 
+
+@cython.ccall
+@cython.locals(jamt_path=str, jamt_exec_name=str, path=str)
+@cython.returns(str)
 def get_jamt_bin():
     jamt_path = get_jamt_path()
     jamt_exec_name = get_jamt_exec_name()

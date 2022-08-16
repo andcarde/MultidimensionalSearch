@@ -25,12 +25,18 @@ import sys
 import resource
 import io
 import pickle
+import cython
 
 from ParetoLib.Oracle.NDTree import NDTree
 from ParetoLib.Oracle.Oracle import Oracle
 
 
+# @cython.cclass
 class OraclePoint(Oracle):
+    cython.declare(oracle=object)
+
+    @cython.locals(max_points=cython.ulong, min_children=cython.ushort)
+    @cython.returns(cython.void)
     def __init__(self, max_points=2, min_children=2):
         # type: (OraclePoint, int, int) -> None
         # super(OraclePoint, self).__init__()
@@ -38,14 +44,17 @@ class OraclePoint(Oracle):
         self.oracle = NDTree(max_points=max_points, min_children=min_children)
 
     # Printers
+    @cython.returns(str)
     def __repr__(self):
         # type: (OraclePoint) -> str
         return self._to_str()
 
+    @cython.returns(str)
     def __str__(self):
         # type: (OraclePoint) -> str
         return self._to_str()
 
+    @cython.returns(str)
     def _to_str(self):
         # type: (OraclePoint) -> str
         return str(self.oracle)
@@ -55,16 +64,20 @@ class OraclePoint(Oracle):
         # type: (OraclePoint, OraclePoint) -> bool
         return self.oracle == other.oracle
 
+    @cython.returns(cython.bint)
     def __ne__(self, other):
         # type: (OraclePoint, OraclePoint) -> bool
         return not self.__eq__(other)
 
     # Identity function (via hashing)
+    @cython.returns(int)
     def __hash__(self):
         # type: (OraclePoint) -> int
         return hash(self.oracle)
 
     # Oracle operations
+    @cython.locals(p=tuple)
+    @cython.returns(cython.void)
     def add_point(self, p):
         # type: (OraclePoint, tuple) -> None
         """
@@ -84,6 +97,8 @@ class OraclePoint(Oracle):
         """
         self.oracle.update_point(p)
 
+    @cython.locals(setpoints=set, point=tuple)
+    @cython.returns(cython.void)
     def add_points(self, setpoints):
         # type: (OraclePoint, set) -> None
         """
@@ -104,6 +119,7 @@ class OraclePoint(Oracle):
         for point in setpoints:
             self.add_point(point)
 
+    @cython.returns(set)
     def get_points(self):
         # type: (OraclePoint) -> set
         """
@@ -124,6 +140,7 @@ class OraclePoint(Oracle):
         """
         return self.oracle.get_points()
 
+    @cython.returns(cython.ushort)
     def dim(self):
         # type: (OraclePoint) -> int
         """
@@ -143,6 +160,7 @@ class OraclePoint(Oracle):
         """
         return self.oracle.dim()
 
+    @cython.returns(list)
     def get_var_names(self):
         # type: (OraclePoint) -> list
         """
@@ -164,6 +182,8 @@ class OraclePoint(Oracle):
         return Oracle.get_var_names(self)
 
     # Membership functions
+    @cython.returns(cython.bint)
+    @cython.locals(p=tuple)
     def __contains__(self, p):
         # type: (OraclePoint, tuple) -> bool
         """
@@ -173,6 +193,8 @@ class OraclePoint(Oracle):
         # return p in set_points
         return self.member(p)
 
+    @cython.returns(cython.bint)
+    @cython.locals(p=tuple)
     def member(self, p):
         # type: (OraclePoint, tuple) -> bool
         """
@@ -195,6 +217,7 @@ class OraclePoint(Oracle):
         # Returns 'True' if p belongs to the set of points stored in the Pareto archive
         return p in self.get_points()
 
+    @cython.returns(object)
     def membership(self):
         # type: (OraclePoint) -> callable
         """
@@ -221,6 +244,8 @@ class OraclePoint(Oracle):
         return lambda p: self.oracle.dominates(p)
 
     # Read/Write file functions
+    @cython.returns(cython.void)
+    @cython.locals(finput=object)
     def from_file_binary(self, finput=None):
         # type: (OraclePoint, io.BinaryIO) -> None
         """
@@ -248,6 +273,8 @@ class OraclePoint(Oracle):
 
         self.oracle = pickle.load(finput)
 
+    @cython.returns(cython.void)
+    @cython.locals(point=tuple)
     def from_file_text(self, finput=None):
         # type: (OraclePoint, io.BinaryIO) -> None
         """
@@ -268,7 +295,9 @@ class OraclePoint(Oracle):
         """
         assert (finput is not None), 'File object should not be null'
 
+        @cython.locals(inline=str)
         def _line2tuple(inline):
+            # type: (str) -> tuple
             line = inline
             line = line.replace('(', '')
             line = line.replace(')', '')
@@ -281,6 +310,8 @@ class OraclePoint(Oracle):
         for point in point_list:
             self.oracle.update_point(point)
 
+    @cython.returns(cython.void)
+    @cython.locals(foutput=object)
     def to_file_binary(self, foutput=None):
         # type: (OraclePoint, io.BinaryIO) -> None
         """
@@ -310,6 +341,8 @@ class OraclePoint(Oracle):
 
         pickle.dump(self.oracle, foutput, pickle.HIGHEST_PROTOCOL)
 
+    @cython.returns(cython.void)
+    @cython.locals(foutput=object)
     def to_file_text(self, foutput=None):
         # type: (OraclePoint, io.BinaryIO) -> None
         """

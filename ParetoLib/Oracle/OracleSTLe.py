@@ -23,13 +23,20 @@ import sys
 import os
 import filecmp
 from ctypes import c_double
+import cython
 
 import ParetoLib.Oracle as RootOracle
 from ParetoLib.Oracle.Oracle import Oracle
 from ParetoLib.STLe.STLe import STLeLibInterface, STLE_BIN, STLE_INTERACTIVE, STLE_READ_SIGNAL, STLE_EVAL, STLE_RESET, STLE_VERSION, STLE_OK, MAX_STLE_CALLS
 
 
+# @cython.cclass
 class OracleSTLe(Oracle):
+    cython.declare(stl_prop_file=str, csv_signal_file=str, stl_param_file=str, stl_formula=str, stl_parameters=list,
+                   pattern=object, num_oracle_calls=cython.ulong, stle_oracle=object, initialized=cython.bint)
+
+    @cython.locals(stl_prop_file=str, csv_signal_file=str, stl_param_file=str)
+    @cython.returns(cython.void)
     def __init__(self, stl_prop_file='', csv_signal_file='', stl_param_file=''):
         # type: (OracleSTLe, str, str, str) -> None
         """
@@ -117,6 +124,7 @@ class OracleSTLe(Oracle):
         res2 = self.stle_oracle.stdout.readline()
         RootOracle.logger.debug('result: {0}'.format(res2))
 
+    @cython.returns(cython.void)
     def __repr__(self):
         # type: (OracleSTLe) -> str
         """
@@ -124,6 +132,7 @@ class OracleSTLe(Oracle):
         """
         return self._to_str()
 
+    @cython.returns(cython.void)
     def __str__(self):
         # type: (OracleSTLe) -> str
         """
@@ -131,6 +140,7 @@ class OracleSTLe(Oracle):
         """
         return self._to_str()
 
+    @cython.returns(str)
     def _to_str(self):
         # type: (OracleSTLe) -> str
         s = 'STL property file: {0}\n'.format(self.stl_prop_file)
@@ -139,6 +149,8 @@ class OracleSTLe(Oracle):
         s += 'CSV signal file: {0}\n'.format(self.csv_signal_file)
         return s
 
+    @cython.locals(res=cython.bint)
+    @cython.returns(cython.bint)
     def __eq__(self, other):
         # type: (OracleSTLe, OracleSTLe) -> bool
         """
@@ -158,6 +170,7 @@ class OracleSTLe(Oracle):
                 'Unexpected error when comparing: {0}\n{1}\n{2}'.format(sys.exc_info()[0], str(self), str(other)))
         return res
 
+    @cython.returns(int)
     def __hash__(self):
         # type: (OracleSTLe) -> int
         """
@@ -165,6 +178,7 @@ class OracleSTLe(Oracle):
         """
         return hash((self.stl_prop_file, self.csv_signal_file, self.stl_param_file))
 
+    @cython.returns(cython.void)
     def __del__(self):
         # type: (OracleSTLe) -> None
         """
@@ -173,6 +187,7 @@ class OracleSTLe(Oracle):
         if self.initialized and self.stle_oracle is not None:
             self.stle_oracle.terminate()
 
+    @cython.returns(object)
     def __copy__(self):
         # type: (OracleSTLe) -> OracleSTLe
         """
@@ -180,6 +195,8 @@ class OracleSTLe(Oracle):
         """
         return OracleSTLe(stl_prop_file=self.stl_prop_file, csv_signal_file=self.csv_signal_file, stl_param_file=self.stl_param_file)
 
+    # @cython.locals(memo=dict)
+    @cython.returns(object)
     def __deepcopy__(self, memo):
         # type: (OracleSTLe, dict) -> OracleSTLe
         """
@@ -216,6 +233,8 @@ class OracleSTLe(Oracle):
             raise AttributeError
         return elem
 
+    @cython.locals(res1=str)
+    @cython.returns(str)
     def version(self):
         # type: (OracleSTLe) -> str
         """
@@ -225,9 +244,10 @@ class OracleSTLe(Oracle):
         assert not self.stle_oracle.stdin.closed
         assert not self.stle_oracle.stdout.closed
 
-        res1 = '0'
         # Version of STLe formula
         # (version)
+
+        res1 = '0'
         expression = '({0})'.format(STLE_VERSION)
         RootOracle.logger.debug('Running: {0}'.format(expression))
         self.stle_oracle.stdin.write(expression)
@@ -236,6 +256,7 @@ class OracleSTLe(Oracle):
         RootOracle.logger.debug('result: {0}'.format(res1))
         return res1
 
+    @cython.returns(cython.ushort)
     def dim(self):
         # type: (OracleSTLe) -> int
         """
@@ -243,6 +264,8 @@ class OracleSTLe(Oracle):
         """
         return len(self.stl_parameters)
 
+    @cython.locals(i=str)
+    @cython.returns(list)
     def get_var_names(self):
         # type: (OracleSTLe) -> list
         """
@@ -251,6 +274,8 @@ class OracleSTLe(Oracle):
         return [str(i) for i in self.stl_parameters]
 
     @staticmethod
+    @cython.locals(stl_param_file=str)
+    @cython.returns(list)
     def _get_parameters_stl(stl_param_file):
         # type: (str) -> list
         res = []
@@ -267,6 +292,8 @@ class OracleSTLe(Oracle):
             return res
 
     @staticmethod
+    @cython.locals(stl_file=str)
+    @cython.returns(str)
     def _load_stl_formula(stl_file):
         # type: (str) -> str
         formula = ''
@@ -281,6 +308,7 @@ class OracleSTLe(Oracle):
             return formula
 
     @staticmethod
+    @cython.returns(object)
     def _regex_arithm_expr_stl_eval():
         # type: () -> re.Pattern
         # Regex for detecting an arithmetic expression inside a STL formula
@@ -289,6 +317,8 @@ class OracleSTLe(Oracle):
         math_regex = r'(\b{0}\b({1}\b{2}\b)*)'.format(number, op, number)
         return re.compile(math_regex)
 
+    @cython.locals(xpoint=tuple, val_formula=str, i=cython.ushort, par=str)
+    @cython.returns(str)
     def _replace_val_stl_formula(self, xpoint):
         # type: (OracleSTLe, tuple) -> str
 
@@ -298,10 +328,13 @@ class OracleSTLe(Oracle):
         #
         # Returns a string (STLe expression).
 
-        assert self.dim() <= len(xpoint)
-        assert self.stl_formula != ''
-        assert self.stl_parameters != []
+        assert self.dim() <= len(xpoint), 'Wrong dimension: {0} <= {1}?, xpoint: {2}'.format(self.dim(), len(xpoint),
+                                                                                             xpoint)
+        assert self.stl_formula != '', 'Not defined STL formula: ' + self.stl_formula
+        assert self.stl_parameters != [], 'Not defined STL parameters: {0}'.format(self.stl_parameters)
 
+        @cython.locals(match=object, result=str)
+        @cython.returns(str)
         def eval_expr(match):
             # type: (re.SRE_Pattern) -> str
             # Evaluate the arithmetic expression detected by 'match'
@@ -324,6 +357,8 @@ class OracleSTLe(Oracle):
 
         return val_formula
 
+    @cython.locals(stl_formula=str, res1=str, expression=str)
+    @cython.returns(cython.bint)
     def eval_stl_formula(self, stl_formula):
         # type: (OracleSTLe, str) -> bool
         """
@@ -359,6 +394,8 @@ class OracleSTLe(Oracle):
         return OracleSTLe._parse_stle_result(res1)
 
     @staticmethod
+    @cython.locals(result=str)
+    @cython.returns(cython.bint)
     def _parse_stle_result(result):
         # type: (str) -> bool
         """
@@ -378,6 +415,8 @@ class OracleSTLe(Oracle):
         RootOracle.logger.debug('Result: {0}'.format(result))
         return int(result) == 1
 
+    @cython.locals(xpoint=tuple, val_stl_formula=str, result=cython.bint)
+    @cython.returns(cython.bint)
     def member(self, xpoint):
         # type: (OracleSTLe, tuple) -> bool
         """
@@ -403,6 +442,9 @@ class OracleSTLe(Oracle):
             return result
 
     # Read/Write file functions
+    @cython.locals(finput=object, current_path=str, path=str, stl_prop_file=str, csv_signal_file=str,
+                   stl_param_file=str,  fname_list=(str, str, str), fname=str)
+    @cython.returns(cython.void)
     def from_file_binary(self, finput=None):
         # type: (OracleSTLe, io.BinaryIO) -> None
         """
@@ -431,6 +473,9 @@ class OracleSTLe(Oracle):
         except EOFError:
             RootOracle.logger.error('Unexpected error when loading {0}: {1}'.format(finput, sys.exc_info()[0]))
 
+    @cython.locals(finput=object, current_path=str, path=str, stl_prop_file=str, csv_signal_file=str,
+                   stl_param_file=str, fname_list=(str, str, str), fname=str)
+    @cython.returns(cython.void)
     def from_file_text(self, finput=None):
         # type: (OracleSTLe, io.BinaryIO) -> None
         """
@@ -472,6 +517,8 @@ class OracleSTLe(Oracle):
         except EOFError:
             RootOracle.logger.error('Unexpected error when loading {0}: {1}'.format(finput, sys.exc_info()[0]))
 
+    @cython.locals(foutput=object)
+    @cython.returns(cython.void)
     def to_file_binary(self, foutput=None):
         # type: (OracleSTLe, io.BinaryIO) -> None
         """
@@ -483,6 +530,8 @@ class OracleSTLe(Oracle):
         pickle.dump(os.path.abspath(self.csv_signal_file), foutput, pickle.HIGHEST_PROTOCOL)
         pickle.dump(os.path.abspath(self.stl_param_file), foutput, pickle.HIGHEST_PROTOCOL)
 
+    @cython.locals(foutput=object)
+    @cython.returns(cython.void)
     def to_file_text(self, foutput=None):
         # type: (OracleSTLe, io.BinaryIO) -> None
         """
@@ -495,7 +544,17 @@ class OracleSTLe(Oracle):
         foutput.write(os.path.abspath(self.stl_param_file) + '\n')
 
 
+# Terminates the inheritance chain by preventing a type from being used as a base class, or a method from being
+# overridden in subtypes. This enables certain optimisations such as inlined method calls.
+# @cython.final
+# @cython.cclass
 class OracleSTLeLib(OracleSTLe):
+    # cython.declare(stl_prop_file=str, stl_formula=str, stl_param_file=str, stl_parameters=list, csv_signal_file=str,
+    #                pattern=object, num_oracle_calls=cython.ulong, stle=object, signalvars=object, signal=object,
+    #                exprset=c_void_p, monitor=object, initialized=cython.bint)
+
+    # cython.declare(_stle=object, signalvars=object, signal=object, exprset=object, monitor=object)
+
     def __init__(self, stl_prop_file='', csv_signal_file='', stl_param_file=''):
         # type: (OracleSTLeLib, str, str, str) -> None
         """
@@ -538,6 +597,7 @@ class OracleSTLeLib(OracleSTLe):
         # Flag for indicating that Oracle is not initialized yet
         self.initialized = False
 
+    @cython.returns(cython.void)
     def _lazy_init(self):
         # type: (OracleSTLeLib) -> None
         assert self.stl_prop_file != ''
@@ -562,10 +622,12 @@ class OracleSTLeLib(OracleSTLe):
         # Marking the Oracle as initialized
         self.initialized = True
 
+    @cython.locals(message=str, n=object)
+    @cython.returns(cython.void)
     def _load_signal_in_mem(self):
         # type: (OracleSTLeLib) -> None
         assert self.stle is not None
-        
+
         # Load the signal in memory
         RootOracle.logger.debug('Loading signal "{0}" into memory'.format(self.csv_signal_file))
         self.signal = self.stle.stl_read_pcsignal_csv_fname(self.csv_signal_file)
@@ -579,17 +641,19 @@ class OracleSTLeLib(OracleSTLe):
         self.signalvars = self.stle.stl_make_signalvars_xn(n)
         RootOracle.logger.debug('Signalvars created: {0}'.format(self.signalvars))
 
+    @cython.returns(cython.void)
     def _clean_cache(self):
         # type: (OracleSTLeLib) -> None
         assert self.stle is not None
         assert self.signalvars is not None
-        
+
         # Remove signal monitor and expression set
         self._remove_monitor_exprset()
 
         # Create a new signal monitor and expression set
         self._create_monitor_exprset()
 
+    @cython.returns(cython.void)
     def _remove_monitor_exprset(self):
         # type: (OracleSTLeLib) -> None
         assert self.stle is not None
@@ -605,6 +669,7 @@ class OracleSTLeLib(OracleSTLe):
         if self.monitor is not None:
             self.stle.stl_delete_offlinepcmonitor(self.monitor)
 
+    @cython.returns(cython.void)
     def _create_monitor_exprset(self):
         # type: (OracleSTLeLib) -> None
         assert self.stle is not None
@@ -636,6 +701,7 @@ class OracleSTLeLib(OracleSTLe):
         """
         return self.stle.stl_version()
 
+    @cython.returns(object)
     def __copy__(self):
         # type: (OracleSTLeLib) -> OracleSTLeLib
         """
@@ -644,6 +710,7 @@ class OracleSTLeLib(OracleSTLe):
         return OracleSTLeLib(stl_prop_file=self.stl_prop_file, csv_signal_file=self.csv_signal_file,
                              stl_param_file=self.stl_param_file)
 
+    @cython.returns(object)
     def __deepcopy__(self, memo):
         # type: (OracleSTLeLib) -> OracleSTLeLib
         """
@@ -697,6 +764,9 @@ class OracleSTLeLib(OracleSTLe):
         RootOracle.logger.debug('Result: {0}'.format(result))
         return int(result) == 1
 
+    # @cython.ccall
+    @cython.locals(stl_formula=str, expr=object, stl_series=object, res=object)
+    @cython.returns(cython.bint)
     def eval_stl_formula(self, stl_formula):
         # type: (OracleSTLeLib, str) -> bool
         """

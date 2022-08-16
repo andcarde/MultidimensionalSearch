@@ -15,15 +15,17 @@ domains by simply implementing the abstract interface.
 
 import os
 import io
+import cython
 
 
 # Oracle template
-
+@cython.cclass
 class Oracle(object):
 
     def __init__(self):
         pass
 
+    @cython.returns(str)
     def __repr__(self):
         # type: (Oracle) -> str
         """
@@ -31,6 +33,7 @@ class Oracle(object):
         """
         return ''
 
+    @cython.returns(str)
     def __str__(self):
         # type: (Oracle) -> str
         """
@@ -38,6 +41,7 @@ class Oracle(object):
         """
         return ''
 
+    @cython.returns(cython.bint)
     def __eq__(self, other):
         # type: (Oracle, Oracle) -> bool
         """
@@ -45,6 +49,7 @@ class Oracle(object):
         """
         return False
 
+    @cython.returns(cython.bint)
     def __ne__(self, other):
         # type: (Oracle, Oracle) -> bool
         """
@@ -52,6 +57,7 @@ class Oracle(object):
         """
         return not self.__eq__(other)
 
+    @cython.returns(int)
     def __hash__(self):
         # type: (Oracle) -> int
         """
@@ -59,6 +65,8 @@ class Oracle(object):
         """
         return 0
 
+    @cython.ccall
+    @cython.returns(cython.ushort)
     def dim(self):
         # type: (Oracle) -> int
         """
@@ -78,6 +86,9 @@ class Oracle(object):
         """
         return 0
 
+    @cython.ccall
+    @cython.returns(list)
+    @cython.locals(i=cython.ushort)
     def get_var_names(self):
         # type: (Oracle) -> list
         """
@@ -98,6 +109,8 @@ class Oracle(object):
         # If parameter names are not provided, then we use lexicographic characters by default.
         return [chr(i) for i in range(ord('a'), ord('z') + 1)]
 
+    @cython.returns(cython.bint)
+    @cython.locals(point=tuple)
     def __contains__(self, point):
         # type: (Oracle, tuple) -> bool
         """
@@ -105,6 +118,9 @@ class Oracle(object):
         """
         return self.member(point) is True
 
+    @cython.ccall
+    @cython.returns(cython.bint)
+    @cython.locals(point=tuple)
     def member(self, point):
         # type: (Oracle, tuple) -> bool
         """
@@ -126,6 +142,7 @@ class Oracle(object):
         """
         return False
 
+    @cython.returns(object)
     def membership(self):
         # type: (Oracle) -> callable
         """
@@ -151,6 +168,9 @@ class Oracle(object):
         return lambda point: self.member(point)
 
     # Read/Write file functions
+    @cython.ccall
+    @cython.returns(cython.void)
+    @cython.locals(fname=str, human_readable=cython.bint, mode=str, finput=object)
     def from_file(self, fname='', human_readable=False):
         # type: (Oracle, str, bool) -> None
         """
@@ -183,6 +203,9 @@ class Oracle(object):
             self.from_file_binary(finput)
         finput.close()
 
+    @cython.ccall
+    @cython.returns(cython.void)
+    @cython.locals(finput=object)
     def from_file_binary(self, finput=None):
         # type: (Oracle, io.BinaryIO) -> None
         """
@@ -203,6 +226,9 @@ class Oracle(object):
         """
         pass
 
+    @cython.ccall
+    @cython.returns(cython.void)
+    @cython.locals(finput=object)
     def from_file_text(self, finput=None):
         # type: (Oracle, io.BinaryIO) -> None
         """
@@ -223,6 +249,9 @@ class Oracle(object):
         """
         pass
 
+    @cython.ccall
+    @cython.returns(cython.void)
+    @cython.locals(fname=str, append=cython.bint, human_readable=cython.bint, mode=str, foutput=object)
     def to_file(self, fname='', append=False, human_readable=False):
         # type: (Oracle, str, bool, bool) -> None
         """
@@ -261,6 +290,9 @@ class Oracle(object):
             self.to_file_binary(foutput)
         foutput.close()
 
+    @cython.ccall
+    @cython.returns(cython.void)
+    @cython.locals(foutput=object)
     def to_file_binary(self, foutput=None):
         # type: (Oracle, io.BinaryIO) -> None
         """
@@ -282,6 +314,9 @@ class Oracle(object):
         """
         pass
 
+    @cython.ccall
+    @cython.returns(cython.void)
+    @cython.locals(foutput=object)
     def to_file_text(self, foutput=None):
         # type: (Oracle, io.BinaryIO) -> None
         """

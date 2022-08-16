@@ -24,14 +24,22 @@ import io
 from sortedcontainers import SortedSet
 from sympy import simplify, expand, default_sort_key, Expr, Symbol
 
+import cython
 import ParetoLib.Oracle as RootOracle
 from ParetoLib.Oracle.Oracle import Oracle
 
 
 # from ParetoLib._py3k import getoutput, viewvalues, viewitems
 
+# @cython.cclass
+class Condition(object):
+    cython.declare(comparison=list)
+    cython.declare(op=str)
+    cython.declare(f=object)
+    cython.declare(g=object)
 
-class Condition:
+    @cython.locals(f=str, op=str, g=str)
+    @cython.returns(cython.void)
     def __init__(self, f='x', op='==', g='0'):
         # type: (Condition, str, str, str) -> None
         """
@@ -68,6 +76,9 @@ class Condition:
                                                                               str(
                                                                                   self._get_expression_with_negative_coeff())))
 
+    @cython.locals(poly_function=str, op_comp=str, op_regex=str, f_regex=str, g_regex=str, regex=str, regex_comp=object,
+                   result=object)
+    @cython.returns(cython.void)
     def init_from_string(self, poly_function):
         # type: (Condition, str) -> None
         """
@@ -109,6 +120,7 @@ class Condition:
                                                                                   str(
                                                                                       self._get_expression_with_negative_coeff())))
 
+    @cython.returns(str)
     def __repr__(self):
         # type: (Condition) -> str
         """
@@ -116,6 +128,7 @@ class Condition:
         """
         return self._to_str()
 
+    @cython.returns(str)
     def __str__(self):
         # type: (Condition) -> str
         """
@@ -123,6 +136,7 @@ class Condition:
         """
         return self._to_str()
 
+    @cython.returns(str)
     def _to_str(self):
         # type: (Condition) -> str
         """
@@ -130,6 +144,7 @@ class Condition:
         """
         return str(self.f) + self.op + str(self.g)
 
+    @cython.returns(cython.bint)
     def __eq__(self, other):
         # type: (Condition, Condition) -> bool
         """
@@ -139,6 +154,7 @@ class Condition:
                (self.op == other.op) and \
                (self.g == other.g)
 
+    @cython.returns(cython.bint)
     def __ne__(self, other):
         # type: (Condition, Condition) -> bool
         """
@@ -146,6 +162,7 @@ class Condition:
         """
         return not self.__eq__(other)
 
+    @cython.returns(int)
     def __hash__(self):
         # type: (Condition) -> int
         """
@@ -153,6 +170,8 @@ class Condition:
         """
         return hash((self.f, self.op, self.g))
 
+    @cython.locals(p=tuple)
+    @cython.returns(cython.bint)
     def __contains__(self, p):
         # type: (Condition, tuple) -> bool
         """
@@ -161,6 +180,8 @@ class Condition:
         # Due to a peculiar behaviour, it is required to compare the result with "True"
         return self.member(p) is True
 
+    @cython.locals(coeffs=dict, all_positives=cython.bint, i=object)
+    @cython.returns(cython.bint)
     def all_coeff_are_positive(self):
         # type: (Condition) -> bool
         coeffs = self.get_coeff_of_expression()
@@ -169,6 +190,8 @@ class Condition:
             all_positives = all_positives and (coeffs[i] >= 0)
         return all_positives
 
+    @cython.locals(expr=object, expanded_expr=object, simpl_expr=object, coeffs=dict)
+    @cython.returns(dict)
     def get_coeff_of_expression(self):
         # type: (Condition) -> dict
         """
@@ -192,6 +215,8 @@ class Condition:
         coeffs = simpl_expr.as_coefficients_dict()
         return coeffs
 
+    @cython.locals(expr=object, expanded_expr=object, simpl_expr=object, coeffs=dict, positive_coeff=dict)
+    @cython.returns(dict)
     def get_positive_coeff_of_expression(self):
         # type: (Condition) -> dict
         """
@@ -217,6 +242,8 @@ class Condition:
         positive_coeff = {i: coeffs[i] for i in coeffs if coeffs[i] >= 0}
         return positive_coeff
 
+    @cython.locals(expr=object, expanded_expr=object, simpl_expr=object, coeffs=dict, negative_coeff=dict)
+    @cython.returns(dict)
     def get_negative_coeff_of_expression(self):
         # type: (Condition) -> dict
         """
@@ -242,18 +269,23 @@ class Condition:
         negative_coeff = {i: coeffs[i] for i in coeffs if coeffs[i] < 0}
         return negative_coeff
 
+    @cython.locals(negative_coeff=object, neg_expr=list)
+    @cython.returns(object)
     def _get_expression_with_negative_coeff(self):
         # type: (Condition) -> Expr
         negative_coeff = self.get_negative_coeff_of_expression()
         neg_expr = ['{0} * {1}'.format(negative_coeff[i], i) for i in negative_coeff]
         return simplify(''.join(neg_expr))
 
+    @cython.locals(positive_coeff=object, pos_expr=list)
+    @cython.returns(object)
     def _get_expression_with_positive_coeff(self):
         # type: (Condition) -> Expr
         positive_coeff = self.get_positive_coeff_of_expression()
         pos_expr = ['{0} * {1}'.format(positive_coeff[i], i) for i in positive_coeff]
         return simplify('+'.join(pos_expr))
 
+    @cython.returns(object)
     def get_expression(self):
         # type: (Condition) -> Expr
         """
@@ -272,6 +304,8 @@ class Condition:
         """
         return simplify(self.f - self.g)
 
+    @cython.locals(expr=object)
+    @cython.returns(list)
     def get_variables(self):
         # type: (Condition) -> list
         """
@@ -320,6 +354,8 @@ class Condition:
         # RootOracle.logger.debug('Expression ' + str(simplify(ex)))
         return simplify(ex)
 
+    @cython.locals(point=tuple, keys_fv=list, di=dict)
+    @cython.returns(object)
     def eval_tuple(self, point):
         # type: (Condition, tuple) -> Expr
         """
@@ -345,6 +381,8 @@ class Condition:
         # RootOracle.logger.debug('di ' + str(di))
         return self.eval_dict(di)
 
+    @cython.locals(var_point=list, expr=object, res=object, ex=str)
+    @cython.returns(object)
     def eval_zip_tuple(self, var_point):
         # type: (Condition, list) -> Expr
         """
@@ -370,6 +408,8 @@ class Condition:
         # RootOracle.logger.debug('Expression ' + str(simplify(ex)))
         return simplify(ex)
 
+    @cython.locals(d=dict, di=dict, keys_fv=list, keys=set, expr=object, res=object, ex=str)
+    @cython.returns(object)
     def eval_dict(self, d=None):
         # type: (Condition, dict) -> Expr
         """
@@ -406,6 +446,8 @@ class Condition:
         return simplify(ex)
 
     # Membership functions
+    @cython.locals(point=tuple, di=dict)
+    @cython.returns(object)
     def member(self, point):
         # type: (Condition, tuple) -> Expr
         """
@@ -429,6 +471,7 @@ class Condition:
         di = {key: point[i] for i, key in enumerate(keys)}
         return self.eval_dict(di)
 
+    @cython.returns(object)
     def membership(self):
         # type: (Condition) -> callable
         """
@@ -451,6 +494,8 @@ class Condition:
         return lambda xpoint: self.member(xpoint)
 
     # Read/Write file functions
+    @cython.returns(cython.void)
+    @cython.locals(fname=str, human_readable=cython.bint, mode=str)
     def from_file(self, fname='', human_readable=False):
         # type: (Condition, str, bool) -> None
         """
@@ -482,6 +527,8 @@ class Condition:
             self.from_file_binary(finput)
         finput.close()
 
+    @cython.returns(cython.void)
+    @cython.locals(finput=object)
     def from_file_binary(self, finput=None):
         # type: (Condition, io.BinaryIO) -> None
         """
@@ -506,6 +553,8 @@ class Condition:
         self.op = pickle.load(finput)
         self.g = pickle.load(finput)
 
+    @cython.returns(cython.void)
+    @cython.locals(finput=object, poly_function=str)
     def from_file_text(self, finput=None):
         # type: (Condition, io.BinaryIO) -> None
         """
@@ -529,6 +578,8 @@ class Condition:
         poly_function = finput.readline()
         self.init_from_string(poly_function)
 
+    @cython.returns(cython.void)
+    @cython.locals(fname=str, append=cython.bint, human_readable=cython.bint, mode=str)
     def to_file(self, fname='', append=False, human_readable=False):
         # type: (Condition, str, bool, bool) -> None
         """
@@ -567,6 +618,8 @@ class Condition:
             self.to_file_binary(foutput)
         foutput.close()
 
+    @cython.returns(cython.void)
+    @cython.locals(foutput=object)
     def to_file_binary(self, foutput=None):
         # type: (Condition, io.BinaryIO) -> None
         """
@@ -592,6 +645,8 @@ class Condition:
         pickle.dump(self.op, foutput, pickle.HIGHEST_PROTOCOL)
         pickle.dump(self.g, foutput, pickle.HIGHEST_PROTOCOL)
 
+    @cython.returns(cython.void)
+    @cython.locals(foutput=object)
     def to_file_text(self, foutput=None):
         # type: (Condition, io.BinaryIO) -> None
         """
@@ -617,7 +672,12 @@ class Condition:
         foutput.write(str(self) + '\n')
 
 
+# @cython.cclass
 class OracleFunction(Oracle):
+    cython.declare(variables=object)
+    cython.declare(oracle=set)
+
+    @cython.returns(cython.void)
     def __init__(self):
         # type: (OracleFunction) -> None
         """
@@ -628,6 +688,7 @@ class OracleFunction(Oracle):
         self.variables = SortedSet([], key=default_sort_key)
         self.oracle = set()
 
+    @cython.returns(str)
     def __repr__(self):
         # type: (OracleFunction) -> str
         """
@@ -635,6 +696,7 @@ class OracleFunction(Oracle):
         """
         return self._to_str()
 
+    @cython.returns(str)
     def __str__(self):
         # type: (OracleFunction) -> str
         """
@@ -642,6 +704,7 @@ class OracleFunction(Oracle):
         """
         return self._to_str()
 
+    @cython.returns(str)
     def _to_str(self):
         # type: (OracleFunction) -> str
         """
@@ -649,6 +712,7 @@ class OracleFunction(Oracle):
         """
         return str(self.oracle)
 
+    @cython.returns(cython.bint)
     def __eq__(self, other):
         # type: (OracleFunction, OracleFunction) -> bool
         """
@@ -656,6 +720,7 @@ class OracleFunction(Oracle):
         """
         return self.oracle == other.oracle
 
+    @cython.returns(cython.bint)
     def __ne__(self, other):
         # type: (OracleFunction, OracleFunction) -> bool
         """
@@ -663,6 +728,7 @@ class OracleFunction(Oracle):
         """
         return not self.__eq__(other)
 
+    @cython.returns(int)
     def __hash__(self):
         # type: (OracleFunction) -> int
         """
@@ -670,6 +736,8 @@ class OracleFunction(Oracle):
         """
         return hash(tuple(self.oracle))
 
+    @cython.locals(cond=object)
+    @cython.returns(cython.void)
     def add(self, cond):
         # type: (OracleFunction, Condition) -> None
         """
@@ -692,6 +760,7 @@ class OracleFunction(Oracle):
         self.variables = self.variables.union(cond.get_variables())
         self.oracle.add(cond)
 
+    @cython.returns(cython.ushort)
     def dim(self):
         # type: (OracleFunction) -> int
         """
@@ -699,6 +768,8 @@ class OracleFunction(Oracle):
         """
         return len(self.get_variables())
 
+    @cython.locals(i=object)
+    @cython.returns(list)
     def get_var_names(self):
         # type: (OracleFunction) -> list
         """
@@ -706,6 +777,8 @@ class OracleFunction(Oracle):
         """
         return [str(i) for i in self.variables]
 
+    @cython.locals(variable_list=list)
+    @cython.returns(list)
     def get_variables(self):
         # type: (OracleFunction) -> list
         """
@@ -731,6 +804,8 @@ class OracleFunction(Oracle):
         variable_list = list(self.variables)
         return variable_list
 
+    @cython.locals(var=object, val=str, _eval_list=list, _eval=cython.bint)
+    @cython.returns(cython.bint)
     def _eval_var_val(self, var=None, val='0'):
         # type: (OracleFunction, Symbol, int) -> bool
         _eval_list = [cond.eval_var_val(var, val) for cond in self.oracle]
@@ -740,6 +815,8 @@ class OracleFunction(Oracle):
         # _eval = any(_eval_list)
         return _eval
 
+    @cython.locals(point=tuple, _eval_list=list, _eval=cython.bint)
+    @cython.returns(cython.bint)
     def _eval_tuple(self, point):
         # type: (OracleFunction, tuple) -> bool
         _eval_list = [cond.eval_tuple(point) for cond in self.oracle]
@@ -749,6 +826,8 @@ class OracleFunction(Oracle):
         # _eval = any(_eval_list)
         return _eval
 
+    @cython.locals(var_point=list, _eval_list=list, _eval=cython.bint)
+    @cython.returns(cython.bint)
     def _eval_zip_tuple(self, var_point):
         # type: (OracleFunction, list) -> bool
         _eval_list = [cond.eval_zip_tuple(var_point) for cond in self.oracle]
@@ -758,6 +837,8 @@ class OracleFunction(Oracle):
         # _eval = any(_eval_list)
         return _eval
 
+    @cython.locals(d=dict, _eval_list=list, _eval=cython.bint)
+    @cython.returns(cython.bint)
     def _eval_dict(self, d=None):
         # type: (OracleFunction, dict) -> bool
         _eval_list = [cond.eval_dict(d) for cond in self.oracle]
@@ -767,6 +848,8 @@ class OracleFunction(Oracle):
         # _eval = any(_eval_list)
         return _eval
 
+    @cython.locals(point=tuple)
+    @cython.returns(cython.bint)
     def __contains__(self, point):
         # type: (OracleFunction, tuple) -> bool
         """
@@ -775,6 +858,8 @@ class OracleFunction(Oracle):
         """
         return self.member(point) is True
 
+    @cython.returns(cython.bint)
+    @cython.locals(point=tuple, var_point=list)
     def _member_zip_tuple(self, point):
         # type: (OracleFunction, tuple) -> bool
         # keys = [x, y, z]
@@ -785,6 +870,8 @@ class OracleFunction(Oracle):
         # var_point = zip(keys, point) # Works only in Python 2.7
         return self._eval_zip_tuple(var_point)
 
+    @cython.returns(cython.bint)
+    @cython.locals(point=tuple, di=dict)
     def _member_dict(self, point):
         # type: (OracleFunction, tuple) -> bool
         # keys = [x, y, z]
@@ -794,6 +881,8 @@ class OracleFunction(Oracle):
         di = {key: point[i] for i, key in enumerate(keys)}
         return self._eval_dict(di)
 
+    @cython.returns(cython.bint)
+    @cython.locals(point=tuple)
     def member(self, point):
         # type: (OracleFunction, tuple) -> bool
         """
@@ -804,6 +893,7 @@ class OracleFunction(Oracle):
         return self._member_zip_tuple(point)
         # return self.member_dict(point)
 
+    @cython.returns(object)
     def membership(self):
         # type: (OracleFunction) -> callable
         """
@@ -812,6 +902,9 @@ class OracleFunction(Oracle):
         return lambda point: self.member(point)
 
     # Read/Write file functions
+
+    @cython.returns(cython.void)
+    @cython.locals(finput=object)
     def from_file_binary(self, finput=None):
         # type: (OracleFunction, io.BinaryIO) -> None
         """
@@ -822,6 +915,8 @@ class OracleFunction(Oracle):
         self.oracle = pickle.load(finput)
         self.variables = pickle.load(finput)
 
+    @cython.returns(cython.void)
+    @cython.locals(finput=object, line=str, cond=object)
     def from_file_text(self, finput=None):
         # type: (OracleFunction, io.BinaryIO) -> None
         """
@@ -835,6 +930,8 @@ class OracleFunction(Oracle):
             cond.init_from_string(line)
             self.add(cond)
 
+    @cython.returns(cython.void)
+    @cython.locals(foutput=object)
     def to_file_binary(self, foutput=None):
         # type: (OracleFunction, io.BinaryIO) -> None
         """
@@ -845,6 +942,8 @@ class OracleFunction(Oracle):
         pickle.dump(self.oracle, foutput, pickle.HIGHEST_PROTOCOL)
         pickle.dump(self.variables, foutput, pickle.HIGHEST_PROTOCOL)
 
+    @cython.returns(cython.void)
+    @cython.locals(foutput=object)
     def to_file_text(self, foutput=None):
         # type: (OracleFunction, io.BinaryIO) -> None
         """

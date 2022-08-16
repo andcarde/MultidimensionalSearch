@@ -10,6 +10,7 @@ This module introduces a set of operations for parallelizing
 the creation of comparable and incomparable rectangles of the space.
 """
 from multiprocessing import Pool, cpu_count
+import cython
 
 from ParetoLib.Geometry.Rectangle import Rectangle, brect
 from ParetoLib.Geometry.Point import dim
@@ -19,7 +20,11 @@ from ParetoLib.Geometry.Point import dim
 # Parallel version for the computation of incomparable rectangles in a space
 ############################################################################
 
+@cython.ccall
+@cython.locals(alpha=tuple, yrectangle=object, xspace=object, rect=object)
+@cython.returns(object)
 def pbrect(args):
+    # type: (iter) -> Rectangle
     """
     Synonym of Rectangle.brect(alpha, yrectangle, xspace)
     """
@@ -27,8 +32,9 @@ def pbrect(args):
     return brect(alpha, yrectangle, xspace)
 
 
+@cython.locals(nproc=cython.ushort, pool=object)
 def pirect(alphaincomp, yrectangle, xspace):
-    # type: (list, Rectangle, Rectangle) -> list
+    # type: (list, Rectangle, Rectangle) -> iter
     """
     Synonym of Rectangle.irect(alphaincomp, yrectangle, xspace)
     """
@@ -61,6 +67,9 @@ def pirect(alphaincomp, yrectangle, xspace):
 # i.e., these wrappers.
 #############################################################################################
 
+@cython.ccall
+@cython.locals(rect=object)
+@cython.returns(cython.double)
 def pvol(rect):
     # type: (Rectangle) -> float
     """
@@ -69,6 +78,8 @@ def pvol(rect):
     return rect.volume()
 
 
+@cython.ccall
+@cython.returns(list)
 def pvertices(rect):
     # type: (Rectangle) -> list
     """
@@ -77,7 +88,11 @@ def pvertices(rect):
     return rect.vertices()
 
 
+@cython.ccall
+@cython.locals(rect=object, xpoint=tuple)
+@cython.returns(cython.bint)
 def pinside(args):
+    # type: (iter) -> bool
     """
     Synonym of Rectangle.inside(xpoint)
     """

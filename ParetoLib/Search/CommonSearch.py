@@ -20,10 +20,12 @@ upper part.
 fast algorithm for the dynamic non-dominance problem. IEEE Trans-
 actions on Evolutionary Computation, 2018.
 """
+import cython
 
 from ParetoLib.Geometry.Point import add, subtract, less_equal, div
 from ParetoLib.Geometry.Segment import Segment
-import copy, math
+import copy
+from ParetoLib._py3k import max_integer_value
 
 # EPS = sys.float_info.epsilon
 # DELTA = sys.float_info.epsilon
@@ -31,9 +33,11 @@ import copy, math
 
 EPS = 1e-5
 DELTA = 1e-5
-STEPS = float('inf')
+STEPS = max_integer_value()  # float('inf')
 
 
+@cython.locals(x=object, error=tuple, i=cython.ushort, y=object, yval=tuple, dist=cython.double)
+@cython.returns((object, cython.ushort))
 def binary_search(x,
                   member,
                   error):
@@ -75,7 +79,8 @@ def binary_search(x,
 # There can be no intersection in the whole of the search space: -3
 (INTERFULL, INTER, DKNOW, NO_INTER, INTERNULL) = (2, 1, -1, -2, -3)
 
-
+@cython.locals(y1=object, y2=tuple)
+@cython.returns((object, cython.short))
 def determine_intersection(y1, y2):
     # type: (Segment, Segment) -> (Segment, int)
     if y2.high <= y1.low:
@@ -86,6 +91,9 @@ def determine_intersection(y1, y2):
         return Segment(y1.low, y2.high), DKNOW
 
 
+@cython.locals(x=object, list_constraints=list, low_allowed=cython.bint, high_allowed=cython.bint, constraint=iter,
+               left_sum=int, i=cython.ushort)
+@cython.returns(cython.bint)
 def intersection_empty_constrained(x, member1, member2, list_constraints):
     # type: (Segment, callable, callable, list) -> bool
     low_allowed = True
@@ -108,16 +116,23 @@ def intersection_empty_constrained(x, member1, member2, list_constraints):
            (high_allowed and not member1(x.high))
 
 
+@cython.locals(x=object)
+@cython.returns(cython.bint)
 def intersection_empty(x, member1, member2):
     # type: (Segment, callable, callable) -> bool
     # The cube doesn't contain an intersection.
     return (not member1(x.high)) or (not member2(x.low))
 
 
+@cython.locals(x=object, error=tuple, to_expand=cython.bint, i=cython.ushort, i1=cython.ushort, i2=cython.ushort,
+               y=object, z=object, zgrek1=object, zgrek2=object, ygrek=object,
+               intersect_indicator=cython.short, dist=cython.double, yval=tuple, result1=cython.bint,
+               result2=cython.bint, yIn=object, yCover=object, eps_minus=tuple, eps_plus=tuple)
+@cython.returns((object, object, cython.short, cython.ushort))
 def intersection_expansion_search(x,
                                   member1, member2,
                                   error, to_expand):
-    # type: (Segment, callable, callable, tuple, bool) -> (Segment, int)
+    # type: (Segment, callable, callable, tuple, bool) -> (Segment, Segment, int, int)
     # member1 is the function whose truth value increases with x.
     # member2 is the function whose truth value decreases with x.
 
@@ -171,8 +186,8 @@ def intersection_expansion_search(x,
 
     # Expansion step here.
     if intersect_indicator == NO_INTER and to_expand:
-        eps_minus = z.center_eps(-error[0] / 2)
-        eps_plus = z.center_eps(error[0] / 2)
+        eps_minus = z.center_eps(-error[0] / 2.0)
+        eps_plus = z.center_eps(error[0] / 2.0)
         if not member2(eps_minus):
             # Try to expand on the lower side.
             zgrek1 = copy.deepcopy(z)
@@ -191,8 +206,8 @@ def intersection_expansion_search(x,
             yCover.high = ygrek.high
             yIn.high = ygrek.low
     elif intersect_indicator == INTER:
-        eps_minus = z.center_eps(-error[0] / 2)
-        eps_plus = z.center_eps(error[0] / 2)
+        eps_minus = z.center_eps(-error[0] / 2.0)
+        eps_plus = z.center_eps(error[0] / 2.0)
         if member1(eps_minus):
             # Try to expand on the lower side.
             zgrek1 = copy.deepcopy(z)

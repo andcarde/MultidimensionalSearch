@@ -112,32 +112,48 @@ class Lattice(object):
         """
         return len(self.list_of_sets)
 
+    @cython.ccall
+    @cython.returns(object)
     def get_elements(self):
-        # type: (Lattice) -> iter
+        # type: (Lattice) -> SortedSet
         return self.list_of_sets[0]
 
+    @cython.ccall
+    @cython.locals(lst=SortedSet, elem=object)
+    @cython.returns(cython.void)
     def add(self, elem):
         # type: (Lattice, object) -> None
         for l in self.list_of_sets:
             l.add(elem)
 
+    @cython.ccall
+    @cython.locals(lst=SortedSet, l=SortedSet)
+    @cython.returns(cython.void)
     def add_list(self, lst):
         # type: (Lattice, iter) -> None
         for l in self.list_of_sets:
             l |= lst
 
+    @cython.ccall
+    @cython.locals(lst=SortedSet, elem=object)
+    @cython.returns(cython.void)
     def remove(self, elem):
         # type: (Lattice, object) -> None
         for l in self.list_of_sets:
             l.discard(elem)
 
+    @cython.ccall
+    @cython.locals(lst=SortedSet, l=SortedSet)
+    @cython.returns(cython.void)
     def remove_list(self, lst):
         # type: (Lattice, iter) -> None
         for l in self.list_of_sets:
             l -= lst
 
+    @cython.ccall
+    @cython.locals(elem=object, s=SortedSet, l=SortedSet, index=int)
     def less(self, elem):
-        # type: (Lattice, object) -> set
+        # type: (Lattice, object) -> SortedSet
         """
         Elements 'x' of the Lattice having x_i < elem_i for all i with i in [1, dim(elem)].
         """
@@ -147,8 +163,10 @@ class Lattice(object):
             s = s.intersection(l[:index])
         return s
 
+    @cython.ccall
+    @cython.locals(elem=object, s=SortedSet, l=SortedSet, index=int)
     def less_equal(self, elem):
-        # type: (Lattice, object) -> set
+        # type: (Lattice, object) -> SortedSet
         """
         Elements 'x' of the Lattice having x_i <= elem_i for all i with i in [1, dim(elem)].
         """
@@ -158,8 +176,10 @@ class Lattice(object):
             s = s.intersection(l[:index])
         return s
 
+    @cython.ccall
+    @cython.locals(elem=object, s=SortedSet, l=SortedSet, index=int)
     def greater(self, elem):
-        # type: (Lattice, object) -> set
+        # type: (Lattice, object) -> SortedSet
         """
         Elements 'x' of the Lattice having x_i > elem_i for all i with i in [1, dim(elem)].
         """
@@ -169,8 +189,10 @@ class Lattice(object):
             s = s.intersection(l[index:])
         return s
 
+    @cython.ccall
+    @cython.locals(elem=object, s=SortedSet, l=SortedSet, index=int)
     def greater_equal(self, elem):
-        # type: (Lattice, object) -> set
+        # type: (Lattice, object) -> SortedSet
         """
         Elements 'x' of the Lattice having x_i >= elem_i for all i with i in [1, dim(elem)].
         """
@@ -180,8 +202,10 @@ class Lattice(object):
             s = s.intersection(l[index:])
         return s
 
+    @cython.ccall
+    @cython.locals(elem=object, s=SortedSet, l=SortedSet, index1=int, index2=int)
     def equal(self, elem):
-        # type: (Lattice, object) -> set
+        # type: (Lattice, object) -> SortedSet
         """
         Elements 'x' of the Lattice having x_i == elem_i for all i with i in [1, dim(elem)].
         """

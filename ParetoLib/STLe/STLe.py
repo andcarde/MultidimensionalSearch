@@ -46,9 +46,11 @@ Options:
 import os
 import stat
 import platform
+from pkg_resources import resource_listdir, resource_filename
+import cython
 
-from ctypes import CDLL, c_int, c_double, c_char_p, c_void_p, pointer, Structure
 
+from ctypes import CDLL, c_int, c_double, c_char_p, c_void_p, pointer
 
 
 @cython.ccall
@@ -58,6 +60,10 @@ def get_stle_path():
     return os.path.dirname(os.path.realpath(__file__))
 
 
+
+@cython.ccall
+@cython.locals(ext=str) #, folder=list, file_list=list, exec_name=str, bin_file=str)
+@cython.returns(str)
 def get_stle_exec_name():
     # Selecting STLe binary file depending on the OS
     ext = ''
@@ -70,6 +76,9 @@ def get_stle_exec_name():
     return [fname for fname in os.listdir(os.path.dirname(__file__)) if fname.endswith(ext)][0]
 
 
+@cython.ccall
+@cython.locals(stle_path=str, stle_exec_name=str, path=str)
+@cython.returns(str)
 def get_stle_bin():
     stle_path = get_stle_path()
     stle_exec_name = get_stle_exec_name()
@@ -95,6 +104,9 @@ def get_stle_lib_name():
     return [fname for fname in os.listdir(os.path.dirname(__file__)) if fname.endswith(ext)][0]
 
 
+@cython.ccall
+@cython.locals(stle_path=str, stle_lib_name=str, path=str)
+@cython.returns(str)
 def get_stle_lib():
     stle_path = get_stle_path()
     stle_lib_name = get_stle_lib_name()
@@ -139,12 +151,31 @@ MAX_STLE_CALLS = 5
 STLE_LIB = get_stle_lib()
 
 
-class PCSignal(Structure):
-    _fields_ = [('v', c_double),
-                ('t', c_int)]
+@cython.cclass
+class STLeLibInterface(object):
 
+    _stle = cython.declare(object, visibility='public')
 
-class STLeLibInterface:
+    _stl_version = cython.declare(object, visibility='public')
+    _stl_read_pcsignal_csv_fname = cython.declare(object, visibility='public')
+    _stl_delete_pcsignal = cython.declare(object, visibility='public')
+    _stl_make_exprset = cython.declare(object, visibility='public')
+    _stl_delete_exprset = cython.declare(object, visibility='public')
+    _stl_unref_expr = cython.declare(object, visibility='public')
+    _stl_parse_sexpr_str = cython.declare(object, visibility='public')
+    _stl_get_expr_impl = cython.declare(object, visibility='public')
+    _stl_pcsignal_size = cython.declare(object, visibility='public')
+    _stl_make_signalvars_xn = cython.declare(object, visibility='public')
+    _stl_delete_signalvars = cython.declare(object, visibility='public')
+    _stl_make_offlinepcmonitor = cython.declare(object, visibility='public')
+    _stl_offlinepcmonitor_make_output = cython.declare(object, visibility='public')
+    _stl_delete_offlinepcmonitor = cython.declare(object, visibility='public')
+    _stl_pcseries_value0 = cython.declare(object, visibility='public')
+    _stl_pcseries_value = cython.declare(object, visibility='public')
+    _stl_pcseries_start_time = cython.declare(object, visibility='public')
+    _stl_pcseries_size = cython.declare(object, visibility='public')
+    _stl_eps_separation_size = cython.declare(object, visibility='public')
+
     def __init__(self):
         # type: (STLeLibInterface) -> None
 
@@ -159,6 +190,7 @@ class STLeLibInterface:
         self._stl_delete_exprset = None
         self._stl_unref_expr = None
         self._stl_parse_sexpr_str = None
+        self._stl_get_expr_impl= None
         self._stl_pcsignal_size = None
         self._stl_make_signalvars_xn = None
         self._stl_delete_signalvars = None
@@ -174,6 +206,8 @@ class STLeLibInterface:
         # Initialize C interfaze with STLe
         self._initialize_c_interfaze()
 
+    @cython.cfunc
+    @cython.returns(cython.void)
     def _initialize_c_interfaze(self):
         # type: (STLeLibInterface) -> None
 
@@ -307,36 +341,58 @@ class STLeLibInterface:
         # deepcopy cannot handle regex
         return STLeLibInterface()
 
+    @cython.ccall
+    @cython.returns(str)
     def stl_version(self):
         # type: (STLeLibInterface) -> str
         version = self._stl_version(None)
         return str(version.decode("utf-8"))
-            
+
+    @cython.ccall
+    @cython.locals(csv_signal_file=str, val=int, fname=bytes)
+    @cython.returns(object)
     def stl_read_pcsignal_csv_fname(self, csv_signal_file, val=0):
         # type: (STLeLibInterface, str, int) -> c_void_p
         fname = csv_signal_file.encode('utf-8')
         return self._stl_read_pcsignal_csv_fname(c_char_p(fname), c_int(val))
 
+    @cython.ccall
+    @cython.locals(signal=object)
+    @cython.returns(cython.void)
     def stl_delete_pcsignal(self, signal):
         # type: (STLeLibInterface, c_void_p) -> None
-        return self._stl_delete_pcsignal(signal)
+        self._stl_delete_pcsignal(signal)
 
+    @cython.ccall
+    @cython.returns(object)
     def stl_make_exprset(self):
         # type: (STLeLibInterface) -> c_void_p
         return self._stl_make_exprset(None)
 
+    @cython.ccall
+    @cython.locals(exprset=object)
+    @cython.returns(cython.void)
     def stl_delete_exprset(self, exprset):
         # type: (STLeLibInterface, c_void_p) -> None
-        return self._stl_delete_exprset(exprset)
+        self._stl_delete_exprset(exprset)
 
+    @cython.ccall
+    @cython.locals(expr=object)
+    @cython.returns(cython.void)
     def stl_unref_expr(self, expr):
         # type: (STLeLibInterface, c_void_p) -> None
-        return self._stl_unref_expr(expr)
+        self._stl_unref_expr(expr)
 
+    @cython.ccall
+    @cython.locals(expr=object)
+    @cython.returns(object)
     def stl_get_expr_impl(self, expr):
         # type: (STLeLibInterface, c_void_p) -> c_void_p
         return self._stl_get_expr_impl(expr)
 
+    @cython.ccall
+    @cython.locals(exprset=object, stl_formula=str, val=int, pos=object, stl_formula_utf=bytes)
+    @cython.returns(object)
     def stl_parse_sexpr_str(self, exprset, stl_formula, val=0):
         # type: (STLeLibInterface, c_void_p, str, int) -> c_void_p
         pos = c_int(val)
@@ -344,48 +400,81 @@ class STLeLibInterface:
         # expr = stl_parse_sexpr_str(self.exprset, stl_formula, c_void_p(pos))
         return self._stl_parse_sexpr_str(exprset, c_char_p(stl_formula_utf), pointer(pos))
 
+    @cython.ccall
+    @cython.locals(signal=object)
+    @cython.returns(object)
     def stl_pcsignal_size(self, signal):
         # type: (STLeLibInterface, c_void_p) -> c_int
         return self._stl_pcsignal_size(signal)
 
+    @cython.ccall
+    @cython.locals(n=object)
+    @cython.returns(object)
     def stl_make_signalvars_xn(self, n):
         # type: (STLeLibInterface, c_int) -> c_void_p
         return self._stl_make_signalvars_xn(n)
 
+    @cython.ccall
+    @cython.locals(delete_signalvars=object)
+    @cython.returns(cython.void)
     def stl_delete_signalvars(self, delete_signalvars):
         # type: (STLeLibInterface, c_void_p) -> None
-        return self._stl_delete_signalvars(delete_signalvars)
+        self._stl_delete_signalvars(delete_signalvars)
 
+    @cython.ccall
+    @cython.locals(signal=object, signalvars=object, exprset=object)
+    @cython.returns(object)
     def stl_make_offlinepcmonitor(self, signal, signalvars, exprset):
         # type: (STLeLibInterface, c_void_p, c_void_p, c_void_p) -> c_void_p
         return self._stl_make_offlinepcmonitor(signal, signalvars, exprset)
 
+    @cython.ccall
+    @cython.locals(monitor=object, expr=object, val_rewrite=int, val_rewritten=int, rewrite=object, rewritten=object)
+    @cython.returns(object)
     def stl_offlinepcmonitor_make_output(self, monitor, expr, val_rewrite=1, val_rewritten=0):
         # type: (STLeLibInterface, c_void_p, c_void_p, int, int) -> c_void_p
         rewrite = c_int(val_rewrite)
         rewritten = c_void_p(val_rewritten)
         return self._stl_offlinepcmonitor_make_output(monitor, expr, rewrite, rewritten)
 
+    @cython.ccall
+    @cython.locals(monitor=object)
+    @cython.returns(cython.void)
     def stl_delete_offlinepcmonitor(self, monitor):
         # type: (STLeLibInterface, c_void_p) -> None
-        return self._stl_delete_offlinepcmonitor(monitor)
+        self._stl_delete_offlinepcmonitor(monitor)
 
+    @cython.ccall
+    @cython.locals(stle_series=object)
+    @cython.returns(object)
     def stl_pcseries_value0(self, stle_series):
         # type: (STLeLibInterface, c_void_p) -> c_double
         return self._stl_pcseries_value0(stle_series)
 
+    @cython.ccall
+    @cython.locals(stle_series=object, i=object)
+    @cython.returns(object)
     def stl_pcseries_value(self, stle_series, i):
         # type: (STLeLibInterface, c_void_p, c_int) -> c_double
         return self._stl_pcseries_value(stle_series, i)
 
+    @cython.ccall
+    @cython.locals(stle_series=object, i=object)
+    @cython.returns(object)
     def stl_pcseries_start_time(self, stle_series, i):
         # type: (STLeLibInterface, c_void_p, c_int) -> c_double
         return self._stl_pcseries_start_time(stle_series, i)
 
+    @cython.ccall
+    @cython.locals(stle_series=object)
+    @cython.returns(object)
     def stl_pcseries_size(self, stle_series):
         # type: (STLeLibInterface, c_void_p) -> c_int
         return self._stl_pcseries_size(stle_series)
 
+    @cython.ccall
+    @cython.locals(stle_series=object)
+    @cython.returns(object)
     def stl_eps_separation_size(self, stle_series, epsilon):
         # type: (STLeLibInterface, c_void_p, c_double) -> c_int
         return self._stl_eps_separation_size(stle_series, epsilon)

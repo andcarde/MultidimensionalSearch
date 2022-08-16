@@ -45,6 +45,7 @@ of the space X in three subspaces: a lower closure, an upper closure and a borde
  contains the Pareto front.
 """
 import time
+import cython
 
 from ParetoLib.Geometry.Rectangle import Rectangle
 
@@ -59,6 +60,10 @@ from ParetoLib.Oracle.Oracle import Oracle
 
 # Auxiliar functions used in 2D, 3D and ND
 # Creation of Spaces
+@cython.returns(object)
+@cython.locals(minx=cython.double, miny=cython.double, maxx=cython.double, maxy=cython.double,
+               minc=(cython.double, cython.double), maxc=(cython.double, cython.double), xyspace=object,
+               start=cython.double, end=cython.double, time0=cython.double)
 def create_2D_space(minx, miny, maxx, maxy):
     # type: (float, float, float, float) -> Rectangle
     RootSearch.logger.debug('Creating Space')
@@ -72,6 +77,11 @@ def create_2D_space(minx, miny, maxx, maxy):
     return xyspace
 
 
+@cython.returns(object)
+@cython.locals(minx=cython.double, miny=cython.double, maxx=cython.double, maxy=cython.double,
+               minc=(cython.double, cython.double, cython.double), maxc=(cython.double, cython.double, cython.double),
+               xyspace=object,
+               start=cython.double, end=cython.double, time0=cython.double)
 def create_3D_space(minx, miny, minz, maxx, maxy, maxz):
     # type: (float, float, float, float, float, float) -> Rectangle
     RootSearch.logger.debug('Creating Space')
@@ -85,7 +95,9 @@ def create_3D_space(minx, miny, minz, maxx, maxy, maxz):
     return xyspace
 
 
-# def create_ND_space(*args):
+@cython.returns(object)
+@cython.locals(minc=tuple, maxc=tuple, xyspace=object,
+               start=cython.double, end=cython.double, time0=cython.double)
 def create_ND_space(args):
     # type: (iter) -> Rectangle
     # args = [(minx, maxx), (miny, maxy),..., (minz, maxz)]
@@ -101,6 +113,13 @@ def create_ND_space(args):
 
 
 # Dimensional tests
+@cython.ccall
+@cython.returns(object)
+@cython.locals(ora=object, min_cornerx=cython.double, min_cornery=cython.double, max_cornerx=cython.double,
+               max_cornery=cython.double, epsilon=cython.double, delta=cython.double, max_step=cython.ulonglong,
+               blocking=cython.bint,
+               sleep=cython.double, opt_level=cython.uint, parallel=cython.bint, logging=cython.bint,
+               simplify=cython.bint, xspace=object, rs=object)
 def Search2D(ora,
              min_cornerx=0.0,
              min_cornery=0.0,
@@ -141,6 +160,13 @@ def Search2D(ora,
     return rs
 
 
+@cython.ccall
+@cython.returns(object)
+@cython.locals(ora=object, min_cornerx=cython.double, min_cornery=cython.double, min_cornerz=cython.double,
+               max_cornerx=cython.double, max_cornery=cython.double, max_cornerz=cython.double, epsilon=cython.double,
+               delta=cython.double, max_step=cython.ulonglong, blocking=cython.bint, sleep=cython.double,
+               opt_level=cython.uint, parallel=cython.bint, logging=cython.bint, simplify=cython.bint, xspace=object,
+               rs=object)
 def Search3D(ora,
              min_cornerx=0.0,
              min_cornery=0.0,
@@ -185,6 +211,12 @@ def Search3D(ora,
     return rs
 
 
+@cython.ccall
+@cython.returns(object)
+@cython.locals(ora=object, min_corner=cython.double, max_corner=cython.double, epsilon=cython.double,
+               delta=cython.double, max_step=cython.ulonglong, blocking=cython.bint, sleep=cython.double,
+               opt_level=cython.uint, parallel=cython.bint, logging=cython.bint,
+               simplify=cython.bint, xspace=object, rs=object)
 def SearchND(ora,
              min_corner=0.0,
              max_corner=1.0,
@@ -216,6 +248,12 @@ def SearchND(ora,
     return rs
 
 
+@cython.ccall
+@cython.returns(object)
+@cython.locals(ora=object, list_intervals=list,
+               epsilon=cython.double, delta=cython.double, max_step=cython.ulonglong, blocking=cython.bint,
+               sleep=cython.double, opt_level=cython.uint, parallel=cython.bint, logging=cython.bint,
+               simplify=cython.bint, xspace=object, rs=object)
 def SearchND_2(ora,
                list_intervals,
                epsilon=EPS,
@@ -244,6 +282,13 @@ def SearchND_2(ora,
     return rs
 
 
+@cython.ccall
+@cython.returns(object)
+@cython.locals(ora1=object, ora2=object, min_cornerx=cython.double, min_cornery=cython.double,
+               max_cornerx=cython.double, max_cornery=cython.double, epsilon=cython.double, delta=cython.double,
+               max_step=cython.ulonglong, blocking=cython.bint,
+               sleep=cython.double, opt_level=cython.uint, parallel=cython.bint, logging=cython.bint,
+               simplify=cython.bint, xspace=object, intersection_result=object)
 def SearchIntersection2D(ora1, ora2,
                          min_cornerx=0.0,
                          min_cornery=0.0,
@@ -270,6 +315,14 @@ def SearchIntersection2D(ora1, ora2,
     return intersection_result
 
 
+@cython.ccall
+@cython.returns(object)
+@cython.locals(ora1=object, ora2=object, min_cornerx=cython.double, min_cornery=cython.double,
+               min_cornerz=cython.double, max_cornerx=cython.double, max_cornery=cython.double,
+               max_cornerz=cython.double, epsilon=cython.double, delta=cython.double,
+               max_step=cython.ulonglong, blocking=cython.bint,
+               sleep=cython.double, opt_level=cython.uint, parallel=cython.bint, logging=cython.bint,
+               simplify=cython.bint, xspace=object, intersection_result=object)
 def SearchIntersection3D(ora1, ora2,
                          min_cornerx=0.0,
                          min_cornery=0.0,
@@ -298,6 +351,12 @@ def SearchIntersection3D(ora1, ora2,
     return intersection_result
 
 
+@cython.ccall
+@cython.returns(object)
+@cython.locals(ora1=object, ora2=object, min_corner=cython.double, max_corner=cython.double, epsilon=cython.double,
+               delta=cython.double, max_step=cython.ulonglong, blocking=cython.bint, sleep=cython.double,
+               opt_level=cython.uint, parallel=cython.bint, logging=cython.bint,
+               simplify=cython.bint, d=cython.uint, minc=tuple, maxc=tuple, xspace=object, intersection_result=object)
 def SearchIntersectionND(ora1, ora2,
                          min_corner=0.0,
                          max_corner=1.0,
@@ -327,6 +386,12 @@ def SearchIntersectionND(ora1, ora2,
     return intersection_result
 
 
+@cython.ccall
+@cython.returns(object)
+@cython.locals(ora1=object, ora2=object, list_intervals=list, list_constraints=list, epsilon=cython.double,
+               delta=cython.double, max_step=cython.ulonglong, blocking=cython.bint, sleep=cython.double,
+               opt_level=cython.uint, parallel=cython.bint, logging=cython.bint,
+               simplify=cython.bint, xspace=object, intersection_result=object)
 def SearchIntersectionND_2(ora1, ora2,
                            list_intervals,
                            list_constraints=[],

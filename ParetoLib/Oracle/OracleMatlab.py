@@ -14,14 +14,32 @@ import pickle
 import io
 import os
 import sys
-import matlab.engine
+import warnings
+import cython
+try:
+    import matlab.engine
+except ImportError as e:
+    warnings.warn('Matlab not installed: {0}'.format(e))
+    pass
 
 import ParetoLib.Oracle as RootOracle
 from ParetoLib.Oracle.Oracle import Oracle
 from ParetoLib._py3k import get_stdout_matlab, get_stderr_matlab
 
 
+# @cython.cclass
 class OracleMatlab(Oracle):
+    cython.declare(out=object)
+    cython.declare(err=object)
+    cython.declare(eng=object)
+
+    cython.declare(f=object)
+    cython.declare(d=cython.ushort)
+
+    cython.declare(_matlab_model_file=str)
+
+    @cython.returns(cython.void)
+    @cython.locals(matlab_model_file=str)
     def __init__(self, matlab_model_file=''):
         # type: (OracleMatlab, str) -> None
         """
@@ -38,10 +56,11 @@ class OracleMatlab(Oracle):
         # Matlab function 'f' not loaded yet.
         # Dimension of the space unknown
         self.f = None
-        self.d = None
+        self.d = 0
 
         self.matlab_model_file = matlab_model_file
 
+    @cython.returns(cython.void)
     def _load_matlab_engine(self):
         # type: (OracleMatlab) -> None
         assert self.matlab_model_file != ''
@@ -55,6 +74,8 @@ class OracleMatlab(Oracle):
 
         RootOracle.logger.debug('Matlab engine {0}'.format(self.eng))
 
+    @cython.returns(cython.void)
+    @cython.locals(filename=str, file_extension=str, func_name=str)
     def _load_function(self):
         # type: (OracleMatlab) -> None
         assert self.matlab_model_file != '', 'Matlab function not defined'
@@ -117,6 +138,7 @@ class OracleMatlab(Oracle):
             self.f = None
             self.d = None
 
+    @cython.returns(str)
     def __repr__(self):
         # type: (OracleMatlab) -> str
         """
@@ -124,6 +146,7 @@ class OracleMatlab(Oracle):
         """
         return self.matlab_model_file
 
+    @cython.returns(str)
     def __str__(self):
         # type: (OracleMatlab) -> str
         """
@@ -131,6 +154,7 @@ class OracleMatlab(Oracle):
         """
         return self.matlab_model_file
 
+    @cython.returns(cython.bint)
     def __eq__(self, other):
         # type: (OracleMatlab, OracleMatlab) -> bool
         """
@@ -138,6 +162,7 @@ class OracleMatlab(Oracle):
         """
         return self.matlab_model_file == other.matlab_model_file
 
+    @cython.returns(cython.bint)
     def __ne__(self, other):
         # type: (OracleMatlab, OracleMatlab) -> bool
         """
@@ -145,6 +170,7 @@ class OracleMatlab(Oracle):
         """
         return not self.__eq__(other)
 
+    @cython.returns(int)
     def __hash__(self):
         # type: (OracleMatlab) -> int
         """
@@ -152,6 +178,7 @@ class OracleMatlab(Oracle):
         """
         return hash(tuple(self.matlab_model_file))
 
+    @cython.returns(cython.void)
     def __del__(self):
         # type: (OracleMatlab) -> None
         """
@@ -160,6 +187,7 @@ class OracleMatlab(Oracle):
         if self.eng is not None:
             self.eng.quit()
 
+    @cython.returns(object)
     def __copy__(self):
         # type: (OracleMatlab) -> OracleMatlab
         """
@@ -168,6 +196,7 @@ class OracleMatlab(Oracle):
         RootOracle.logger.debug('__copy__: {0}'.format(self))
         return OracleMatlab(matlab_model_file=self.matlab_model_file)
 
+    @cython.returns(object)
     def __deepcopy__(self, memo):
         # type: (OracleMatlab, dict) -> OracleMatlab
         """
@@ -208,6 +237,7 @@ class OracleMatlab(Oracle):
             raise AttributeError
         return elem
 
+    @cython.returns(cython.ushort)
     def dim(self):
         # type: (OracleMatlab) -> int
         """
@@ -215,6 +245,8 @@ class OracleMatlab(Oracle):
         """
         return self.d
 
+    @cython.returns(list)
+    @cython.locals(i=cython.ushort)
     def get_var_names(self):
         # type: (OracleMatlab) -> list
         """
@@ -222,6 +254,8 @@ class OracleMatlab(Oracle):
         """
         return ['p'+str(i) for i in range(self.d)]
 
+    @cython.returns(cython.bint)
+    @cython.locals(point=tuple)
     def __contains__(self, point):
         # type: (OracleMatlab, tuple) -> bool
         """
@@ -230,6 +264,8 @@ class OracleMatlab(Oracle):
         """
         return self.member(point) is True
 
+    @cython.returns(cython.bint)
+    @cython.locals(point=tuple)
     def member(self, point):
         # type: (OracleMatlab, tuple) -> bool
         """
@@ -237,6 +273,7 @@ class OracleMatlab(Oracle):
         """
         return self.f(*point, stdout=self.out, stderr=self.err)
 
+    @cython.returns(object)
     def membership(self):
         # type: (OracleMatlab) -> callable
         """
@@ -245,6 +282,8 @@ class OracleMatlab(Oracle):
         return lambda point: self.member(point)
 
     # Read/Write file functions
+    @cython.returns(cython.void)
+    @cython.locals(finput=object, current_path=str, matlab_model_file=str)
     def from_file_binary(self, finput=None):
         # type: (OracleMatlab, io.BinaryIO) -> None
         """
@@ -265,6 +304,8 @@ class OracleMatlab(Oracle):
         except EOFError:
             RootOracle.logger.error('Unexpected error when loading {0}: {1}'.format(finput, sys.exc_info()[0]))
 
+    @cython.returns(cython.void)
+    @cython.locals(finput=object, current_path=str, matlab_model_file=str)
     def from_file_text(self, finput=None):
         # type: (OracleMatlab, io.BinaryIO) -> None
         """
@@ -291,6 +332,8 @@ class OracleMatlab(Oracle):
         except EOFError:
             RootOracle.logger.error('Unexpected error when loading {0}: {1}'.format(finput, sys.exc_info()[0]))
 
+    @cython.returns(cython.void)
+    @cython.locals(foutput=object)
     def to_file_binary(self, foutput=None):
         # type: (OracleMatlab, io.BinaryIO) -> None
         """
@@ -300,6 +343,8 @@ class OracleMatlab(Oracle):
 
         pickle.dump(os.path.abspath(self.matlab_model_file), foutput, pickle.HIGHEST_PROTOCOL)
 
+    @cython.returns(cython.void)
+    @cython.locals(foutput=object)
     def to_file_text(self, foutput=None):
         # type: (OracleMatlab, io.BinaryIO) -> None
         """

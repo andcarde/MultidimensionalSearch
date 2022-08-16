@@ -96,6 +96,10 @@ def check_dependencies():
         print('Statistical Data Visualization (seaborn) is not installed.\nThis package is required for ' \
               'ParetoLib.\n\nYou can find seaborn at https://seaborn.pydata.org/')
         return (False)
+    if (not can_import('cython')):
+        print('Cython is not installed.\nThis package is required for ' \
+              'ParetoLib.\n\nYou can find Cython at https://cython.org/')
+        return (False)
     # Exit automatically if running as part of some script
     # if (not sys.stdout.isatty()):
     #     sys.exit(-1)
@@ -196,7 +200,7 @@ sys.path.insert(0, src_path)
 setup_args = {'name': 'ParetoLib',
               'version': '{0}'.format(__version__),
               'author': 'J. Ignacio Requeno',
-              'author_email': 'jose-ignacio.requeno-jarabo@univ-grenoble-alpes.fr',
+              'author_email': 'jrequeno@ucm.es',
               'url': 'https://gricad-gitlab.univ-grenoble-alpes.fr/verimag/tempo/multidimensional_search/',
               'license': 'GNU GPLv3',
               'description': 'ParetoLib is a free multidimensional boundary learning library for ' \

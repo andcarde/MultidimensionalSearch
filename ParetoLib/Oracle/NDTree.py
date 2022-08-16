@@ -22,13 +22,22 @@ import os
 import io
 import pickle
 from ParetoLib._py3k import set_limit
+import cython
 
 from ParetoLib.Geometry.Rectangle import Rectangle
 from ParetoLib.Geometry.Point import less, less_equal, distance, dim
 import ParetoLib.Oracle as RootOracle
 
 
-class NDTree:
+@cython.cclass
+class NDTree(object):
+    # cython.declare(root=object, max_points=cython.ulong, min_children=cython.ushort)
+    root = cython.declare(object, visibility='public')
+    max_points = cython.declare(cython.ulong, visibility='public')
+    min_children = cython.declare(cython.ushort, visibility='public')
+
+    @cython.locals(max_points=cython.ulong, min_children=cython.ushort)
+    @cython.returns(cython.void)
     def __init__(self, max_points=2, min_children=2):
         # type: (NDTree, int, int) -> None
         """
@@ -46,6 +55,8 @@ class NDTree:
         set_limit(max_rec)
         sys.setrecursionlimit(max_rec)
 
+    @cython.locals(p=tuple)
+    @cython.returns(cython.bint)
     def __contains__(self, p):
         # type: (NDTree, tuple) -> bool
         """
@@ -69,6 +80,7 @@ class NDTree:
         return self.root.has_point_rec(p) if not self.is_empty() else False
         # return item in self.root
 
+    @cython.returns(str)
     def __repr__(self):
         # type: (NDTree) -> str
         """
@@ -76,6 +88,7 @@ class NDTree:
         """
         return self.root.to_str_rec(0) if not self.is_empty() else ''
 
+    @cython.returns(str)
     def __str__(self):
         # type: (NDTree) -> str
         """
@@ -83,6 +96,8 @@ class NDTree:
         """
         return self.root.to_str_rec(0) if not self.is_empty() else ''
 
+    @cython.locals(sameContent=cython.bint, other=object)
+    @cython.returns(cython.bint)
     def __eq__(self, other):
         # type: (NDTree, NDTree) -> bool
         """
@@ -92,6 +107,8 @@ class NDTree:
                       (other.min_children == self.min_children)
         return (hash(self.root) == hash(other.root)) and sameContent
 
+    @cython.locals(other=object)
+    @cython.returns(cython.bint)
     def __ne__(self, other):
         # type: (NDTree, NDTree) -> bool
         """
@@ -99,6 +116,7 @@ class NDTree:
         """
         return not self.__eq__(other)
 
+    @cython.returns(int)
     def __hash__(self):
         # type: (NDTree) -> int
         """
@@ -106,12 +124,16 @@ class NDTree:
         """
         return hash((self.root, self.max_points, self.min_children))
 
+    @cython.returns(str)
     def _report(self):
         """
         Report function
         """
         self.root.report_rec() if not self.is_empty() else ''
 
+    @cython.ccall
+    @cython.locals(rect=object)
+    @cython.returns(cython.ushort)
     def dim(self):
         # type: (NDTree) -> int
         """
@@ -138,6 +160,8 @@ class NDTree:
         else:
             return 0
 
+    @cython.ccall
+    @cython.returns(cython.bint)
     def is_empty(self):
         # type: (NDTree) -> bool
         """
@@ -156,6 +180,8 @@ class NDTree:
         """
         return self.root is None
 
+    @cython.ccall
+    @cython.returns(object)
     def get_rectangle(self):
         # type: (NDTree) -> Rectangle
         """
@@ -180,6 +206,9 @@ class NDTree:
         # return self.root.getRectangleSn() if not self.isEmpty() else None
         return self.root.get_rectangle_sn() if not self.is_empty() else Rectangle()
 
+    @cython.ccall
+    @cython.locals(points=set)
+    @cython.returns(set)
     def get_points(self):
         # type: (NDTree) -> set
         """
@@ -203,6 +232,9 @@ class NDTree:
         points = self.root.s() if self.root is not None else set()
         return points
 
+    @cython.ccall
+    @cython.locals(p=tuple, n=object, update=cython.bint)
+    @cython.returns(cython.void)
     def update_point(self, p):
         # type: (NDTree, tuple) -> None
         """
@@ -233,8 +265,11 @@ class NDTree:
                 n.insert(p)
         self.root = n
 
+    @cython.ccall
+    @cython.locals(p=tuple)
+    @cython.returns(cython.bint)
     def dominates(self, p):
-        # type: (NDTree, tuple) -> True
+        # type: (NDTree, tuple) -> bool
         """
         Testing the dominance of the NDTree over a point.
 
@@ -255,6 +290,9 @@ class NDTree:
         return self.root.dominates(p)
 
     # Read/Write file functions
+    @cython.ccall
+    @cython.locals(mode=str, fname=str, human_readable=cython.bint)
+    @cython.returns(cython.void)
     def from_file(self, fname='', human_readable=False):
         # type: (NDTree, str, bool) -> None
         """
@@ -287,6 +325,8 @@ class NDTree:
             self.from_file_binary(finput)
         finput.close()
 
+    @cython.ccall
+    @cython.returns(cython.void)
     def from_file_binary(self, finput=None):
         # type: (NDTree, io.BinaryIO) -> None
         """
@@ -317,6 +357,8 @@ class NDTree:
         self.max_points = pickle.load(finput)
         self.min_children = pickle.load(finput)
 
+    @cython.locals(point=tuple)
+    @cython.returns(cython.void)
     def from_file_text(self, finput=None):
         # type: (NDTree, io.BinaryIO) -> None
         """
@@ -337,6 +379,7 @@ class NDTree:
         """
         assert (finput is not None), 'File object should not be null'
 
+        @cython.locals(inline=str, pi=str)
         def _line2tuple(inline):
             """
             line = (x1,x2,...,xn)
@@ -352,6 +395,9 @@ class NDTree:
         for point in point_list:
             self.update_point(point)
 
+    @cython.ccall
+    @cython.locals(mode=str, fname=str, append=cython.bint, human_readable=cython.bint)
+    @cython.returns(cython.void)
     def to_file(self, fname='', append=False, human_readable=False):
         # type: (NDTree, str, bool, bool) -> None
         """
@@ -390,6 +436,8 @@ class NDTree:
             self.to_file_binary(foutput)
         foutput.close()
 
+    @cython.ccall
+    @cython.returns(cython.void)
     def to_file_binary(self, foutput=None):
         # type: (NDTree, io.BinaryIO) -> None
         """
@@ -421,6 +469,9 @@ class NDTree:
         pickle.dump(self.max_points, foutput, pickle.HIGHEST_PROTOCOL)
         pickle.dump(self.min_children, foutput, pickle.HIGHEST_PROTOCOL)
 
+    @cython.ccall
+    @cython.locals(setPoints=set, point=tuple)
+    @cython.returns(cython.void)
     def to_file_text(self, foutput=None):
         # type: (NDTree, io.BinaryIO) -> None
         """
@@ -449,7 +500,17 @@ class NDTree:
             foutput.write('\n')
 
 
-class Node:
+@cython.cclass
+class Node(object):
+    rect = cython.declare(object, visibility='public')
+    parent = cython.declare(object, visibility='public')
+    nodes = cython.declare(list, visibility='public')
+    L = cython.declare(list, visibility='public')
+    max_points = cython.declare(cython.ulong, visibility='public')
+    min_children = cython.declare(cython.ushort, visibility='public')
+
+    @cython.locals(parent=object, max_points=cython.ulong, min_children=cython.ushort)
+    @cython.returns(cython.void)
     def __init__(self, parent=None, max_points=2, min_children=2):
         # type: (Node, Node, int, int) -> None
         """
@@ -475,6 +536,9 @@ class Node:
         # self.setParent(parent)
 
     # Membership function
+    @cython.ccall
+    @cython.locals(x=tuple)
+    @cython.returns(cython.bint)
     def has_point(self, x):
         # type: (Node, tuple) -> bool
         """
@@ -482,6 +546,7 @@ class Node:
         """
         return x in self.L
 
+    @cython.returns(cython.bint)
     def has_point_rec(self, x):
         # type: (Node, tuple) -> bool
         """
@@ -494,6 +559,8 @@ class Node:
             _hasPoint = (n.has_point_rec(x) for n in self.nodes)
             return any(_hasPoint)
 
+    @cython.locals(x=tuple)
+    @cython.returns(cython.bint)
     def __contains__(self, x):
         # type: (Node, tuple) -> bool
         """
@@ -501,6 +568,9 @@ class Node:
         """
         return self.has_point_rec(x)
 
+    @cython.ccall
+    @cython.locals(nesting_level=int, _string=str, i=int, x=tuple)
+    @cython.returns(str)
     def _to_str(self, nesting_level=0):
         # type: (Node, int) -> str
         """
@@ -515,6 +585,8 @@ class Node:
         # _string += ']\n'
         return _string
 
+    @cython.locals(nesting_level=int)
+    @cython.returns(str)
     def to_str_rec(self, nesting_level=0):
         # type: (Node, int) -> str
         """
@@ -526,6 +598,7 @@ class Node:
             _strings = (x.to_str_rec(nesting_level + 1) for x in self.nodes)
             return '\n'.join(_strings)
 
+    @cython.returns(str)
     def __repr__(self):
         # type: (Node) -> str
         """
@@ -533,6 +606,7 @@ class Node:
         """
         return self.to_str_rec(0)
 
+    @cython.returns(str)
     def __str__(self):
         # type: (Node) -> str
         """
@@ -540,6 +614,8 @@ class Node:
         """
         return self.to_str_rec(0)
 
+    @cython.locals(other=object, eqRect=cython.bint, eqParent=cython.bint, sameContent=cython.bint)
+    @cython.returns(cython.bint)
     def __eq__(self, other):
         # type: (Node, Node) -> bool
         """
@@ -554,6 +630,8 @@ class Node:
 
         return eqRect and eqParent and sameContent
 
+    @cython.locals(other=object)
+    @cython.returns(cython.bint)
     def __ne__(self, other):
         # type: (Node, Node) -> bool
         """
@@ -561,6 +639,7 @@ class Node:
         """
         return not self.__eq__(other)
 
+    @cython.returns(int)
     def __hash__(self):
         # type: (Node) -> int
         """
@@ -571,6 +650,8 @@ class Node:
         return hash((self.rect, self.parent, tuple(self.L), self.max_points, self.min_children))
 
     # Report functions
+    @cython.ccall
+    @cython.returns(cython.void)
     def _report(self):
         """
         Report function.
@@ -583,6 +664,8 @@ class Node:
         RootOracle.logger.info('\tPoints {0}'.format(self.L))
         RootOracle.logger.info('\tRect {0}'.format(str(self.rect)))
 
+    @cython.ccall
+    @cython.returns(cython.void)
     def report_rec(self):
         """
         Report function.
@@ -591,6 +674,8 @@ class Node:
         [n.report_rec() for n in self.nodes]
 
     # Functions for checking the type of node
+    @cython.ccall
+    @cython.returns(cython.bint)
     def is_root(self):
         # type: (Node) -> bool
         """
@@ -598,6 +683,8 @@ class Node:
         """
         return self.parent is None
 
+    @cython.ccall
+    @cython.returns(cython.bint)
     def is_leaf(self):
         # type: (Node) -> bool
         """
@@ -606,6 +693,9 @@ class Node:
         return self.num_subnodes() == 0
 
     # Node operations
+    @cython.ccall
+    @cython.locals(n=object, pos=int)
+    @cython.returns(cython.void)
     def add_node(self, n, pos=-1):
         # type: (Node, Node, int) -> None
         """
@@ -618,6 +708,9 @@ class Node:
             else:
                 self.nodes.append(n)
 
+    @cython.ccall
+    @cython.locals(n=object)
+    @cython.returns(cython.void)
     def remove_node(self, n):
         # type: (Node, Node) -> None
         """
@@ -627,6 +720,9 @@ class Node:
             self.nodes.remove(n)
             del n
 
+    @cython.ccall
+    @cython.locals(n=object, npr=object, index=int)
+    @cython.returns(cython.void)
     def replace_node(self, n, npr):
         # type: (Node, Node, Node) -> None
         """
@@ -637,6 +733,9 @@ class Node:
             self.add_node(npr, index)
             self.remove_node(n)
 
+    @cython.ccall
+    @cython.locals(pos=int)
+    @cython.returns(object)
     def get_subnode(self, pos=0):
         # type: (Node, int) -> Node
         """
@@ -644,6 +743,8 @@ class Node:
         """
         return self.nodes[pos]
 
+    @cython.ccall
+    @cython.returns(set)
     def get_subnodes(self):
         # type: (Node) -> set
         """
@@ -651,6 +752,8 @@ class Node:
         """
         return set(self.nodes)
 
+    @cython.ccall
+    @cython.returns(int)
     def num_subnodes(self):
         # type: (Node) -> int
         """
@@ -658,6 +761,8 @@ class Node:
         """
         return len(self.nodes)
 
+    @cython.ccall
+    @cython.returns(cython.bint)
     def is_empty_solution(self):
         # type: (Node) -> bool
         """
@@ -668,6 +773,9 @@ class Node:
                ((self.num_points() == 0) and (self.num_subnodes() == 0))
 
     # Point operations
+    @cython.ccall
+    @cython.locals(x=tuple, pos=int)
+    @cython.returns(cython.void)
     def add_point(self, x, pos=-1):
         # type: (Node, tuple, int) -> None
         """
@@ -678,6 +786,9 @@ class Node:
         else:
             self.L.append(x)
 
+    @cython.ccall
+    @cython.locals(x=tuple)
+    @cython.returns(cython.void)
     def remove_point(self, x):
         # type: (Node, tuple) -> None
         """
@@ -687,6 +798,9 @@ class Node:
             self.L.remove(x)
             del x
 
+    @cython.ccall
+    @cython.locals(x=tuple, xp=tuple, index=int)
+    @cython.returns(cython.void)
     def replace_point(self, x, xp):
         # type: (Node, tuple, tuple) -> None
         """
@@ -697,6 +811,9 @@ class Node:
             self.add_point(xp, index)
             self.remove_point(x)
 
+    @cython.ccall
+    @cython.locals(pos=int)
+    @cython.returns(tuple)
     def get_point(self, pos=0):
         # type: (Node, int) -> tuple
         """
@@ -704,6 +821,8 @@ class Node:
         """
         return self.L[pos]
 
+    @cython.ccall
+    @cython.returns(set)
     def get_points(self):
         # type: (Node) -> set
         """
@@ -712,6 +831,8 @@ class Node:
         return set(self.L)
 
     # Set of points
+    @cython.locals(temp=set, i=object)
+    @cython.returns(set)
     def s(self):
         # type: (Node) -> set
         """
@@ -727,6 +848,8 @@ class Node:
             temp = set.union(*temp_list)
             return temp
 
+    @cython.ccall
+    @cython.returns(int)
     def num_points(self):
         # type: (Node) -> int
         """
@@ -734,6 +857,8 @@ class Node:
         """
         return len(self.L)
 
+    @cython.ccall
+    @cython.returns(cython.bint)
     def has_points(self):
         # type: (Node) -> bool
         """
@@ -742,6 +867,8 @@ class Node:
         return (self is not None) and (len(self.L) > 0)
 
     # Relationship functions
+    @cython.ccall
+    @cython.returns(object)
     def get_parent(self):
         # type: (Node) -> Node
         """
@@ -749,6 +876,9 @@ class Node:
         """
         return self.parent
 
+    @cython.ccall
+    @cython.locals(parent=object)
+    @cython.returns(object)
     def set_parent(self, parent):
         # type: (Node, Node) -> None
         """
@@ -757,6 +887,8 @@ class Node:
         self.parent = parent
 
     # Rectangle Operations
+    @cython.ccall
+    @cython.returns(object)
     def get_rectangle_sn(self):
         # type: (Node) -> Rectangle
         """
@@ -764,6 +896,9 @@ class Node:
         """
         return self.rect
 
+    @cython.ccall
+    @cython.locals(rect=object)
+    @cython.returns(cython.void)
     def set_rectangle_sn(self, rect):
         # type: (Node, Rectangle) -> None
         """
@@ -772,6 +907,8 @@ class Node:
         self.rect = rect
 
     # NDTree operations
+    @cython.locals(lsorted=list)
+    @cython.returns(object)
     def find_closest_node(self, x):
         # type: (Node, tuple) -> Node
         """
@@ -780,6 +917,9 @@ class Node:
         lsorted = sorted(self.nodes, key=lambda node: node.rect.distance_to_center(x))
         return lsorted[0]
 
+    @cython.ccall
+    @cython.locals(x=tuple, npr=object)
+    @cython.returns(cython.void)
     def insert(self, x):
         # type: (Node, tuple) -> None
         """
@@ -795,8 +935,11 @@ class Node:
             npr = self.find_closest_node(x)
             npr.insert(x)
 
+    @cython.locals(d=int, y=tuple,
+                   max_distance=cython.double, mean_max_distance=cython.double, temp_mean_max_distance=cython.double)
+    @cython.returns((tuple, cython.double))
     def find_point_highest_average_euclidean_distance(self):
-        # type: (Node) -> (tuple, int)
+        # type: (Node) -> (tuple, float)
         """
         Computation of the 'center of mass' of the current Node,
         and the mean distance between this center and each point
@@ -814,6 +957,9 @@ class Node:
                 y = yp
         return y, mean_max_distance
 
+    @cython.ccall
+    @cython.locals(y=tuple, npr=object)
+    @cython.returns(cython.void)
     def split(self):
         # type: (Node) -> None
         """
@@ -840,6 +986,9 @@ class Node:
             npr.update_ideal_nadir(y)
             self.remove_point(y)
 
+    @cython.locals(x=tuple,
+                   nout=object, rect=object, nparent=object, y=tuple, update=cython.bint)
+    @cython.returns((object, cython.bint))
     def update_node(self, x):
         # type: (Node, tuple) -> (Node, bool)
         """
@@ -884,6 +1033,8 @@ class Node:
         # Skip this node
         return nout, True
 
+    @cython.locals(rect=object, n=cython.ushort, updateIdeal=cython.bint, updateNadir=cython.bint, npr=object)
+    @cython.returns(cython.void)
     def update_ideal_nadir(self, x):
         # type: (Node, tuple) -> None
         """
@@ -926,6 +1077,8 @@ class Node:
                 npr = self.get_parent()
                 npr.update_ideal_nadir(x)
 
+    @cython.locals(rect=object, test1=cython.bint, test2=cython.bint)
+    @cython.returns(cython.bint)
     def dominates(self, x):
         # type: (Node, tuple) -> bool
         """

@@ -15,13 +15,14 @@ if __name__ == '__main__':
         name="ParetoLib",
         version=__version__,
         author="J. Ignacio Requeno",
-        author_email='jose-ignacio.requeno-jarabo@univ-grenoble-alpes.fr',
+        author_email='jrequeno@ucm.es',
         description='ParetoLib is a free multidimensional boundary learning library for ' \
                     'Python 2.7, 3.4 or newer',
         long_description=long_description,
         long_description_content_type="text/markdown",
         url='https://gricad-gitlab.univ-grenoble-alpes.fr/verimag/tempo/multidimensional_search',
         install_requires=[
+            'cython>=0.29',
             'matplotlib>=2.0.2',
             'numpy>=1.15',
             'pandas>=1.3.0',
