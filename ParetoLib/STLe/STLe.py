@@ -57,12 +57,17 @@ from ctypes import CDLL, c_int, c_double, c_char_p, c_void_p, pointer
 @cython.locals(folder=str)
 @cython.returns(str)
 def get_stle_path():
-    return os.path.dirname(os.path.realpath(__file__))
+    #  __name__ == 'ParetoLib.STLe.STLe'
+    # __package__ == 'ParetoLib.STLe'
 
+    folder = os.path.dirname(os.path.realpath(__file__))
+    # folder = resource_filename(__package__, '.')
+
+    return folder
 
 
 @cython.ccall
-@cython.locals(ext=str) #, folder=list, file_list=list, exec_name=str, bin_file=str)
+@cython.locals(ext=str, folder=list, file_list=list, exec_name=str)
 @cython.returns(str)
 def get_stle_exec_name():
     # Selecting STLe binary file depending on the OS
@@ -73,7 +78,15 @@ def get_stle_exec_name():
         ext = '.exe'
     else:
         raise RuntimeError('OS Platform \'{0}\' not compatible for STLe.\n'.format(platform.system()))
-    return [fname for fname in os.listdir(os.path.dirname(__file__)) if fname.endswith(ext)][0]
+
+    folder = os.listdir(os.path.dirname(__file__))
+    # folder = resource_listdir(__package__, '.')
+    file_list = [fname for fname in folder if fname.endswith(ext)]
+
+    # exec_name = '{0}{1}'.format('STLe', ext)
+    exec_name = file_list[0]
+
+    return exec_name
 
 
 @cython.ccall
@@ -89,7 +102,7 @@ def get_stle_bin():
 
 
 @cython.ccall
-@cython.locals(ext=str, folder=list, file_list=list, lib_file=str)
+@cython.locals(ext=str, folder=list, file_list=list)
 @cython.returns(str)
 def get_stle_lib_name():
     # Selecting STLe binary file depending on the OS
@@ -101,7 +114,15 @@ def get_stle_lib_name():
         ext = '.dll'
     else:
         raise RuntimeError('OS Platform \'{0}\' not compatible for STLe.\n'.format(platform.system()))
-    return [fname for fname in os.listdir(os.path.dirname(__file__)) if fname.endswith(ext)][0]
+
+    folder = os.listdir(os.path.dirname(__file__))
+    # folder = resource_listdir(__package__, '.')
+
+    file_list = [fname for fname in folder if fname.endswith(ext)]
+
+    lib_name = file_list[0]
+
+    return lib_name
 
 
 @cython.ccall

@@ -1,4 +1,4 @@
-import setuptools
+from setuptools import find_packages, setup
 import os
 
 if __name__ == '__main__':
@@ -11,7 +11,7 @@ if __name__ == '__main__':
         if (line.startswith('__version__')):
             exec (line.strip('. '))
 
-    setuptools.setup(
+    setup(
         name="ParetoLib",
         version=__version__,
         author="J. Ignacio Requeno",
@@ -33,8 +33,8 @@ if __name__ == '__main__':
             'sympy>=1.1.1'
         ],
         #packages_dir={'': 'ParetoLib'},
-        #packages=setuptools.find_packages(exclude=['ParetoLib._py3k', 'Tests']),
-        packages=setuptools.find_packages(),
+        #packages=find_packages(exclude=['ParetoLib._py3k', 'Tests']),
+        packages=find_packages(),
         package_data={
             'ParetoLib.JAMT': ['*.jar'],
             'ParetoLib.STLe': ['*.bin', '*.exe', '*.so.1', '*.dll']

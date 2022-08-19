@@ -26,6 +26,7 @@ import pickle
 from itertools import chain, combinations  # combinations_with_replacement
 import zipfile
 import tempfile
+import cython
 # import shutil
 
 import matplotlib.pyplot as plt
@@ -37,7 +38,11 @@ from ParetoLib.Geometry.Rectangle import Rectangle
 import ParetoLib.Search as RootSearch
 
 
+# @cython.cclass
 class ResultSet(object):
+    cython.declare(xspace=object, border=list, ylow=list, yup=list, filename_yup=str, filename_ylow=str,
+                   filename_boreder=str, filename_space=str, ylow_pareto=object, yup_pareto=object)
+
     def __init__(self, border=list(), ylow=list(), yup=list(), xspace=Rectangle()):
         # type: (ResultSet, iter, iter, iter, Rectangle) -> None
         assert xspace is not None, 'xspace is None, it must be defined'
@@ -147,6 +152,8 @@ class ResultSet(object):
         return hash((tuple(self.border), tuple(self.ylow), tuple(self.yup), hash(self.xspace)))
 
     # Vertex functions
+    @cython.locals(vertices=set)
+    @cython.returns(set)
     def vertices_yup(self):
         # type: (ResultSet) -> set
         vertices_list = (rect.vertices() for rect in self.yup)
@@ -154,6 +161,8 @@ class ResultSet(object):
         vertices = vertices.union(*vertices_list)
         return vertices
 
+    @cython.locals(vertices=set)
+    @cython.returns(set)
     def vertices_ylow(self):
         # type: (ResultSet) -> set
         vertices_list = (rect.vertices() for rect in self.ylow)
@@ -161,6 +170,8 @@ class ResultSet(object):
         vertices = vertices.union(*vertices_list)
         return vertices
 
+    @cython.locals(vertices=set)
+    @cython.returns(set)
     def vertices_border(self):
         # type: (ResultSet) -> set
         vertices_list = (rect.vertices() for rect in self.border)
@@ -168,6 +179,8 @@ class ResultSet(object):
         vertices = vertices.union(*vertices_list)
         return vertices
 
+    @cython.locals(vertices=set)
+    @cython.returns(set)
     def vertices(self):
         # type: (ResultSet) -> set
         vertices = self.vertices_yup()
@@ -179,6 +192,9 @@ class ResultSet(object):
     # After running simplify(), the number of cubes in the boundary and in each closure should decrease.
     # Besides, overlapping cubes in the boundary should also disappear, i.e.,
     # overlapping_volume_border() == 0 and overlapping_volume_total() == 0
+    # @cython.ccall
+    @cython.locals(extended_ylow=list, extended_yup=list)
+    @cython.returns(cython.void)
     def simplify(self):
         # type: (ResultSet) -> None
         # Remove single points from the yup and ylow closures, i.e., rectangles rect with:
@@ -192,16 +208,18 @@ class ResultSet(object):
 
         # Get the highest (upper right) values of self.ylow; i.e., those points that are closer to self.yup
         extended_ylow = [Rectangle(self.xspace.min_corner, r.max_corner) for r in self.ylow]
-        # extended_yup = [Rectangle(r.min_corner, self.xspace.max_corner) for r in self.yup]
+        extended_yup = [Rectangle(r.min_corner, self.xspace.max_corner) for r in self.yup]
 
         # Get the lowest (lower left) values of self.yup; i.e., those points that are closer to self.ylow
         # extended_ylow = [Rectangle(self.xspace.min_corner, ylow_point) for ylow_point in self.get_points_pareto_ylow()]
-        extended_yup = [Rectangle(yup_point, self.xspace.max_corner) for yup_point in self.get_points_pareto_yup()]
+        # extended_yup = [Rectangle(yup_point, self.xspace.max_corner) for yup_point in self.get_points_pareto_yup()]
 
         self.border = Rectangle.difference_rectangles(self.xspace, extended_ylow + extended_yup)
         self.yup = Rectangle.difference_rectangles(self.xspace, extended_ylow + self.border)
         self.ylow = Rectangle.difference_rectangles(self.xspace, extended_yup + self.border)
 
+    # @cython.ccall
+    @cython.returns(cython.void)
     def fusion(self):
         # type: (ResultSet) -> None
         # Concatenate rectangles in each closure
@@ -211,6 +229,7 @@ class ResultSet(object):
 
     # Volume functions
     @staticmethod
+    @cython.returns(cython.double)
     def _overlapping_volume(pairs_of_rect):
         # type: (iter) -> float
         # remove pairs (recti, recti) from previous list
@@ -236,6 +255,8 @@ class ResultSet(object):
     # It seems to be an inherent problem of the functions for computing crect/brect because it sometimes generates
     # planes (2-dimensional) instead of cubes (n-dimensional) for spaces of n-dimension.
 
+    # @cython.ccall
+    @cython.returns(cython.double)
     def overlapping_volume_yup(self):
         # type: (ResultSet) -> float
         # self.yup = [rect1, rect2,..., rectn]
@@ -244,6 +265,8 @@ class ResultSet(object):
         # return self._overlapping_volume(pairs_of_rect)
         return ResultSet._overlapping_volume(pairs_of_rect)
 
+    # @cython.ccall
+    @cython.returns(cython.double)
     def overlapping_volume_ylow(self):
         # type: (ResultSet) -> float
         # self.ylow = [rect1, rect2,..., rectn]
@@ -252,6 +275,8 @@ class ResultSet(object):
         # return self._overlapping_volume(pairs_of_rect)
         return ResultSet._overlapping_volume(pairs_of_rect)
 
+    # @cython.ccall
+    @cython.returns(cython.double)
     def overlapping_volume_border(self):
         # type: (ResultSet) -> float
         # self.border = [rect1, rect2,..., rectn]
@@ -260,6 +285,9 @@ class ResultSet(object):
         # return self._overlapping_volume(pairs_of_rect)
         return ResultSet._overlapping_volume(pairs_of_rect)
 
+    # @cython.ccall
+    @cython.locals(total_rectangles=list)
+    @cython.returns(cython.double)
     def overlapping_volume_total(self):
         # type: (ResultSet) -> float
         # total_rectangles = [rect1, rect2,..., rectn]
@@ -272,18 +300,23 @@ class ResultSet(object):
         # return self._overlapping_volume(pairs_of_rect)
         return ResultSet._overlapping_volume(pairs_of_rect)
 
+    @cython.returns(cython.double)
     def volume_yup(self):
         # type: (ResultSet) -> float
         # vol_list = p.map(Rectangle.volume, self.yup)
         vol_list = (rect.volume() for rect in self.yup)
         return sum(vol_list)
 
+    @cython.returns(cython.double)
     def volume_ylow(self):
         # type: (ResultSet) -> float
         # vol_list = p.map(Rectangle.volume, self.ylow)
         vol_list = (rect.volume() for rect in self.ylow)
         return sum(vol_list)
 
+    # @cython.ccall
+    @cython.locals(vol_total=cython.double, vol_ylow=cython.double, vol_yup=cython.double)
+    @cython.returns(cython.double)
     def volume_border(self):
         # type: (ResultSet) -> float
         vol_total = self.xspace.volume()
@@ -291,18 +324,24 @@ class ResultSet(object):
         vol_yup = self.volume_yup()
         return vol_total - vol_ylow - vol_yup
 
+    @cython.returns(cython.double)
     def volume_border_2(self):
         # type: (ResultSet) -> float
         # vol_list = p.map(Rectangle.volume, self.border)
         vol_list = (rect.volume() for rect in self.border)
         return sum(vol_list) - self.overlapping_volume_total()
 
+    # @cython.ccall
+    @cython.locals(vol_total=cython.double)
+    @cython.returns(cython.double)
     def volume_total(self):
         # type: (ResultSet) -> float
         # vol_total = self.volume_ylow() + self.volume_yup() + self.volume_border()
         vol_total = self.xspace.volume()
         return vol_total
 
+    # @cython.ccall
+    @cython.returns(str)
     def volume_report(self):
         # type: (ResultSet) -> str
         vol_report = ('Volume report (Ylow, Yup, Border, Total): ({0}, {1}, {2}, {3})\n'.format(
@@ -311,6 +350,8 @@ class ResultSet(object):
         return vol_report
 
     # Membership functions
+    @cython.locals(xpoint=tuple)
+    @cython.returns(cython.bint)
     def __contains__(self, xpoint):
         # type: (ResultSet, tuple) -> bool
         # xpoint is inside the upper/lower closure or in the border
@@ -318,30 +359,41 @@ class ResultSet(object):
                self.member_ylow(xpoint) or \
                self.member_yup(xpoint)
 
+    @cython.returns(cython.bint)
     def member_yup(self, xpoint):
         # type: (ResultSet, tuple) -> bool
         isMember = (rect.inside(xpoint) for rect in self.yup)
         return any(isMember)
         # return any(isMember) and not self.member_border(xpoint)
 
+    @cython.returns(cython.bint)
     def member_ylow(self, xpoint):
         # type: (ResultSet, tuple) -> bool
         isMember = (rect.inside(xpoint) for rect in self.ylow)
         return any(isMember)
         # return any(isMember) and not self.member_border(xpoint)
 
+    # @cython.ccall
+    @cython.locals(xpoint=tuple)
+    @cython.returns(cython.bint)
     def member_border(self, xpoint):
         # type: (ResultSet, tuple) -> bool
         # isMember = (rect.inside(xpoint) for rect in self.border)
         # return any(isMember)
         return self.member_space(xpoint) and not self.member_yup(xpoint) and not self.member_ylow(xpoint)
 
+    # @cython.ccall
+    @cython.locals(xpoint=tuple)
+    @cython.returns(cython.bint)
     def member_space(self, xpoint):
         # type: (ResultSet, tuple) -> bool
         # return xpoint in self.xspace
         return self.xspace.inside(xpoint)
 
     # Points of closure
+    # @cython.ccall
+    @cython.locals(n=cython.long)
+    @cython.returns(list)
     def get_points_yup(self, n=-1):
         # type: (ResultSet, int) -> list
         if n >= 0:
@@ -349,10 +401,14 @@ class ResultSet(object):
         else:
             return self._get_points_yup()
 
+    # @cython.ccall
+    @cython.returns(list)
     def _get_points_yup(self):
         # type: (ResultSet) -> list
         return [r.min_corner for r in self.yup]
 
+    @cython.locals(n=cython.long, m=cython.long, merged=list)
+    @cython.returns(list)
     def _get_n_points_yup(self, n):
         # type: (ResultSet, int) -> list
         m = int(n / len(self.yup))
@@ -367,6 +423,9 @@ class ResultSet(object):
         merged = list(chain.from_iterable(point_list))
         return merged
 
+    # @cython.ccall
+    @cython.locals(n=cython.long)
+    @cython.returns(list)
     def get_points_ylow(self, n=-1):
         # type: (ResultSet, int) -> list
         if n >= 0:
@@ -374,6 +433,13 @@ class ResultSet(object):
         else:
             return self._get_points_ylow()
 
+    # @cython.ccall
+    @cython.returns(list)
+    def _get_points_ylow(self):
+        return [r.max_corner for r in self.ylow]
+
+    @cython.locals(n=cython.long, m=cython.long, merged=list)
+    @cython.returns(list)
     def _get_n_points_ylow(self, n):
         # type: (ResultSet, int) -> list
         m = int(n / len(self.ylow))
@@ -383,9 +449,9 @@ class ResultSet(object):
         merged = list(chain.from_iterable(point_list))
         return merged
 
-    def _get_points_ylow(self):
-        return [r.max_corner for r in self.ylow]
-
+    # @cython.ccall
+    @cython.locals(n=cython.long)
+    @cython.returns(list)
     def get_points_border(self, n=-1):
         # type: (ResultSet, int) -> list
         if n >= 0:
@@ -393,6 +459,13 @@ class ResultSet(object):
         else:
             return self._get_points_ylow()
 
+    # @cython.ccall
+    @cython.returns(list)
+    def _get_points_border(self):
+        return self.get_points_pareto()
+
+    @cython.locals(n=cython.long, m=cython.long, merged=list)
+    @cython.returns(list)
     def _get_n_points_border(self, n):
         # type: (ResultSet, int) -> list
         m = int(n / len(self.border))
@@ -402,19 +475,22 @@ class ResultSet(object):
         merged = list(chain.from_iterable(point_list))
         return merged
 
-    def _get_points_border(self):
-        return self.get_points_pareto()
-
+    # @cython.ccall
+    @cython.locals(n=cython.long)
+    @cython.returns(list)
     def get_points_space(self, n):
         # type: (ResultSet, int) -> list
         return self.xspace.get_points(n)
 
+    # @cython.ccall
+    @cython.returns(cython.void)
     def set_points_pareto(self, l):
         # type: (ResultSet, iter) -> None
         self.yup = [Rectangle(p, self.xspace.max_corner) for p in l]
         self.ylow = [Rectangle(self.xspace.min_corner, p) for p in l]
         self.border = [Rectangle(p, p) for p in l]
 
+    @cython.returns(set)
     def get_points_pareto_yup(self):
         # type: (ResultSet) -> set
         if self.yup_pareto.is_empty():
@@ -423,6 +499,7 @@ class ResultSet(object):
 
         return self.yup_pareto.get_points()
 
+    @cython.returns(set)
     def get_points_pareto_ylow(self):
         # type: (ResultSet) -> set
         if self.ylow_pareto.is_empty():
@@ -431,6 +508,8 @@ class ResultSet(object):
 
         return self.ylow_pareto.get_points()
 
+    # @cython.ccall
+    @cython.returns(set)
     def get_points_pareto(self):
         # type: (ResultSet) -> list
         # Pareto points of Ylow will always dominate Pareto points from Yup
@@ -440,44 +519,69 @@ class ResultSet(object):
 
     # Maximum/minimum values for each parameter
     @staticmethod
+    @cython.locals(i=cython.ushort)
+    @cython.returns(cython.double)
     def _get_min_val_dimension_rect_list(i, rect_list):
         # type: (int, list) -> float
         min_cs = (rect.min_corner for rect in rect_list)
         mc_i = (mc[i] for mc in min_cs)
         return min(mc_i)
 
+    # @cython.ccall
+    @cython.locals(i=cython.ushort)
+    @cython.returns(cython.double)
     def get_min_val_dimension_yup(self, i):
         # type: (ResultSet, int) -> float
         return ResultSet._get_min_val_dimension_rect_list(i, self.yup)
 
+    # @cython.ccall
+    @cython.locals(i=cython.ushort)
+    @cython.returns(cython.double)
     def get_min_val_dimension_ylow(self, i):
         # type: (ResultSet, int) -> float
         return ResultSet._get_min_val_dimension_rect_list(i, self.ylow)
 
+    # @cython.ccall
+    @cython.locals(i=cython.ushort)
+    @cython.returns(cython.double)
     def get_min_val_dimension_border(self, i):
         # type: (ResultSet, int) -> float
         return ResultSet._get_min_val_dimension_rect_list(i, self.border)
 
     @staticmethod
+    @cython.locals(i=cython.ushort)
+    @cython.returns(cython.double)
     def _get_max_val_dimension_rect_list(i, rect_list):
         # type: (int, list) -> float
         max_cs = (rect.max_corner for rect in rect_list)
         mc_i = (mc[i] for mc in max_cs)
         return max(mc_i)
 
+    # @cython.ccall
+    @cython.locals(i=cython.ushort)
+    @cython.returns(cython.double)
     def get_max_val_dimension_yup(self, i):
         # type: (ResultSet, int) -> float
         return ResultSet._get_max_val_dimension_rect_list(i, self.yup)
 
+    # @cython.ccall
+    @cython.locals(i=cython.ushort)
+    @cython.returns(cython.double)
     def get_max_val_dimension_ylow(self, i):
         # type: (ResultSet, int) -> float
         return ResultSet._get_max_val_dimension_rect_list(i, self.ylow)
 
+    # @cython.ccall
+    @cython.locals(i=cython.ushort)
+    @cython.returns(cython.double)
     def get_max_val_dimension_border(self, i):
         # type: (ResultSet, int) -> float
         return ResultSet._get_max_val_dimension_rect_list(i, self.border)
 
     # Composition of two Pareto Fronts
+    # @cython.ccall
+    @cython.locals(xspace=list, border=list, ylow=list, yup=list)
+    @cython.returns(object)
     def intersection(self, other):
         # type: (ResultSet, ResultSet) -> ResultSet
         xspace = self.xspace.intersection(other.xspace)
@@ -489,25 +593,30 @@ class ResultSet(object):
         return res
 
     # Scaling functions
+    @cython.returns(cython.void)
     def scale_xspace(self, f=lambda x: x):
         # type: (ResultSet, callable) -> None
         self.xspace.scale(f)
 
+    @cython.returns(cython.void)
     def scale_yup(self, f=lambda x: x):
         # type: (ResultSet, callable) -> None
         for r in self.yup:
             r.scale(f)
 
+    @cython.returns(cython.void)
     def scale_ylow(self, f=lambda x: x):
         # type: (ResultSet, callable) -> None
         for r in self.ylow:
             r.scale(f)
 
+    @cython.returns(cython.void)
     def scale_border(self, f=lambda x: x):
         # type: (ResultSet, callable) -> None
         for r in self.border:
             r.scale(f)
 
+    @cython.returns(cython.void)
     def scale(self, f=lambda x: x):
         # type: (ResultSet, callable) -> None
         """
@@ -540,26 +649,44 @@ class ResultSet(object):
         self.scale_border(f)
 
     # MatPlot Graphics
+    # @cython.ccall
+    @cython.locals(xaxe=cython.ushort, yaxe=cython.ushort, opacity=cython.double, patch=list)
+    @cython.returns(list)
     def _plot_space_2D(self, xaxe=0, yaxe=1, opacity=1.0):
         # type: (ResultSet, int, int, float) -> list
         patch = [self.xspace.plot_2D('blue', xaxe, yaxe, opacity)]
         return patch
 
+    # @cython.ccall
+    @cython.locals(xaxe=cython.ushort, yaxe=cython.ushort, opacity=cython.double, patch=list)
+    @cython.returns(list)
     def _plot_yup_2D(self, xaxe=0, yaxe=1, opacity=1.0):
         # type: (ResultSet, int, int, float) -> list
         patch = [rect.plot_2D('green', xaxe, yaxe, opacity) for rect in self.yup]
         return patch
 
+    # @cython.ccall
+    @cython.locals(xaxe=cython.ushort, yaxe=cython.ushort, opacity=cython.double, patch=list)
+    @cython.returns(list)
     def _plot_ylow_2D(self, xaxe=0, yaxe=1, opacity=1.0):
         # type: (ResultSet, int, int, float) -> list
         patch = [rect.plot_2D('red', xaxe, yaxe, opacity) for rect in self.ylow]
         return patch
 
+    # @cython.ccall
+    @cython.locals(xaxe=cython.ushort, yaxe=cython.ushort, opacity=cython.double, patch=list)
+    @cython.returns(list)
     def _plot_border_2D(self, xaxe=0, yaxe=1, opacity=1.0):
         # type: (ResultSet, int, int, float) -> list
         patch = [rect.plot_2D('blue', xaxe, yaxe, opacity) for rect in self.border]
         return patch
 
+    # @cython.ccall
+    @cython.locals(filename=str, xaxe=cython.ushort, yaxe=cython.ushort, var_names=list, blocking=cython.bint,
+                   sec=cython.double, opacity=cython.double, fig_title=str, fig1=object, embedded_fig=cython.bint,
+                   ax1_list=list, ax1=object, pathpatch_yup=list, pathpatch_ylow=list, pathpatch_border=list,
+                   pathpatch=list)
+    @cython.returns(object)
     def plot_2D(self,
                 filename='',
                 xaxe=0,
@@ -630,8 +757,14 @@ class ResultSet(object):
 
         return fig1
 
+    # @cython.ccall
+    @cython.locals(rs=object, filename=str, xaxe=cython.ushort, yaxe=cython.ushort, var_names=list,
+                   blocking=cython.bint, sec=cython.double, opacity=cython.double, fig_title=str, fig1=object,
+                   embedded_fig=cython.bint, ax1_list=list, ax1=object, pathpatch_yup=list, pathpatch_ylow=list,
+                   pathpatch_border=list, pathpatch=list)
+    @cython.returns(object)
     def plot_2D_figs(self,
-                     rs2,
+                     rs,
                      filename='',
                      xaxe=0,
                      yaxe=1,
@@ -672,8 +805,8 @@ class ResultSet(object):
         pathpatch = pathpatch_yup
         pathpatch += pathpatch_ylow
         pathpatch += pathpatch_border
-        pathpatch += rs2._plot_yup_2D(xaxe, yaxe, opacity)
-        pathpatch += rs2._plot_ylow_2D(xaxe, yaxe, opacity)
+        pathpatch += rs._plot_yup_2D(xaxe, yaxe, opacity)
+        pathpatch += rs._plot_ylow_2D(xaxe, yaxe, opacity)
 
         for pathpatch_i in pathpatch:
             ax1.add_patch(pathpatch_i)
@@ -703,6 +836,11 @@ class ResultSet(object):
 
         return fig1
 
+    # @cython.ccall
+    @cython.locals(filename=str, xaxe=cython.ushort, yaxe=cython.ushort, var_names=list, blocking=cython.bint,
+                   sec=cython.double, opacity=cython.double, fig_title=str, fig1=object, embedded_fig=cython.bint,
+                   ax1_list=list, ax1=object, pathpatch_yup=list, pathpatch_ylow=list, pathpatch_border=list, pathpatch=list)
+    @cython.returns(object)
     def plot_2D_light(self,
                       filename='',
                       xaxe=0,
@@ -773,6 +911,11 @@ class ResultSet(object):
 
         return fig1
 
+    # @cython.ccall
+    @cython.locals(filename=str, xaxe=cython.ushort, yaxe=cython.ushort, var_names=list, blocking=cython.bint,
+                   sec=cython.double, fig_title=str, fig1=object, embedded_fig=cython.bint, ax1_list=list,
+                   ax1=object, xs=list, ys=list)
+    @cython.returns(object)
     def plot_2D_pareto(self,
                        filename='',
                        xaxe=0,
@@ -806,8 +949,11 @@ class ResultSet(object):
         ax1.set_xlabel(var_names[xaxe % len(var_names)])
         ax1.set_ylabel(var_names[yaxe % len(var_names)])
 
-        points_lower_closure = (r.max_corner for r in self.ylow)
-        points_upper_closure = (r.min_corner for r in self.yup)
+        # points_lower_closure = (r.max_corner for r in self.ylow)
+        # points_upper_closure = (r.min_corner for r in self.yup)
+
+        points_lower_closure = self.get_points_pareto_ylow()
+        points_upper_closure = self.get_points_pareto_yup()
 
         xs = []
         ys = []
@@ -848,26 +994,44 @@ class ResultSet(object):
 
         return fig1
 
+    # @cython.ccall
+    @cython.locals(xaxe=cython.ushort, yaxe=cython.ushort, zaxe=cython.ushort, opacity=cython.double, patch=list)
+    @cython.returns(list)
     def _plot_space_3D(self, xaxe=0, yaxe=1, zaxe=2, opacity=1.0):
         # type: (ResultSet, int, int, int, float) -> list
         faces = [self.xspace.plot_3D('blue', xaxe, yaxe, zaxe, opacity)]
         return faces
 
+    # @cython.ccall
+    @cython.locals(xaxe=cython.ushort, yaxe=cython.ushort, zaxe=cython.ushort, opacity=cython.double, faces=list)
+    @cython.returns(list)
     def _plot_yup_3D(self, xaxe=0, yaxe=1, zaxe=2, opacity=1.0, clip_box=None):
         # type: (ResultSet, int, int, int, float, _) -> list
         faces = [rect.plot_3D('green', xaxe, yaxe, zaxe, opacity, clip_box) for rect in self.yup]
         return faces
 
+    # @cython.ccall
+    @cython.locals(xaxe=cython.ushort, yaxe=cython.ushort, zaxe=cython.ushort, opacity=cython.double, faces=list)
+    @cython.returns(list)
     def _plot_ylow_3D(self, xaxe=0, yaxe=1, zaxe=2, opacity=1.0, clip_box=None):
         # type: (ResultSet, int, int, int, float, _) -> list
         faces = [rect.plot_3D('red', xaxe, yaxe, zaxe, opacity, clip_box) for rect in self.ylow]
         return faces
 
+    # @cython.ccall
+    @cython.locals(xaxe=cython.ushort, yaxe=cython.ushort, zaxe=cython.ushort, opacity=cython.double, faces=list)
+    @cython.returns(list)
     def _plot_border_3D(self, xaxe=0, yaxe=1, zaxe=2, opacity=1.0, clip_box=None):
         # type: (ResultSet, int, int, int, float, _) -> list
         faces = [rect.plot_3D('blue', xaxe, yaxe, zaxe, opacity, clip_box) for rect in self.border]
         return faces
 
+    # @cython.ccall
+    @cython.locals(filename=str, xaxe=cython.ushort, yaxe=cython.ushort, zaxe=cython.ushort, var_names=list,
+                   blocking=cython.bint, sec=cython.double, opacity=cython.double, fig_title=str, fig1=object,
+                   embedded_fig=cython.bint, ax1_list=list, ax1=object, faces_yup=list, faces_ylow=list,
+                   faces_border=list, faces=list)
+    @cython.returns(object)
     def plot_3D(self,
                 filename='',
                 xaxe=0,
@@ -924,7 +1088,7 @@ class ResultSet(object):
 
         ax1.set_xscale('linear')
         ax1.set_yscale('linear')
-        # ax1.set_yscale('linear')
+        # ax1.set_zscale('linear')
 
         if not embedded_fig:
             if sec > 0.0 and not blocking:
@@ -942,8 +1106,14 @@ class ResultSet(object):
 
         return fig1
 
+    # @cython.ccall
+    @cython.locals(rs=object, filename=str, xaxe=cython.ushort, yaxe=cython.ushort, var_names=list,
+                   blocking=cython.bint, sec=cython.double, opacity=cython.double, fig_title=str, clip_box=object,
+                   fig1=object, embedded_fig=cython.bint, ax1_list=list, ax1=object, pathpatch_yup=list,
+                   pathpatch_ylow=list, pathpatch_border=list, pathpatch=list)
+    @cython.returns(object)
     def plot_3D_figs(self,
-                     rs2,
+                     rs,
                      filename='',
                      xaxe=0,
                      yaxe=1,
@@ -981,8 +1151,8 @@ class ResultSet(object):
         faces = faces_yup
         faces += faces_ylow
         faces += faces_border
-        faces += rs2._plot_yup_3D(xaxe, yaxe, opacity)
-        faces += rs2._plot_ylow_3D(xaxe, yaxe, opacity)
+        faces += rs._plot_yup_3D(xaxe, yaxe, opacity)
+        faces += rs._plot_ylow_3D(xaxe, yaxe, opacity)
 
         for faces_i in faces:
             ax1.add_collection3d(faces_i)
@@ -1014,6 +1184,12 @@ class ResultSet(object):
 
         return fig1
 
+    # @cython.ccall
+    @cython.locals(filename=str, xaxe=cython.ushort, yaxe=cython.ushort, zaxe=cython.ushort, var_names=list,
+                   blocking=cython.bint, sec=cython.double, opacity=cython.double, fig_title=str, fig1=object,
+                   embedded_fig=cython.bint, ax1_list=list, ax1=object, faces_yup=list, faces_ylow=list,
+                   faces_border=list, faces=list)
+    @cython.returns(object)
     def plot_3D_light(self,
                       filename='',
                       xaxe=0,
@@ -1069,7 +1245,7 @@ class ResultSet(object):
 
         ax1.set_xscale('linear')
         ax1.set_yscale('linear')
-        # ax1.set_yscale('linear')
+        # ax1.set_zscale('linear')
 
         if not embedded_fig:
             if sec > 0.0 and not blocking:
@@ -1087,6 +1263,11 @@ class ResultSet(object):
 
         return fig1
 
+    # @cython.ccall
+    @cython.locals(filename=str, xaxe=cython.ushort, yaxe=cython.ushort, zaxe=cython.ushort, var_names=list,
+                   blocking=cython.bint, sec=cython.double, fig_title=str, fig1=object, embedded_fig=cython.bint,
+                   ax1_list=list, ax1=object, xs=list, ys=list, zs=list)
+    @cython.returns(object)
     def plot_3D_pareto(self,
                        filename='',
                        xaxe=0,
@@ -1173,21 +1354,33 @@ class ResultSet(object):
         return fig1
 
     # Saving/loading results
+    # @cython.ccall
+    @cython.locals(f=str)
+    @cython.returns(cython.void)
     def to_file_yup(self, f):
         # type: (ResultSet, str) -> None
         with open(f, 'wb') as output:
             pickle.dump(self.yup, output, pickle.HIGHEST_PROTOCOL)
 
+    # @cython.ccall
+    @cython.locals(f=str)
+    @cython.returns(cython.void)
     def to_file_ylow(self, f):
         # type: (ResultSet, str) -> None
         with open(f, 'wb') as output:
             pickle.dump(self.ylow, output, pickle.HIGHEST_PROTOCOL)
 
+    # @cython.ccall
+    @cython.locals(f=str)
+    @cython.returns(cython.void)
     def to_file_border(self, f):
         # type: (ResultSet, str) -> None
         with open(f, 'wb') as output:
             pickle.dump(self.border, output, pickle.HIGHEST_PROTOCOL)
 
+    # @cython.ccall
+    @cython.locals(f=str)
+    @cython.returns(cython.void)
     def to_file_space(self, f):
         # type: (ResultSet, str) -> None
         with open(f, 'wb') as output:
@@ -1230,30 +1423,46 @@ class ResultSet(object):
         os.rmdir(tempdir)
         # shutil.rmtree(tempdir, ignore_errors=True)
 
+    # @cython.ccall
+    @cython.locals(f=str)
+    @cython.returns(cython.void)
     def from_file_yup(self, f):
         # type: (ResultSet, str) -> None
         self.yup = set()
         with open(f, 'rb') as inputfile:
             self.yup = pickle.load(inputfile)
 
+    # @cython.ccall
+    @cython.locals(f=str)
+    @cython.returns(cython.void)
     def from_file_ylow(self, f):
         # type: (ResultSet, str) -> None
         self.ylow = set()
         with open(f, 'rb') as inputfile:
             self.ylow = pickle.load(inputfile)
 
+    # @cython.ccall
+    @cython.locals(f=str)
+    @cython.returns(cython.void)
     def from_file_border(self, f):
         # type: (ResultSet, str) -> None
         self.border = set()
         with open(f, 'rb') as inputfile:
             self.border = pickle.load(inputfile)
 
+    # @cython.ccall
+    @cython.locals(f=str)
+    @cython.returns(cython.void)
     def from_file_space(self, f):
         # type: (ResultSet, str) -> None
         self.xspace = Rectangle()
         with open(f, 'rb') as inputfile:
             self.xspace = pickle.load(inputfile)
 
+    # @cython.ccall
+    @cython.locals(f=str, tempdir=str, yup_name=str, ylow_name=str, border_name=str, space_name=str,
+                   filename_list=tuple)
+    @cython.returns(cython.void)
     def from_file(self, f):
         # type: (ResultSet, str) -> None
         # fname = os.path.basename(f)

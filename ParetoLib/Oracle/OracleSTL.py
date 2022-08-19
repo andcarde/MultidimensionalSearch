@@ -29,17 +29,22 @@ from ParetoLib.JAMT.JAMT import JAVA_BIN, JAVA_OPT_JAR, JAMT_BIN, JAMT_OPT_ALIAS
 
 # @cython.cclass
 class OracleSTL(Oracle):
+    cython.declare(stl_prop_file=str, vcd_signal_file=str, var_alias_file=str, stl_param_file=str, _stl_formula=str, _stl_parameters=list,
+                   pattern=object, num_oracle_calls=cython.ulong, initialized=cython.bint)
+
+    @cython.locals(stl_prop_file=str, vcd_signal_file=str, var_alias_file=str, stl_param_file=str)
+    @cython.returns(cython.void)
     def __init__(self, stl_prop_file='', vcd_signal_file='', var_alias_file='', stl_param_file=''):
         # type: (OracleSTL, str, str, str, str) -> None
         Oracle.__init__(self)
 
         # Load STLe formula
         self.stl_prop_file = stl_prop_file.strip(' \n\t')
-        self.stl_formula = None
+        self._stl_formula = None
 
         # Load parameters of the STLe formula
         self.stl_param_file = stl_param_file.strip(' \n\t')
-        self.stl_parameters = None
+        self._stl_parameters = None
 
         # Load the signal
         self.vcd_signal_file = vcd_signal_file.strip(' \n\t')
@@ -50,6 +55,62 @@ class OracleSTL(Oracle):
 
         # Flag for indicating that Oracle is not initialized yet
         self.initialized = False
+
+    @property
+    def stl_formula(self):
+        # type: (OracleSTL) -> str
+        """
+        Getter of stl_formula class attribute.
+        """
+        if not self.initialized:
+            self._lazy_init()
+
+        return self._stl_formula
+
+    @stl_formula.setter
+    def stl_formula(self, value):
+        # type: (OracleSTL, str) -> None
+        """
+        Setter of stl_formula class attribute.
+
+        Args:
+            self (_OracleSTLeCommon): The _OracleSTLeCommon.
+            value (str): The value
+
+        Returns:
+            None: self.stl_formula = value.
+        """
+        self._stl_formula = value
+
+    # _stle_oracle = property(getname, setname, delname)
+
+    @property
+    def stl_parameters(self):
+        # type: (OracleSTL) -> list
+        """
+        Getter of stl_parameters class attribute.
+        """
+        if not self.initialized:
+            self._lazy_init()
+
+        return self._stl_parameters
+
+    @stl_parameters.setter
+    def stl_parameters(self, value):
+        # type: (OracleSTL, list) -> None
+        """
+        Setter of stl_parameters class attribute.
+
+        Args:
+            self (_OracleSTLeCommon): The _OracleSTLeCommon.
+            value (list): The value
+
+        Returns:
+            None: self.stl_parameters = value.
+        """
+        self._stl_parameters = value
+
+    # _stl_parameters = property(getname, setname, delname)
 
     @cython.returns(cython.void)
     def _lazy_init(self):
@@ -69,31 +130,6 @@ class OracleSTL(Oracle):
         self.initialized = True
 
         RootOracle.logger.debug('Initialized OracleSTL')
-
-    def __getattr__(self, name):
-        # type: (OracleSTL, str) -> _
-        """
-        Returns:
-            self.name (object attribute)
-        """
-        elem = object.__getattribute__(self, name)
-        if elem is None:
-            self._lazy_init()
-            elem = object.__getattribute__(self, name)
-        RootOracle.logger.debug('__getattr__: {0}, {1}'.format(name, elem))
-        return elem
-
-    def __getattribute__(self, name):
-        # type: (OracleSTL, str) -> _
-        """
-        Returns:
-            self.name (object attribute)
-        """
-        elem = object.__getattribute__(self, name)
-        RootOracle.logger.debug('__getattribute__: {0}'.format(name))
-        if elem is None:
-            raise AttributeError
-        return elem
 
     @cython.returns(cython.void)
     def __repr__(self):

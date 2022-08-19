@@ -20,6 +20,7 @@ import time
 import tempfile
 import itertools
 import multiprocessing as mp
+import cython
 
 from multiprocessing import Manager, Pool, cpu_count
 from sortedcontainers import SortedSet
@@ -35,6 +36,9 @@ from ParetoLib.Geometry.ParRectangle import pvol
 from ParetoLib.Geometry.Lattice import Lattice
 
 
+@cython.locals(xrectangle=object, epsilon=cython.double, n=cython.ushort, error=tuple, y=object,
+               steps_binsearch=cython.ushort)
+@cython.returns(object)
 def pbin_search_ser(args):
     xrectangle, f, epsilon, n = args
     RootSearch.logger.debug('Executing serial binary search')
@@ -46,6 +50,10 @@ def pbin_search_ser(args):
     return y
 
 
+# dict_man=dict
+@cython.locals(xrectangle=object, epsilon=cython.double, n=cython.ushort, ora=object, error=tuple,
+               y=object, steps_binsearch=cython.ushort)
+@cython.returns(object)
 def pbin_search(args):
     xrectangle, dict_man, epsilon, n = args
     RootSearch.logger.debug('Executing parallel binary search')
@@ -61,18 +69,27 @@ def pbin_search(args):
     return y
 
 
+# @cython.locals(args=(object, object), xrectangle=object, y=object)
+@cython.locals(xrectangle=object, y=object)
+@cython.returns(object)
 def pb0(args):
     # b0 = Rectangle(xspace.min_corner, y.low)
     xrectangle, y = args
     return Rectangle(xrectangle.min_corner, y.low)
 
 
+# @cython.locals(args=(object, object), xrectangle=object, y=object)
+@cython.locals(xrectangle=object, y=object)
+@cython.returns(object)
 def pb1(args):
     # b1 = Rectangle(y.high, xspace.max_corner)
     xrectangle, y = args
     return Rectangle(y.high, xrectangle.max_corner)
 
 
+# @cython.locals(args=(list, object, object), incomparable=list, y=object, xrectangle=object)
+@cython.locals(incomparable=list, y=object, xrectangle=object)
+@cython.returns(list)
 def pborder(args):
     # border = irect(incomparable, yrectangle, xrectangle)
     incomparable, y, xrectangle = args
@@ -80,24 +97,37 @@ def pborder(args):
     return irect(incomparable, yrectangle, xrectangle)
 
 
+# @cython.locals(args=(object, object), bi_extended=object, rect=object)
+@cython.locals(bi_extended=object, rect=object)
+@cython.returns(object)
 def pborder_dominatedby_bi(args):
     bi_extended, rect = args
     return rect.intersection(bi_extended)
 
 
+# @cython.locals(args=(object, object), rect=object, bi_extended=object)
+@cython.locals(rect=object, bi_extended=object)
+@cython.returns(list)
 def pborder_nondominatedby_bi(args):
     rect, bi_extended = args
     return rect - bi_extended
 
 
+# @cython.locals(args=(object, object), b0_extended=object, rect=object)
+@cython.locals(b0_extended=object, rect=object)
+@cython.returns(list)
 def pborder_nondominatedby_b0(args):
     b0_extended, rect = args
     return idwc(b0_extended, rect)
 
 
+# @cython.locals(args=(object, object), b1_extended=object, rect=object)
+@cython.locals(b1_extended=object, rect=object)
+@cython.returns(list)
 def pborder_nondominatedby_b1(args):
     b1_extended, rect = args
     return iuwc(b1_extended, rect)
+
 
 # Multidimensional search
 # The search returns a set of Rectangles in Yup, Ylow and Border
@@ -142,6 +172,30 @@ def multidim_search(xspace,
 
 ########################################################################################################################
 # Multidimensional search prioritizing the analysis of rectangles with highest volume
+@cython.returns(object)
+@cython.locals(xspace=object, oracle=object, epsilon=cython.double, delta=cython.double, max_step=cython.ulonglong,
+               blocking=cython.bint, sleep=cython.double, logging=cython.bint, n=cython.ushort, comparable=list,
+               incomparable=list, border=object, lattice_border_ylow=object, lattice_border_yup=object, ylow=list,
+               yup=list, ylow_minimal=list, yup_minimal=list, vol_total=cython.double, vol_yup=cython.double,
+               vol_ylow=cython.double, vol_border=cython.double, step=cython.ulonglong,
+               remaining_steps=cython.ulonglong, args_pborder=list, args_pbin_search=object, num_proc=cython.ushort,
+               p=object, man=object, proc=object, tempdir=str, chunk=cython.ulonglong, y_list=list, y_segment=object,
+               yl=tuple, yu=tuple, b0_extended=object, b1_extended=object, ylow_rectangle=object,
+               border_overlapping_b0=set, args_pborder_nondominatedby_b0=list, border_nondominatedby_b0=set,
+               yup_rectangle=object, border_overlapping_b1=set, args_pborder_nondominatedby_b1=list,
+               border_nondominatedby_b1=set, db0=list, db1=list, boxes_null_vol=list, name=str, rs=object)
+# @cython.locals(xspace=object, oracle=object, epsilon=cython.double, delta=cython.double, max_step=cython.ulonglong,
+#                blocking=cython.bint, sleep=cython.double, logging=cython.bint, n=cython.ushort, comparable=list,
+#                incomparable=list, border=object, lattice_border_ylow=object, lattice_border_yup=object, ylow=list,
+#                yup=list, ylow_minimal=list, yup_minimal=list, vol_total=cython.double, vol_yup=cython.double,
+#                vol_ylow=cython.double, vol_border=cython.double, step=cython.ulonglong,
+#                remaining_steps=cython.ulonglong, args_pbin_search=object,num_proc=cython.ushort, p=object,
+#                man=object, dict_man=dict, proc=object, tempdir=str, chunk=cython.ulonglong, slice_border=list,
+#                y_list=list, y_segment=object, yl=tuple, yu=tuple, b0_extended=object, b1_extended=object,
+#                ylow_rectangle=object, border_overlapping_b0=set, args_pborder_nondominatedby_b0=list,
+#                border_nondominatedby_b0=set, yup_rectangle=object, border_overlapping_b1=set,
+#                args_pborder_nondominatedby_b1=list, border_nondominatedby_b1=set, db0=list, db1=list,
+#                boxes_null_vol=list, name=str, rs=object)
 def multidim_search_deep_first_opt_3(xspace,
                                      oracle,
                                      epsilon=EPS,
@@ -403,6 +457,18 @@ def multidim_search_deep_first_opt_3(xspace,
     return ParResultSet(border, ylow, yup, xspace)
 
 
+@cython.returns(object)
+@cython.locals(xspace=object, oracle=object, epsilon=cython.double, delta=cython.double, max_step=cython.ulonglong,
+               blocking=cython.bint, sleep=cython.double, logging=cython.bint, n=cython.ushort, comparable=list,
+               incomparable=list, border=object, lattice_border_ylow=object, lattice_border_yup=object, ylow=list,
+               yup=list, ylow_minimal=list, yup_minimal=list, vol_total=cython.double, vol_yup=cython.double,
+               vol_ylow=cython.double, vol_border=cython.double, step=cython.ulonglong,
+               remaining_steps=cython.ulonglong, args_pborder=list, args_pbin_search=object, num_proc=cython.ushort,
+               p=object, man=object, proc=object, tempdir=str, chunk=cython.ulonglong, y_list=list, y_segment=object,
+               yl=tuple, yu=tuple, b0_extended=object, b1_extended=object, ylow_rectangle=object,
+               border_overlapping_b0=set, args_pborder_nondominatedby_b0=list, border_nondominatedby_b0=set,
+               yup_rectangle=object, border_overlapping_b1=set, args_pborder_nondominatedby_b1=list,
+               border_nondominatedby_b1=set, db0=list, db1=list, boxes_null_vol=list, name=str, rs=object)
 def multidim_search_deep_first_opt_2(xspace,
                                      oracle,
                                      epsilon=EPS,
@@ -632,6 +698,18 @@ def multidim_search_deep_first_opt_2(xspace,
     return ParResultSet(border, ylow, yup, xspace)
 
 
+@cython.returns(object)
+@cython.locals(xspace=object, oracle=object, epsilon=cython.double, delta=cython.double, max_step=cython.ulonglong,
+               blocking=cython.bint, sleep=cython.double, logging=cython.bint, n=cython.ushort, comparable=list,
+               incomparable=list, border=object, lattice_border_ylow=object, lattice_border_yup=object, ylow=list,
+               yup=list, ylow_minimal=list, yup_minimal=list, vol_total=cython.double, vol_yup=cython.double,
+               vol_ylow=cython.double, vol_border=cython.double, step=cython.ulonglong,
+               remaining_steps=cython.ulonglong, args_pbin_search=object, num_proc=cython.ushort, p=object, man=object,
+               proc=object, tempdir=str, chunk=cython.ulonglong, y_list=list, y_segment=object,
+               yl=tuple, yu=tuple, b0_extended=object, b1_extended=object, ylow_rectangle=object,
+               border_overlapping_b0=set, args_pborder_nondominatedby_b0=list, border_nondominatedby_b0=set,
+               yup_rectangle=object, border_overlapping_b1=set, args_pborder_nondominatedby_b1=list,
+               border_nondominatedby_b1=set, db0=list, db1=list, boxes_null_vol=list, name=str, rs=object)
 def multidim_search_deep_first_opt_1(xspace,
                                      oracle,
                                      epsilon=EPS,
@@ -855,13 +933,13 @@ def multidim_search_deep_first_opt_1(xspace,
 # Cubes from the boundary are partially dominated by Pareto points in Ylow/Ylup, while opt_inf searches for
 # cubes that are fully dominated.
 def multidim_search_deep_first_opt_inf(xspace,
-                                     oracle,
-                                     epsilon=EPS,
-                                     delta=DELTA,
-                                     max_step=STEPS,
-                                     blocking=False,
-                                     sleep=0.0,
-                                     logging=True):
+                                       oracle,
+                                       epsilon=EPS,
+                                       delta=DELTA,
+                                       max_step=STEPS,
+                                       blocking=False,
+                                       sleep=0.0,
+                                       logging=True):
     # type: (Rectangle, Oracle, float, float, int, bool, float, bool) -> ParResultSet
 
     # Xspace is a particular case of maximal rectangle
@@ -1045,6 +1123,14 @@ def multidim_search_deep_first_opt_inf(xspace,
     return ParResultSet(border, ylow, yup, xspace)
 
 
+@cython.returns(object)
+@cython.locals(xspace=object, oracle=object, epsilon=cython.double, delta=cython.double, max_step=cython.ulonglong,
+               blocking=cython.bint, sleep=cython.double, logging=cython.bint, n=cython.ushort, comparable=list,
+               incomparable=list, border=object, ylow=list, yup=list, vol_total=cython.double, vol_yup=cython.double,
+               vol_ylow=cython.double, vol_border=cython.double, step=cython.ulonglong,
+               remaining_steps=cython.ulonglong, args_pbin_search=object, num_proc=cython.ushort, p=object, man=object,
+               proc=object, tempdir=str, chunk=cython.ulonglong, y_list=list, b0_list=list,
+               b1_list=list, args_pborder=list, new_incomp_rects=set, name=str, rs=object)
 def multidim_search_deep_first_opt_0(xspace,
                                      oracle,
                                      epsilon=EPS,

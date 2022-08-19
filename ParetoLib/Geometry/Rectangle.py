@@ -90,7 +90,7 @@ from ParetoLib._py3k import red
 
 @cython.cclass
 class Rectangle(object):
-    cython.declare(min_corner=tuple, max_corner=tuple, vol=cython.double, vertx=list)
+    cython.declare(_min_corner=tuple, _max_corner=tuple, vol=cython.double, vertx=list)
 
     def __init__(self,
                  min_corner=(float('-inf'),) * 2,
@@ -105,12 +105,12 @@ class Rectangle(object):
         assert dim(min_corner) == dim(max_corner)
 
         # min_corner, max_corner
-        # self.min_corner = tuple(min(mini, maxi) for mini, maxi in zip(min_corner, max_corner))
-        # self.max_corner = tuple(max(mini, maxi) for mini, maxi in zip(min_corner, max_corner))
-        self.min_corner = minimum(min_corner, max_corner)
-        self.max_corner = maximum(min_corner, max_corner)
-        # self.min_corner = min_corner
-        # self.max_corner = max_corner
+        # self._min_corner = tuple(min(mini, maxi) for mini, maxi in zip(min_corner, max_corner))
+        # self._max_corner = tuple(max(mini, maxi) for mini, maxi in zip(min_corner, max_corner))
+        self._min_corner = minimum(min_corner, max_corner)
+        self._max_corner = maximum(min_corner, max_corner)
+        # self._min_corner = min_corner
+        # self._max_corner = max_corner
 
         # Volume (self.vol) is calculated on demand the first time is accessed, and cached afterwards.
         # Using 'None' for indicating that attribute vol is outdated (e.g., user changes min_corner or max_corners).
@@ -122,7 +122,7 @@ class Rectangle(object):
         self.vertx = None
         self.privilege = 1
 
-        assert greater_equal(self.max_corner, self.min_corner) or incomparables(self.min_corner, self.max_corner)
+        assert greater_equal(self._max_corner, self._min_corner) or incomparables(self._min_corner, self._max_corner)
 
     @cython.ccall
     @cython.returns(cython.void)
@@ -133,6 +133,78 @@ class Rectangle(object):
         self.snInf = None
         self.sigVol = None
         self.vertx = None
+
+
+    # _min_corner = property(getname, setname, delname)
+
+    # @cython.ccall
+    # @cython.returns(tuple)
+    @property
+    def min_corner(self):
+        # type: (Rectangle) -> tuple
+        """
+        Getter of max_corner class attribute.
+        """
+        return self._min_corner
+
+    @min_corner.setter
+    def min_corner(self, value):
+        # type: (Rectangle, tuple) -> None
+        """
+        Setter of min_corner class attribute.
+
+        Args:
+            self (Rectangle): The Rectangle.
+            value (tuple): The value
+
+        Returns:
+            None: self._min_corner = value.
+
+        Example:
+        >>> x = (0,0,0)
+        >>> y = (2,2,2)
+        >>> r = Rectangle(x,y)
+        >>> r.min_corner = x
+        """
+        self.reset()
+        self._min_corner = value
+
+    # _max_corner = property(getname, setname, delname)
+
+    # @cython.ccall
+    # @cython.returns(tuple)
+    @property
+    def max_corner(self):
+        # type: (Rectangle) -> tuple
+        """
+        Getter of max_corner class attribute.
+        """
+        return self._max_corner
+
+    # @cython.ccall
+    # @cython.locals(value=tuple)
+    # @cython.returns(cython.void)
+    @max_corner.setter
+    def max_corner(self, value):
+        # type: (Rectangle, tuple) -> None
+        """
+        Setter of max_corner class attribute.
+
+        Args:
+            self (Rectangle): The Rectangle.
+            value (tuple): The value
+
+        Returns:
+            None: self._max_corner = value.
+
+        Example:
+        >>> x = (0,0,0)
+        >>> y = (2,2,2)
+        >>> r = Rectangle(x,y)
+        >>> r.max_corner = y
+        """
+        self.reset()
+        self._max_corner = value
 
     def __setattr__(self, name, value):
         # type: (Rectangle, str, None) -> None
@@ -205,8 +277,8 @@ class Rectangle(object):
         >>> x in r
         >>> False
         """
-        return (greater(xpoint, self.min_corner) and
-                less(xpoint, self.max_corner))
+        return (greater(xpoint, self._min_corner) and
+                less(xpoint, self._max_corner))
 
     @cython.ccall
     @cython.locals(xpoint=tuple)
@@ -233,8 +305,8 @@ class Rectangle(object):
         >>> True
         """
         # xpoint is inside the rectangle or along the border
-        return (greater_equal(xpoint, self.min_corner) and
-                less_equal(xpoint, self.max_corner))
+        return (greater_equal(xpoint, self._min_corner) and
+                less_equal(xpoint, self._max_corner))
 
     @cython.ccall
     @cython.returns(str)
@@ -243,7 +315,7 @@ class Rectangle(object):
         """
         Printer.
         """
-        _string = '[{0}, {1}]'.format(self.min_corner, self.max_corner)
+        _string = '[{0}, {1}]'.format(self._min_corner, self._max_corner)
         return _string
 
     @cython.returns(str)
@@ -268,8 +340,8 @@ class Rectangle(object):
         """
         self == other
         """
-        # return (other.min_corner == self.min_corner) and (other.max_corner == self.max_corner)
-        return equal(other.min_corner, self.min_corner) and equal(other.max_corner, self.max_corner)
+        # return (other.min_corner == self._min_corner) and (other.max_corner == self._max_corner)
+        return equal(other.min_corner, self._min_corner) and equal(other.max_corner, self._max_corner)
 
     @cython.returns(cython.bint)
     def __ne__(self, other):
@@ -285,7 +357,7 @@ class Rectangle(object):
         """
         self < other
         """
-        return less(self.max_corner, other.max_corner)
+        return less(self._max_corner, other.max_corner)
 
     @cython.returns(cython.bint)
     def __le__(self, other):
@@ -293,7 +365,7 @@ class Rectangle(object):
         """
         self <= other
         """
-        return less_equal(self.max_corner, other.max_corner)
+        return less_equal(self._max_corner, other.max_corner)
 
     @cython.returns(cython.bint)
     def __gt__(self, other):
@@ -317,8 +389,8 @@ class Rectangle(object):
         """
         Identity function (via hashing).
         """
-        return hash((self.min_corner, self.max_corner))
-        # return hash((tuple(self.min_corner), tuple(self.max_corner)))
+        return hash((self._min_corner, self._max_corner))
+        # return hash((tuple(self._min_corner), tuple(self._max_corner)))
 
     # Rectangle properties
     @cython.ccall
@@ -341,7 +413,7 @@ class Rectangle(object):
         >>> r.dim()
         >>> 3
         """
-        return dim(self.min_corner)
+        return dim(self._min_corner)
 
     @cython.locals(diagonal_length=tuple, _prod=cython.double)
     @cython.returns(cython.double)
@@ -410,7 +482,7 @@ class Rectangle(object):
     def _vertices(self):
         # type: (Rectangle) -> list
         deltas = self.diag_vector()
-        vertex = self.min_corner
+        vertex = self._min_corner
         vertices = []
         # For dim = 3, indexes =
         # (0, 0, 0)
@@ -431,7 +503,7 @@ class Rectangle(object):
     def _vertices_func(self):
         # type: (Rectangle) -> list
         deltas = self.diag_vector()
-        vertex = self.min_corner
+        vertex = self._min_corner
         num_vertex = self.num_vertices()
         d = self.dim()
         vertices = [None] * num_vertex
@@ -487,7 +559,7 @@ class Rectangle(object):
         >>> r.diag()
         >>> (1.0,1.0)
         """
-        return Segment(self.min_corner, self.max_corner)
+        return Segment(self._min_corner, self._max_corner)
 
     @cython.ccall
     @cython.returns(tuple)
@@ -509,7 +581,7 @@ class Rectangle(object):
         >>> r.diag_vector()
         >>> (2.0,2.0,2.0)
         """
-        return subtract(self.max_corner, self.min_corner)
+        return subtract(self._max_corner, self._min_corner)
 
     @cython.ccall
     @cython.locals(diagonal=object)
@@ -557,7 +629,7 @@ class Rectangle(object):
         >>> (0.5,0.5)
         """
         offset = div(self.diag_vector(), 2.0)
-        return add(self.min_corner, offset)
+        return add(self._min_corner, offset)
 
     @cython.ccall
     @cython.locals(xpoint=tuple, middle_point=tuple, eucledian_dist=cython.double)
@@ -610,7 +682,7 @@ class Rectangle(object):
         # n internal points = n + 1 internal segments
         m = float(n + 1)  # Type conversion required for point operations
         diag_step = div(self.diag_vector(), m)
-        min_point = add(self.min_corner, diag_step)
+        min_point = add(self._min_corner, diag_step)
         point_list = [add(min_point, mult(diag_step, i)) for i in range(n)]
         return point_list
 
@@ -645,15 +717,15 @@ class Rectangle(object):
         concatenable = False
 
         # Two rectangles are concatenable if d-1 coordinates are aligned and they only differ in 1 coordinate
-        min_corner_eq = (self_i == other_i for self_i, other_i in zip(self.min_corner, other.min_corner))
-        max_corner_eq = (self_i == other_i for self_i, other_i in zip(self.max_corner, other.max_corner))
+        min_corner_eq = (self_i == other_i for self_i, other_i in zip(self._min_corner, other.min_corner))
+        max_corner_eq = (self_i == other_i for self_i, other_i in zip(self._max_corner, other.max_corner))
         corner_eq = [min_c and max_c for min_c, max_c in zip(min_corner_eq, max_corner_eq)]
 
         if sum(corner_eq) == (self.dim() - 1):
             # Besides, the mismatching coordinate must have continuous interval
             mismatching_index = corner_eq.index(False)
-            concatenable = (self.max_corner[mismatching_index] == other.min_corner[mismatching_index]) or \
-                           (other.max_corner[mismatching_index] == self.min_corner[mismatching_index])
+            concatenable = (self._max_corner[mismatching_index] == other.min_corner[mismatching_index]) or \
+                           (other.max_corner[mismatching_index] == self._min_corner[mismatching_index])
 
         return concatenable
 
@@ -724,13 +796,13 @@ class Rectangle(object):
         assert self.dim() == other.dim(), 'Rectangles should have the same dimension'
         assert (not self.overlaps(other)), 'Rectangles should not overlap: {0}, {1}'.format(self, other)
 
-        rect = Rectangle(self.min_corner, self.max_corner)
+        rect = Rectangle(self._min_corner, self._max_corner)
 
         if self.is_concatenable(other):
-            # rect.min_corner = tuple(min(self_i, other_i) for self_i, other_i in zip(self.min_corner, other.min_corner))
-            # rect.max_corner = tuple(max(self_i, other_i) for self_i, other_i in zip(self.max_corner, other.max_corner))
-            rect.min_corner = minimum(self.min_corner, other.min_corner)
-            rect.max_corner = maximum(self.max_corner, other.max_corner)
+            # rect.min_corner = tuple(min(self_i, other_i) for self_i, other_i in zip(self._min_corner, other.min_corner))
+            # rect.max_corner = tuple(max(self_i, other_i) for self_i, other_i in zip(self._max_corner, other.max_corner))
+            rect.min_corner = minimum(self._min_corner, other.min_corner)
+            rect.max_corner = maximum(self._max_corner, other.max_corner)
 
         return rect
 
@@ -764,7 +836,7 @@ class Rectangle(object):
         vert_self = set(self.vertices())
         vert_other = set(other.vertices())
         inter = vert_self.intersection(vert_other)
-        rect = Rectangle(self.min_corner, self.max_corner)
+        rect = Rectangle(self._min_corner, self._max_corner)
 
         # if len(vert_1) == len(vert_2) and \
         #    len(vert_1) == pow(2, d) and \
@@ -812,13 +884,14 @@ class Rectangle(object):
 
         # if 'self' and 'other' are concatenable
         if self.is_concatenable(other):
-            # min_corner = tuple(min(self_i, other_i) for self_i, other_i in zip(self.min_corner, other.min_corner))
-            # max_corner = tuple(max(self_i, other_i) for self_i, other_i in zip(self.max_corner, other.max_corner))
-            min_corner = minimum(self.min_corner, other.min_corner)
-            max_corner = maximum(self.max_corner, other.max_corner)
+            # min_corner = tuple(min(self_i, other_i) for self_i, other_i in zip(self._min_corner, other.min_corner))
+            # max_corner = tuple(max(self_i, other_i) for self_i, other_i in zip(self._max_corner, other.max_corner))
+            min_corner = minimum(self._min_corner, other.min_corner)
+            max_corner = maximum(self._max_corner, other.max_corner)
 
-            self.min_corner = min_corner
-            self.max_corner = max_corner
+            self._min_corner = min_corner
+            self._max_corner = max_corner
+            self.reset()
         return self
 
     @cython.ccall
@@ -865,8 +938,9 @@ class Rectangle(object):
             assert len(new_union_vertices) > 0, \
                 'Error in computing vertices for the concatenation of "{0}" and "{1}"'.format(self, other)
 
-            self.min_corner = min(new_union_vertices)
-            self.max_corner = max(new_union_vertices)
+            self._min_corner = min(new_union_vertices)
+            self._max_corner = max(new_union_vertices)
+            self.reset()
         return self
 
     @cython.ccall
@@ -895,10 +969,10 @@ class Rectangle(object):
         """
         assert self.dim() == other.dim(), 'Rectangles should have the same dimension'
 
-        # minc = tuple(max(self_i, other_i) for self_i, other_i in zip(self.min_corner, other.min_corner))
-        # maxc = tuple(min(self_i, other_i) for self_i, other_i in zip(self.max_corner, other.max_corner))
-        minc = maximum(self.min_corner, other.min_corner)
-        maxc = minimum(self.max_corner, other.max_corner)
+        # minc = tuple(max(self_i, other_i) for self_i, other_i in zip(self._min_corner, other.min_corner))
+        # maxc = tuple(min(self_i, other_i) for self_i, other_i in zip(self._max_corner, other.max_corner))
+        minc = maximum(self._min_corner, other.min_corner)
+        maxc = minimum(self._max_corner, other.max_corner)
         return less(minc, maxc)
 
     @cython.ccall
@@ -928,14 +1002,14 @@ class Rectangle(object):
         """
         assert self.dim() == other.dim(), 'Rectangles should have the same dimension'
 
-        # minc = tuple(max(self_i, other_i) for self_i, other_i in zip(self.min_corner, other.min_corner))
-        # maxc = tuple(min(self_i, other_i) for self_i, other_i in zip(self.max_corner, other.max_corner))
-        minc = maximum(self.min_corner, other.min_corner)
-        maxc = minimum(self.max_corner, other.max_corner)
+        # minc = tuple(max(self_i, other_i) for self_i, other_i in zip(self._min_corner, other.min_corner))
+        # maxc = tuple(min(self_i, other_i) for self_i, other_i in zip(self._max_corner, other.max_corner))
+        minc = maximum(self._min_corner, other.min_corner)
+        maxc = minimum(self._max_corner, other.max_corner)
         if less(minc, maxc):
             return Rectangle(minc, maxc)
         # else:
-        #     return Rectangle(self.min_corner, self.max_corner)
+        #     return Rectangle(self._min_corner, self._max_corner)
 
     @cython.ccall
     @cython.locals(minc=tuple, maxc=tuple)
@@ -968,13 +1042,15 @@ class Rectangle(object):
         """
         assert self.dim() == other.dim(), 'Rectangles should have the same dimension'
 
-        # minc = tuple(max(self_i, other_i) for self_i, other_i in zip(self.min_corner, other.min_corner))
-        # maxc = tuple(min(self_i, other_i) for self_i, other_i in zip(self.max_corner, other.max_corner))
-        minc = maximum(self.min_corner, other.min_corner)
-        maxc = minimum(self.max_corner, other.max_corner)
+        # minc = tuple(max(self_i, other_i) for self_i, other_i in zip(self._min_corner, other.min_corner))
+        # maxc = tuple(min(self_i, other_i) for self_i, other_i in zip(self._max_corner, other.max_corner))
+        minc = maximum(self._min_corner, other.min_corner)
+        maxc = minimum(self._max_corner, other.max_corner)
         if less(minc, maxc):
-            self.min_corner = minc
-            self.max_corner = maxc
+            self._min_corner = minc
+            self._max_corner = maxc
+            self.reset()
+
         return self
 
     __and__ = intersection
@@ -1017,10 +1093,10 @@ class Rectangle(object):
         if inter is None:
             diff_set.add(self)
         else:
-            # ground = self.min_corner
-            # ceil = self.max_corner
-            ground = tuple(self.min_corner)
-            ceil = tuple(self.max_corner)
+            # ground = self._min_corner
+            # ceil = self._max_corner
+            ground = tuple(self._min_corner)
+            ceil = tuple(self._max_corner)
 
             # The maximum number of sub-cubes is 2*d (2 boxes per coordinate)
             for i in range(self.dim()):
@@ -1036,8 +1112,8 @@ class Rectangle(object):
                 # ground = new_ground
                 # ceil = new_ceil
 
-                inner_ground = ground[:i] + (max(ground[i], inter.max_corner[i]),) + ground[i+1:]
-                inner_ceil = ceil[:i] + (min(ceil[i], inter.min_corner[i]),) + ceil[i+1:]
+                inner_ground = ground[:i] + (max(ground[i], inter.max_corner[i]),) + ground[i + 1:]
+                inner_ceil = ceil[:i] + (min(ceil[i], inter.min_corner[i]),) + ceil[i + 1:]
 
                 r1 = Rectangle(ground, inner_ceil)
                 r2 = Rectangle(inner_ground, ceil)
@@ -1047,8 +1123,8 @@ class Rectangle(object):
                 if r2.volume() > 0.0:
                     diff_set.add(r2)
 
-                ground = ground[:i] + (max(ground[i], inter.min_corner[i]),) + ground[i+1:]
-                ceil = ceil[:i] + (min(ceil[i], inter.max_corner[i]),) + ceil[i+1:]
+                ground = ground[:i] + (max(ground[i], inter.min_corner[i]),) + ground[i + 1:]
+                ceil = ceil[:i] + (min(ceil[i], inter.max_corner[i]),) + ceil[i + 1:]
         return list(diff_set)
 
     # @cython.ccall
@@ -1096,16 +1172,16 @@ class Rectangle(object):
             # d is a list with dimension equal to the rectangle dimension.
             dimension = self.dim()
 
-            # For each dimension i, d[i] = {self.min_corner[i], self.max_corner[i]} plus
+            # For each dimension i, d[i] = {self._min_corner[i], self._max_corner[i]} plus
             # all the points of rectangle 'other' that fall inside of rectangle 'self'
-            d = [{self.min_corner[i], self.max_corner[i]} for i in range(dimension)]
+            d = [{self._min_corner[i], self._max_corner[i]} for i in range(dimension)]
 
             # At maximum:
-            # d[i] = {self.min_corner[i], other.min_corner[i], other.max_corner[i], self.max_corner[i]}
+            # d[i] = {self._min_corner[i], other.min_corner[i], other.max_corner[i], self._max_corner[i]}
             for i in range(dimension):
-                if self.min_corner[i] < other.min_corner[i] < self.max_corner[i]:
+                if self._min_corner[i] < other.min_corner[i] < self._max_corner[i]:
                     d[i].add(other.min_corner[i])
-                if self.min_corner[i] < other.max_corner[i] < self.max_corner[i]:
+                if self._min_corner[i] < other.max_corner[i] < self._max_corner[i]:
                     d[i].add(other.max_corner[i])
 
             # elem[i] = pairwise(d[i])
@@ -1159,9 +1235,9 @@ class Rectangle(object):
     def dominates_point(self, xpoint):
         # type: (Rectangle, tuple) -> bool
         """
-        Synonym of Point.dominates(self.max_corner, xpoint).
+        Synonym of Point.dominates(self._max_corner, xpoint).
         """
-        return less_equal(self.max_corner, xpoint)
+        return less_equal(self._max_corner, xpoint)
 
     @cython.ccall
     @cython.locals(xpoint=tuple)
@@ -1169,9 +1245,9 @@ class Rectangle(object):
     def is_dominated_by_point(self, xpoint):
         # type: (Rectangle, tuple) -> bool
         """
-        Synonym of Point.dominates(xpoint, self.min_corner).
+        Synonym of Point.dominates(xpoint, self._min_corner).
         """
-        return less_equal(xpoint, self.min_corner)
+        return less_equal(xpoint, self._min_corner)
 
     @cython.ccall
     @cython.locals(other=object)
@@ -1179,10 +1255,10 @@ class Rectangle(object):
     def dominates_rect(self, other):
         # type: (Rectangle, Rectangle) -> bool
         """
-        Synonym of Point.dominates(self.max_corner, other.min_corner).
+        Synonym of Point.dominates(self._max_corner, other.min_corner).
         """
-        return less_equal(self.max_corner, other.min_corner)  # testing. Strict dominance and not overlap
-        # return less_equal(self.min_corner, other.min_corner) and less_equal(self.max_corner, other.max_corner) # working
+        return less_equal(self._max_corner, other.min_corner)  # testing. Strict dominance and not overlap
+        # return less_equal(self._min_corner, other.min_corner) and less_equal(self._max_corner, other.max_corner) # working
 
     @cython.ccall
     @cython.locals(other=object)
@@ -1218,14 +1294,14 @@ class Rectangle(object):
          >>> r.scale(f)
          >>> [(70.0,-1.0), (70.0,0.0)]
         """
-        self.min_corner = f(self.min_corner)
-        self.max_corner = f(self.max_corner)
+        self._min_corner = f(self._min_corner)
+        self._max_corner = f(self._max_corner)
 
-        min_c = minimum(self.min_corner, self.max_corner)
-        max_c = maximum(self.min_corner, self.max_corner)
+        min_c = minimum(self._min_corner, self._max_corner)
+        max_c = maximum(self._min_corner, self._max_corner)
 
-        self.min_corner = min_c
-        self.max_corner = max_c
+        self._min_corner = min_c
+        self._max_corner = max_c
 
     # Matplot functions
     @cython.ccall
@@ -1255,10 +1331,10 @@ class Rectangle(object):
 
         """
         assert (self.dim() >= 2), 'Dimension required >= 2'
-        minc = (self.min_corner[xaxe], self.min_corner[yaxe],)
+        minc = (self._min_corner[xaxe], self._min_corner[yaxe],)
 
         if clip_box is not None:
-            maxc = (self.max_corner[xaxe], self.max_corner[yaxe],)
+            maxc = (self._max_corner[xaxe], self._max_corner[yaxe],)
 
             clipminc = (clip_box.min_corner[xaxe], clip_box.min_corner[yaxe],)
             clipmaxc = (clip_box.max_corner[xaxe], clip_box.max_corner[yaxe],)
@@ -1313,8 +1389,8 @@ class Rectangle(object):
         """
         assert (self.dim() >= 3), 'Dimension required >= 3'
 
-        minc = (self.min_corner[xaxe], self.min_corner[yaxe], self.min_corner[zaxe],)
-        maxc = (self.max_corner[xaxe], self.max_corner[yaxe], self.max_corner[zaxe],)
+        minc = (self._min_corner[xaxe], self._min_corner[yaxe], self._min_corner[zaxe],)
+        maxc = (self._max_corner[xaxe], self._max_corner[yaxe], self._max_corner[zaxe],)
         if clip_box is not None:
             clipminc = (clip_box.min_corner[xaxe], clip_box.min_corner[yaxe], clip_box.min_corner[zaxe],)
             clipmaxc = (clip_box.max_corner[xaxe], clip_box.max_corner[yaxe], clip_box.max_corner[zaxe],)

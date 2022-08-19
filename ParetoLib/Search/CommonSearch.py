@@ -124,8 +124,9 @@ def intersection_empty(x, member1, member2):
     return (not member1(x.high)) or (not member2(x.low))
 
 
-@cython.locals(x=object, error=tuple, to_expand=cython.bint, i=cython.ushort, i1=cython.ushort, i2=cython.ushort,
-               y=object, z=object, zgrek1=object, zgrek2=object, ygrek=object,
+@cython.locals(x=object, y=object, z=object, error=tuple, to_expand=cython.bint,
+               i=cython.ushort, i1=cython.ushort, i2=cython.ushort,
+               zgrek1=object, zgrek2=object, ygrek=object,
                intersect_indicator=cython.short, dist=cython.double, yval=tuple, result1=cython.bint,
                result2=cython.bint, yIn=object, yCover=object, eps_minus=tuple, eps_plus=tuple)
 @cython.returns((object, object, cython.short, cython.ushort))

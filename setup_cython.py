@@ -1,4 +1,3 @@
-import multiprocessing
 from multiprocessing import cpu_count
 from setuptools import Extension, find_packages, setup
 from setuptools.command.build_py import build_py as build_py_orig
@@ -83,42 +82,43 @@ if __name__ == '__main__':
     # extension_list = Extension("ParetoLib.Geometry.Point", ["ParetoLib/Geometry/Point.py"])
     extension_list = [makeExtension(module, filename) for (module, filename) in extNames]
     exclude_list = cython_exclude(extNames)
-    python_packages = find_packages()
-    # python_packages = ['ParetoLib._py3k', 'ParetoLib.JAMT', 'ParetoLib.STLe']
-    # cythonized_packages = find_packages(exclude=['ParetoLib._py3k'])
     setup(
         name="ParetoLib",
         version=__version__,
         author="J. Ignacio Requeno",
-        author_email='jose-ignacio.requeno-jarabo@univ-grenoble-alpes.fr',
+        author_email='jrequeno@ucm.es',
         description='ParetoLib is a free multidimensional boundary learning library for ' \
                     'Python 2.7, 3.4 or newer',
         long_description=long_description,
         long_description_content_type="text/markdown",
         url='https://gricad-gitlab.univ-grenoble-alpes.fr/verimag/tempo/multidimensional_search',
         install_requires=[
+            'cython>=0.29',
             'matplotlib>=2.0.2,<=3.0.3',
             'numpy>=1.15',
+            'pandas>=1.3.0',
+            'PyQt5>=5.15.6',
             'pytest>=2.0',
+            'seaborn>=0.11.2',
             'sortedcontainers>=1.5.10',
-            'sympy>=1.1.1',
-            'cython>=0.29'
+            'sympy>=1.1.1'
         ],
         ext_modules=cythonize(module_list=extension_list, exclude=exclude_list, nthreads=cpu_count()),
         # packages_dir={'': 'ParetoLib'},
         # packages=find_packages(exclude=['ParetoLib._py3k', 'Tests']),
-        packages=python_packages,
+        # packages = ['ParetoLib._py3k', 'ParetoLib.JAMT', 'ParetoLib.STLe']
+        packages=find_packages(),
         package_data={
             'ParetoLib.JAMT': ['*.jar'],
             'ParetoLib.STLe': ['*.bin', '*.exe', '*.so.1', '*.dll']
         },
         include_package_data=True,
-        classifiers=(
+        classifiers=[
             "Programming Language :: Python :: 2.7",
             "Programming Language :: Python :: 3.4",
             "License :: GNU GPL",
             "Operating System :: OS Independent",
-        ),
+        ],
         use_2to3=True,
         test_suite=os.path.dirname(__file__) + '.Tests',
         # convert_2to3_doctests=['src/your/module/README.txt'],

@@ -33,8 +33,8 @@ class OracleMatlab(Oracle):
     cython.declare(err=object)
     cython.declare(eng=object)
 
-    cython.declare(f=object)
-    cython.declare(d=cython.ushort)
+    cython.declare(_f=object)
+    cython.declare(_d=cython.ushort)
 
     cython.declare(_matlab_model_file=str)
 
@@ -55,15 +55,15 @@ class OracleMatlab(Oracle):
 
         # Matlab function 'f' not loaded yet.
         # Dimension of the space unknown
-        self.f = None
-        self.d = 0
+        self._f = None
+        self._d = 0
 
-        self.matlab_model_file = matlab_model_file
+        self._matlab_model_file = matlab_model_file
 
     @cython.returns(cython.void)
     def _load_matlab_engine(self):
         # type: (OracleMatlab) -> None
-        assert self.matlab_model_file != ''
+        assert self._matlab_model_file != ''
 
         # Lazy initialization of the Matlab engine
         RootOracle.logger.debug('Initializing Matlab engine')
@@ -78,7 +78,7 @@ class OracleMatlab(Oracle):
     @cython.locals(filename=str, file_extension=str, func_name=str)
     def _load_function(self):
         # type: (OracleMatlab) -> None
-        assert self.matlab_model_file != '', 'Matlab function not defined'
+        assert self._matlab_model_file != '', 'Matlab function not defined'
         # assert self.eng is not None, 'Matlab engine not started'
 
         RootOracle.logger.debug('Loading Matlab function')
@@ -87,7 +87,7 @@ class OracleMatlab(Oracle):
             self._load_matlab_engine()
 
         # Include the path of the Matlab model in the Matlab workspace
-        self.eng.addpath(os.path.dirname(self.matlab_model_file))
+        self.eng.addpath(os.path.dirname(self._matlab_model_file))
 
         # Extract the name of the Matlab function.
         # If the Matlab filename is 'matlab_model.m' then:
@@ -98,45 +98,113 @@ class OracleMatlab(Oracle):
 
         # matlab_model_file = '/path/to/matlab_model.m'
         # filename, file_extension = ('/path/to/matlab_model', '.m')
-        filename, file_extension = os.path.splitext(self.matlab_model_file)
+        filename, file_extension = os.path.splitext(self._matlab_model_file)
         # func_name = 'matlab_model'
         func_name = os.path.basename(filename)
 
         # Extract from Matlab the function 'f' that will be used as Oracle
-        # self.f = self.eng.__getattr__('matlab_model')
-        self.f = self.eng.__getattr__(func_name)
+        # self._f = self.eng.__getattr__('matlab_model')
+        self._f = self.eng.__getattr__(func_name)
 
         # Dimension, i.e., equivalent to the number of in arguments of the function 'f'
-        self.d = int(self.eng.nargin(func_name))
+        self._d = int(self.eng.nargin(func_name))
 
-        RootOracle.logger.debug('Function {0} with {1} parameters'.format(func_name, self.d))
-        RootOracle.logger.debug('Matlab function {0}'.format(self.f))
+        RootOracle.logger.debug('Function {0} with {1} parameters'.format(func_name, self._d))
+        RootOracle.logger.debug('Matlab function {0}'.format(self._f))
 
-    def __setattr__(self, name, value):
-        # type: (OracleMatlab, str, None) -> None
+    @property
+    def matlab_model_file(self):
+        # type: (OracleMatlab) -> str
         """
-        Assignation of a value to a class attribute.
+        Getter of matlab_model_file class attribute.
+        """
+
+        return self._matlab_model_file
+
+    @matlab_model_file.setter
+    def matlab_model_file(self, value):
+        # type: (OracleMatlab, str) -> None
+        """
+        Setter of matlab_model_file class attribute.
 
         Args:
             self (OracleMatlab): The OracleMatlab.
-            name (str): The attribute.
-            value (None): The value
+            value (str): The value
 
         Returns:
-            None: self.name = value.
+            None: self.matlab_model_file = value.
 
         Example:
         >>> matlab_model_file = 'test1.m'
         >>> ora = OracleMatlab()
         >>> ora.matlab_model_file = matlab_model_file
         """
+        if value.strip() != '':
+            self._f = None
+            self._d = 0
+            self._matlab_model_file = value
 
-        object.__setattr__(self, name, value)
+    # _matlab_model_file = property(getname, setname, delname)
 
-        str_matlab_file = 'matlab_model_file'
-        if (name == str_matlab_file) and (value.strip() != ''):
-            self.f = None
-            self.d = None
+    @property
+    def f(self):
+        # type: (OracleMatlab) -> callable
+        """
+        Getter of f class attribute.
+        """
+        if self._f is None and self._d == 0:
+            self._load_function()
+
+        return self._f
+
+    @f.setter
+    def f(self, value):
+        # type: (OracleMatlab, callable) -> None
+        """
+        Setter of matlab_model_file class attribute.
+
+        Args:
+            self (OracleMatlab): The OracleMatlab.
+            value (object): The value
+
+        Returns:
+            None: self.f = value.
+        """
+        self._f = value
+
+    # f = property(getname, setname, delname)
+
+    @property
+    def d(self):
+        # type: (OracleMatlab) -> int
+        """
+        Getter of d class attribute.
+        """
+        if self._f is None and self._d == 0:
+            self._load_function()
+
+        return self._d
+
+    @d.setter
+    def d(self, value):
+        # type: (OracleMatlab, int) -> None
+        """
+        Setter of d class attribute.
+
+        Args:
+            self (OracleMatlab): The OracleMatlab.
+            value (int): The value
+
+        Returns:
+            None: self.d = value.
+
+        Example:
+        >>> ora = OracleMatlab()
+        >>> ora.d = 2
+        """
+        self._d = value
+
+    # d = property(getname, setname, delname)
 
     @cython.returns(str)
     def __repr__(self):
@@ -144,7 +212,7 @@ class OracleMatlab(Oracle):
         """
         Printer.
         """
-        return self.matlab_model_file
+        return self._matlab_model_file
 
     @cython.returns(str)
     def __str__(self):
@@ -152,7 +220,7 @@ class OracleMatlab(Oracle):
         """
         Printer.
         """
-        return self.matlab_model_file
+        return self._matlab_model_file
 
     @cython.returns(cython.bint)
     def __eq__(self, other):
@@ -160,7 +228,7 @@ class OracleMatlab(Oracle):
         """
         self == other
         """
-        return self.matlab_model_file == other.matlab_model_file
+        return self._matlab_model_file == other.matlab_model_file
 
     @cython.returns(cython.bint)
     def __ne__(self, other):
@@ -176,7 +244,7 @@ class OracleMatlab(Oracle):
         """
         Identity function (via hashing).
         """
-        return hash(tuple(self.matlab_model_file))
+        return hash(tuple(self._matlab_model_file))
 
     @cython.returns(cython.void)
     def __del__(self):
@@ -194,7 +262,7 @@ class OracleMatlab(Oracle):
         other = copy.copy(self)
         """
         RootOracle.logger.debug('__copy__: {0}'.format(self))
-        return OracleMatlab(matlab_model_file=self.matlab_model_file)
+        return OracleMatlab(matlab_model_file=self._matlab_model_file)
 
     @cython.returns(object)
     def __deepcopy__(self, memo):
@@ -205,37 +273,63 @@ class OracleMatlab(Oracle):
         # deepcopy function is required for creating multiple instances of the Oracle in ParSearch.
         # deepcopy cannot handle neither matlab.engine nor matlab.func
         RootOracle.logger.debug('__deeopcopy__: {0}'.format(self))
-        return OracleMatlab(matlab_model_file=self.matlab_model_file)
+        return OracleMatlab(matlab_model_file=self._matlab_model_file)
 
-    def __getattr__(self, name):
-        # type: (OracleMatlab, str) -> _
-        """
-        Returns:
-            self.name (object attribute)
-        """
-        elem = object.__getattribute__(self, name)
+    # def __setattr__(self, name, value):
+    #     # type: (OracleMatlab, str, None) -> None
+    #     """
+    #     Assignation of a value to a class attribute.
+    #
+    #     Args:
+    #         self (OracleMatlab): The OracleMatlab.
+    #         name (str): The attribute.
+    #         value (None): The value
+    #
+    #     Returns:
+    #         None: self.name = value.
+    #
+    #     Example:
+    #     >>> matlab_model_file = 'test1.m'
+    #     >>> ora = OracleMatlab()
+    #     >>> ora.matlab_model_file = matlab_model_file
+    #     """
+    #
+    #     object.__setattr__(self, name, value)
+    #
+    #     str_matlab_file = 'matlab_model_file'
+    #     if (name == str_matlab_file) and (value.strip() != ''):
+    #         self.f = None
+    #         self.d = None
 
-        if (elem is None) and (name in ['f', 'd']):
-            self._load_function()
-            elem = object.__getattribute__(self, name)
-        # elif (elem is None) and (name == 'eng'):
-        #     self._load_matlab_engine()
-        #     elem = object.__getattribute__(self, name)
-
-        RootOracle.logger.debug('__getattr__: {0}, {1}'.format(name, elem))
-        return elem
-
-    def __getattribute__(self, name):
-        # type: (OracleMatlab, str) -> _
-        """
-        Returns:
-            self.name (object attribute)
-        """
-        elem = object.__getattribute__(self, name)
-        RootOracle.logger.debug('__getattribute__: {0}, {1}'.format(name, elem))
-        if elem is None:
-            raise AttributeError
-        return elem
+    # def __getattr__(self, name):
+    #     # type: (OracleMatlab, str) -> _
+    #     """
+    #     Returns:
+    #         self.name (object attribute)
+    #     """
+    #     elem = object.__getattribute__(self, name)
+    #
+    #     if (elem is None) and (name in ['f', 'd']):
+    #         self._load_function()
+    #         elem = object.__getattribute__(self, name)
+    #     # elif (elem is None) and (name == 'eng'):
+    #     #     self._load_matlab_engine()
+    #     #     elem = object.__getattribute__(self, name)
+    #
+    #     RootOracle.logger.debug('__getattr__: {0}, {1}'.format(name, elem))
+    #     return elem
+    #
+    # def __getattribute__(self, name):
+    #     # type: (OracleMatlab, str) -> _
+    #     """
+    #     Returns:
+    #         self.name (object attribute)
+    #     """
+    #     elem = object.__getattribute__(self, name)
+    #     RootOracle.logger.debug('__getattribute__: {0}, {1}'.format(name, elem))
+    #     if elem is None:
+    #         raise AttributeError
+    #     return elem
 
     @cython.returns(cython.ushort)
     def dim(self):
@@ -243,7 +337,7 @@ class OracleMatlab(Oracle):
         """
         See Oracle.dim().
         """
-        return self.d
+        return self._d
 
     @cython.returns(list)
     @cython.locals(i=cython.ushort)
@@ -252,7 +346,7 @@ class OracleMatlab(Oracle):
         """
         See Oracle.get_var_names().
         """
-        return ['p'+str(i) for i in range(self.d)]
+        return ['p'+str(i) for i in range(self._d)]
 
     @cython.returns(cython.bint)
     @cython.locals(point=tuple)
@@ -271,7 +365,7 @@ class OracleMatlab(Oracle):
         """
         See Oracle.member().
         """
-        return self.f(*point, stdout=self.out, stderr=self.err)
+        return self._f(*point, stdout=self.out, stderr=self.err)
 
     @cython.returns(object)
     def membership(self):
@@ -299,7 +393,7 @@ class OracleMatlab(Oracle):
             if not os.path.isfile(matlab_model_file):
                 RootOracle.logger.info('File {0} does not exists or it is not a file'.format(matlab_model_file))
 
-            self.matlab_model_file = matlab_model_file
+            self._matlab_model_file = matlab_model_file
 
         except EOFError:
             RootOracle.logger.error('Unexpected error when loading {0}: {1}'.format(finput, sys.exc_info()[0]))
@@ -327,7 +421,7 @@ class OracleMatlab(Oracle):
             if not os.path.isfile(matlab_model_file):
                 RootOracle.logger.info('File {0} does not exists or it is not a file'.format(matlab_model_file))
 
-            self.matlab_model_file = matlab_model_file
+            self._matlab_model_file = matlab_model_file
 
         except EOFError:
             RootOracle.logger.error('Unexpected error when loading {0}: {1}'.format(finput, sys.exc_info()[0]))
@@ -341,7 +435,7 @@ class OracleMatlab(Oracle):
         """
         assert (foutput is not None), 'File object should not be null'
 
-        pickle.dump(os.path.abspath(self.matlab_model_file), foutput, pickle.HIGHEST_PROTOCOL)
+        pickle.dump(os.path.abspath(self._matlab_model_file), foutput, pickle.HIGHEST_PROTOCOL)
 
     @cython.returns(cython.void)
     @cython.locals(foutput=object)
@@ -352,4 +446,4 @@ class OracleMatlab(Oracle):
         """
         assert (foutput is not None), 'File object should not be null'
 
-        foutput.write(os.path.abspath(self.matlab_model_file) + '\n')
+        foutput.write(os.path.abspath(self._matlab_model_file) + '\n')

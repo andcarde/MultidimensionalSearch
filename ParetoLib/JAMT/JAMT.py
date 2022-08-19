@@ -52,18 +52,30 @@ def get_java_bin():
 # -------------------------------------------------------------------------------
 
 @cython.ccall
-# @cython.locals(ext=str, folder=list, file_list=list, exec_name=str, jar_file=str)
+@cython.locals(ext=str, folder=list, file_list=list, exec_name=str) #, jar_file=str)
 @cython.returns(str)
 def get_jamt_exec_name():
-    return [fname for fname in os.listdir(os.path.dirname(__file__)) if fname.endswith('.jar')][0]
+    ext = '.jar'
+
+    folder = os.listdir(os.path.dirname(__file__))
+    # folder = resource_listdir(__package__, '.')
+
+    file_list = [fname for fname in folder if fname.endswith(ext)]
+    exec_name = file_list[0]
+
+    return exec_name
 
 
 @cython.ccall
-#@cython.locals(folder=str)
+@cython.locals(folder=str)
 @cython.returns(str)
 def get_jamt_path():
-    return os.path.dirname(os.path.realpath(__file__))
+    #  __name__ == 'ParetoLib.JAMT.JAMT'
+    # __package__ == 'ParetoLib.JAMT'
 
+    folder = os.path.dirname(os.path.realpath(__file__))
+    # folder = resource_filename(__package__, '.')
+    return folder
 
 
 @cython.ccall

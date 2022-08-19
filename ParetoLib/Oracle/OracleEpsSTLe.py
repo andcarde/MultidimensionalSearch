@@ -1,9 +1,15 @@
+import cython
+
 import ParetoLib.Oracle as RootOracle
 from ParetoLib.Oracle.OracleSTLe import OracleSTLeLib
 from ParetoLib.STLe.STLe import MAX_STLE_CALLS
 
 
 class OracleEpsSTLe(OracleSTLeLib):
+    cython.declare(epsilon=int, bound=int)
+
+    @cython.locals(stl_prop_file=str, csv_signal_file=str, stl_param_file=str)
+    @cython.returns(cython.void)
     def __init__(self, bound_on_count, intvl_epsilon=5, stl_prop_file='', csv_signal_file='', stl_param_file=''):
         # type: (OracleEpsSTLe, int, int, str, str, str) -> None
         """
@@ -18,6 +24,8 @@ class OracleEpsSTLe(OracleSTLeLib):
         self.epsilon = intvl_epsilon
         self.bound = bound_on_count
 
+    @cython.locals(xpoint=tuple, val_stl_formula=str)
+    @cython.returns(cython.bint)
     def member(self, xpoint):
         # type: (OracleEpsSTLe, tuple) -> bool
         """

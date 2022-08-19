@@ -25,6 +25,7 @@ from sortedcontainers import SortedSet
 from sympy import simplify, expand, default_sort_key, Expr, Symbol
 
 import cython
+
 import ParetoLib.Oracle as RootOracle
 from ParetoLib.Oracle.Oracle import Oracle
 
@@ -325,8 +326,10 @@ class Condition(object):
         expr = self.get_expression()
         return sorted(expr.free_symbols, key=default_sort_key)
 
+    @cython.locals(variable=object, val=str, fvset=list, fv=object, expr=object, res=object, ex=str)
+    @cython.returns(object)
     def eval_var_val(self, variable=None, val='0.0'):
-        # type: (Condition, Symbol, float) -> Expr
+        # type: (Condition, Symbol, str) -> Expr
         """
         Substitutes a variable by a value in the polynomial expression of Condition.
 
