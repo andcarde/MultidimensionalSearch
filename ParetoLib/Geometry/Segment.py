@@ -293,8 +293,8 @@ class Segment(object):
         offset = div(self.diag(), 2.0)
         return add(self.low, offset)
 
-    @cython.ccall
-    @cython.locals(offset=tuple)
+    #@cython.ccall
+    #@cython.locals(offset=tuple)
     @cython.returns(tuple)
     def center_round(self):
         # type: (Segment) -> tuple

@@ -42,7 +42,13 @@ $ python setup.py build
 
 $ python setup.py install
 
-for installing the library. In order to run all the tests, you must execute:
+for installing the library.
+
+For installing a C-compiled version of the library:
+
+$ python setup_cython.py build_ext --inplace
+ 
+In order to run all the tests, you must execute:
 
 $ python setup.py test
 

@@ -32,7 +32,7 @@ from ParetoLib.STLe.STLe import STLeLibInterface, STLE_BIN, STLE_INTERACTIVE, ST
 
 # @cython.cclass
 class OracleSTLe(Oracle):
-    cython.declare(stl_prop_file=str, csv_signal_file=str, stl_param_file=str, stl_formula=str, stl_parameters=list,
+    cython.declare(stl_prop_file=str, csv_signal_file=str, stl_param_file=str, _stl_formula=str, _stl_parameters=list,
                    pattern=object, num_oracle_calls=cython.ulong, stle_oracle=object, initialized=cython.bint)
 
     @cython.locals(stl_prop_file=str, csv_signal_file=str, stl_param_file=str)
@@ -499,7 +499,7 @@ class OracleSTLe(Oracle):
 
     # Read/Write file functions
     @cython.locals(finput=object, current_path=str, path=str, stl_prop_file=str, csv_signal_file=str,
-                   stl_param_file=str,  fname_list=(str, str, str), fname=str)
+                   stl_param_file=str, fname_list=tuple, fname=str)
     @cython.returns(cython.void)
     def from_file_binary(self, finput=None):
         # type: (OracleSTLe, io.BinaryIO) -> None
@@ -530,7 +530,7 @@ class OracleSTLe(Oracle):
             RootOracle.logger.error('Unexpected error when loading {0}: {1}'.format(finput, sys.exc_info()[0]))
 
     @cython.locals(finput=object, current_path=str, path=str, stl_prop_file=str, csv_signal_file=str,
-                   stl_param_file=str, fname_list=(str, str, str), fname=str)
+                   stl_param_file=str, fname_list=tuple, fname=str)
     @cython.returns(cython.void)
     def from_file_text(self, finput=None):
         # type: (OracleSTLe, io.BinaryIO) -> None

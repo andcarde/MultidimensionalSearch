@@ -119,7 +119,7 @@ class Lattice(object):
         return self.list_of_sets[0]
 
     @cython.ccall
-    @cython.locals(lst=SortedSet, elem=object)
+    @cython.locals(lst=object, elem=object)
     @cython.returns(cython.void)
     def add(self, elem):
         # type: (Lattice, object) -> None
@@ -127,7 +127,7 @@ class Lattice(object):
             l.add(elem)
 
     @cython.ccall
-    @cython.locals(lst=SortedSet, l=SortedSet)
+    @cython.locals(lst=object, l=object)
     @cython.returns(cython.void)
     def add_list(self, lst):
         # type: (Lattice, iter) -> None
@@ -135,7 +135,7 @@ class Lattice(object):
             l |= lst
 
     @cython.ccall
-    @cython.locals(lst=SortedSet, elem=object)
+    @cython.locals(lst=object, elem=object)
     @cython.returns(cython.void)
     def remove(self, elem):
         # type: (Lattice, object) -> None
@@ -143,7 +143,7 @@ class Lattice(object):
             l.discard(elem)
 
     @cython.ccall
-    @cython.locals(lst=SortedSet, l=SortedSet)
+    @cython.locals(lst=object, l=object)
     @cython.returns(cython.void)
     def remove_list(self, lst):
         # type: (Lattice, iter) -> None
@@ -151,7 +151,7 @@ class Lattice(object):
             l -= lst
 
     @cython.ccall
-    @cython.locals(elem=object, s=SortedSet, l=SortedSet, index=int)
+    @cython.locals(elem=object, s=object, l=object, index=int)
     def less(self, elem):
         # type: (Lattice, object) -> SortedSet
         """
@@ -164,7 +164,7 @@ class Lattice(object):
         return s
 
     @cython.ccall
-    @cython.locals(elem=object, s=SortedSet, l=SortedSet, index=int)
+    @cython.locals(elem=object, s=object, l=object, index=int)
     def less_equal(self, elem):
         # type: (Lattice, object) -> SortedSet
         """
@@ -177,7 +177,7 @@ class Lattice(object):
         return s
 
     @cython.ccall
-    @cython.locals(elem=object, s=SortedSet, l=SortedSet, index=int)
+    @cython.locals(elem=object, s=object, l=object, index=int)
     def greater(self, elem):
         # type: (Lattice, object) -> SortedSet
         """
@@ -190,7 +190,7 @@ class Lattice(object):
         return s
 
     @cython.ccall
-    @cython.locals(elem=object, s=SortedSet, l=SortedSet, index=int)
+    @cython.locals(elem=object, s=object, l=object, index=int)
     def greater_equal(self, elem):
         # type: (Lattice, object) -> SortedSet
         """
@@ -203,7 +203,7 @@ class Lattice(object):
         return s
 
     @cython.ccall
-    @cython.locals(elem=object, s=SortedSet, l=SortedSet, index1=int, index2=int)
+    @cython.locals(elem=object, s=object, l=object, index1=int, index2=int)
     def equal(self, elem):
         # type: (Lattice, object) -> SortedSet
         """

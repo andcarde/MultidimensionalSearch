@@ -8,14 +8,15 @@ from Cython.Build import cythonize
 def scandir(thisdir=os.getcwd()):
     # Getting the current work directory (cwd)
     module_list = []
-    # r=root, d=directories, f = files
+    # r = root, d = directories, f = files
     for r, d, f in os.walk(thisdir):
         for file in f:
             if file.endswith(".py"):
-                # filename = os.path.join(r, file)
-                filename = "{0}/{2}".format(r, d, file)
+                filename = os.path.join(r, file)
+                # filename = "{0}/{2}".format(r, d, file)
                 module, file_extension = os.path.splitext(filename)
                 module = module.replace('/', '.')
+                module = module.replace('\\', '.')
                 # module = module.replace('.__init__', '')
                 module_list.append((module, filename))
     return module_list
@@ -33,7 +34,8 @@ def makeExtension(extName, extPath):
 
 def cython_exclude(module_list):
     # return [filename for (module, filename) in module_list if ('_py3k' in module)]
-    return [filename for (module, filename) in module_list if ('__init__.py' in filename) or ('_py3k' in module)]
+    return [filename for (module, filename) in module_list
+            if ('__init__.py' in filename) or ('_py3k' in module) or ('GUI' in module)]
 
 
 # class build_py(build_py_orig):
@@ -82,6 +84,9 @@ if __name__ == '__main__':
     # extension_list = Extension("ParetoLib.Geometry.Point", ["ParetoLib/Geometry/Point.py"])
     extension_list = [makeExtension(module, filename) for (module, filename) in extNames]
     exclude_list = cython_exclude(extNames)
+    # print("1: {0}".format(extNames))
+    # print("2: {0}".format(extension_list))
+    # print("3: {0}".format(exclude_list))
     setup(
         name="ParetoLib",
         version=__version__,

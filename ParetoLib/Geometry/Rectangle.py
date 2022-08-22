@@ -90,7 +90,7 @@ from ParetoLib._py3k import red
 
 @cython.cclass
 class Rectangle(object):
-    cython.declare(_min_corner=tuple, _max_corner=tuple, vol=cython.double, vertx=list)
+    cython.declare(_min_corner=tuple, _max_corner=tuple, vol=cython.double, vertx=list, privilege=cython.double)
 
     def __init__(self,
                  min_corner=(float('-inf'),) * 2,
@@ -114,13 +114,13 @@ class Rectangle(object):
 
         # Volume (self.vol) is calculated on demand the first time is accessed, and cached afterwards.
         # Using 'None' for indicating that attribute vol is outdated (e.g., user changes min_corner or max_corners).
-        self.vol = None
-        self.nInf = None
-        self.snInf = None
-        self.sigVol = None
+        self.vol = -1.0
+        # self.nInf = None
+        # self.snInf = None
+        # self.sigVol = None
         # Vertices are also cached.
         self.vertx = None
-        self.privilege = 1
+        self.privilege = 1.0
 
         assert greater_equal(self._max_corner, self._min_corner) or incomparables(self._min_corner, self._max_corner)
 
@@ -128,12 +128,11 @@ class Rectangle(object):
     @cython.returns(cython.void)
     def reset(self):
         # type: (Rectangle) -> None
-        self.vol = None
-        self.nInf = None
-        self.snInf = None
-        self.sigVol = None
+        self.vol = -1.0
+        # self.nInf = None
+        # self.snInf = None
+        # self.sigVol = None
         self.vertx = None
-
 
     # _min_corner = property(getname, setname, delname)
 
@@ -205,53 +204,6 @@ class Rectangle(object):
         """
         self.reset()
         self._max_corner = value
-
-    def __setattr__(self, name, value):
-        # type: (Rectangle, str, None) -> None
-        """
-        Assignation of a value to a class attribute.
-
-        Args:
-            self (Rectangle): The Rectangle.
-            name (str): The attribute.
-            value (None): The value
-
-        Returns:
-            None: self.name = value.
-
-        Example:
-        >>> x = (0,0,0)
-        >>> y = (2,2,2)
-        >>> r = Rectangle(x,y)
-        >>> r.min_corner = x
-        """
-        str_vertx = 'vertx'
-        if name != str_vertx:
-            # self.__dict__[str_vertx] = None
-            object.__setattr__(self, str_vertx, None)
-
-        # Every time a corner is changed, the volume is marked as 'outdated'.
-        # It is used for a lazy computation of volume when requested by the user,
-        # and therefore avoiding unecessary computations
-        str_vol = 'vol'
-        if name != str_vol:
-            # self.__dict__[str_vol] = None
-            object.__setattr__(self, str_vol, None)
-
-        # Round the elements of 'value' when assigning them to self.min_corner or self.max_corner
-        # if type(value) == tuple:
-        #     value = tuple(r(vi) for vi in value)
-
-        # Round the elements of 'value' when assigning them to self.vol
-        # if type(value) == float:
-        #     value = r(value)
-
-        # Round the elements of 'value' when assigning them to self.vertx
-        # if type(value) == list:
-        #     value = [tuple(r(vi) for vi in vertex) for vertex in value]
-
-        # self.__dict__[name] = None
-        object.__setattr__(self, name, value)
 
     #
     @cython.locals(xpoint=tuple)
@@ -444,7 +396,8 @@ class Rectangle(object):
         >>> 8.0
         """
         # Recalculate volume if it is outdated
-        if self.vol is None:
+        # if self.vol is None:
+        if self.vol == -1.0:
             self.vol = self._volume()
         return self.vol
 

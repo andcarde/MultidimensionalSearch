@@ -91,7 +91,7 @@ def determine_intersection(y1, y2):
         return Segment(y1.low, y2.high), DKNOW
 
 
-@cython.locals(x=object, list_constraints=list, low_allowed=cython.bint, high_allowed=cython.bint, constraint=iter,
+@cython.locals(x=object, list_constraints=list, low_allowed=cython.bint, high_allowed=cython.bint, #constraint=iter,
                left_sum=int, i=cython.ushort)
 @cython.returns(cython.bint)
 def intersection_empty_constrained(x, member1, member2, list_constraints):

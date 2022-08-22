@@ -89,9 +89,10 @@ def multidim_search(xspace,
 # The search returns a rectangle containing a solution and a Border
 @cython.ccall
 @cython.returns(object)
-@cython.locals(xspace=object, list_constraints=list, oracle1=object, oracle2=object, epsilon=cython.double, delta=cython.double, max_step=cython.ulonglong,
-               blocking=cython.bint, sleep=cython.double, opt_level=cython.uint, logging=cython.bint, md_search=list,
-               start=cython.double, end=cython.double, time0=cython.double, intersect_result=object)
+@cython.locals(xspace=object, list_constraints=list, oracle1=object, oracle2=object, epsilon=cython.double,
+               delta=cython.double, max_step=cython.ulonglong, blocking=cython.bint, sleep=cython.double,
+               opt_level=cython.uint, logging=cython.bint, md_search=list, start=cython.double, end=cython.double,
+               time0=cython.double, intersect_result=object)
 def multidim_intersection_search(xspace, list_constraints,
                                  oracle1, oracle2,
                                  epsilon=EPS,
@@ -137,7 +138,7 @@ def multidim_intersection_search(xspace, list_constraints,
                vol_border=cython.double, step=cython.ulonglong, tempdir=str, xrectangle=object, y=object,
                steps_binsearch=cython.ushort, ylow_rectangle=object, border_nondominatedby_b0=set, yup_rectangle=object,
                border_nondominatedby_b1=set, vol_db0=cython.double, vol_db1=cython.double, boxes_null_vol=list,
-               yrectangle=object, i=list, name=str)
+               yrectangle=object, i=list, rs=object, name=str)
 def multidim_search_opt_3(xspace,
                           oracle,
                           epsilon=EPS,
@@ -372,7 +373,7 @@ def multidim_search_opt_3(xspace,
                vol_total=cython.double, vol_yup=cython.double, vol_ylow=cython.double, vol_border=cython.double,
                step=cython.ulonglong, tempdir=str, xrectangle=object, y=object, steps_binsearch=cython.ushort,
                border_nondominatedby_b0=set, border_nondominatedby_b1=set, vol_db0=cython.double, vol_db1=cython.double,
-               yrectangle=object, i=list, name=str)
+               yrectangle=object, i=list, rs=object, name=str)
 def multidim_search_opt_2(xspace,
                           oracle,
                           epsilon=EPS,
@@ -576,7 +577,7 @@ def multidim_search_opt_2(xspace,
                b0_extended=object, b1_extended=object, border_overlapping_ylow=list, border_overlapping_yup=list,
                border_overlapping_b0=list, border_dominatedby_b0_shadow=list, border_nondominatedby_b0=list,
                border_overlapping_b1=list, border_dominatedby_b1_shadow=list, border_nondominatedby_b1=list,
-               yrectangle=object, i=list, name=str)
+               yrectangle=object, i=list, rs=object, name=str)
 def multidim_search_opt_1(xspace,
                           oracle,
                           epsilon=EPS,
@@ -959,7 +960,7 @@ def multidim_search_opt_inf(xspace,
                incomparable=list, border=object, ylow=list, yup=list, error=tuple, vol_total=cython.double,
                vol_yup=cython.double, vol_ylow=cython.double, vol_border=cython.double, step=cython.ulonglong,
                tempdir=str, xrectangle=object, y=object, steps_binsearch=cython.ushort, b0=object, b1=object,
-               yrectangle=object, i=list, name=str)
+               yrectangle=object, i=list, rs=object, name=str)
 def multidim_search_opt_0(xspace,
                           oracle,
                           epsilon=EPS,
@@ -1107,7 +1108,7 @@ def bound_box_with_constraints(box, list_constraints):
             const_sum -= constraint[i] * (box.min_corner[i])
         const_sum += constraint[-1]
         current_bound = const_sum / coeff_sum
-        if constraint[-1] < 0:
+        if constraint[-1] < 0.0:
             if flag_min:
                 min_bound = max(min_bound, current_bound)
             else:
@@ -1122,6 +1123,17 @@ def bound_box_with_constraints(box, list_constraints):
     return min_bound, max_bound
 
 
+# @cython.ccall
+@cython.returns(object)
+@cython.locals(xspace=object, list_constraints=list, oracle1=object, oracle2=object, epsilon=cython.double,
+               delta=cython.double, max_step=cython.ulonglong, blocking=cython.bint, sleep=cython.double,
+               logging=cython.bint, n=cython.ushort, comparable=list, incomparable=list, incomparable_segment=list,
+               border=object, error=tuple, vol_total=cython.double, vol_xrest=cython.double, vol_border=cython.double,
+               step=cython.ulonglong, intersect_box=list, intersect_region=list, min_bound=cython.double,
+               max_bound=cython.double, inside_bound=cython.bint, rect_diag=object, intersect_indicator=cython.short,
+               end_min=tuple, end_max=tuple, mod_rectangle=object, y=object, y_in=object, y_cover=object,
+               steps_binsearch=cython.ushort, tempdir=str, b0=object, b1=object, yrectangle=object,
+               i=list, lower_rect=object, upper_rect=object, rect=object, rs=object, name=str)
 def multidim_intersection_search_opt_0(xspace, list_constraints,
                                        oracle1, oracle2,
                                        epsilon=EPS,
@@ -1191,24 +1203,22 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
         RootSearch.logger.debug('xrectangle.norm: {0}'.format(xrectangle.norm()))
 
         min_bound, max_bound = bound_box_with_constraints(xrectangle, list_constraints)
-        flag = 0
+        inside_bound = False
         rect_diag = xrectangle.diag()
-        if (max_bound < 0) or (min_bound > 1) or (min_bound > max_bound) or (min_bound + (epsilon / 100) > max_bound):
+        if (max_bound < 0.0) or (min_bound > 1.0) or (min_bound > max_bound) or (min_bound + (epsilon / 100.0) > max_bound):
             intersect_indicator = INTERNULL
             continue
         else:
-            if min_bound < 0:
-                min_bound = 0
-            if max_bound > 1:
-                max_bound = 1
-            if min_bound > 0 or max_bound < 1:
-                min_bound += (epsilon / 100)
-                max_bound -= (epsilon / 100)
+            min_bound = max(0.0, min_bound)
+            max_bound = min(1.0, max_bound)
+            inside_bound = min_bound > 0.0 or max_bound < 1.0
+            if inside_bound:
+                min_bound += (epsilon / 100.0)
+                max_bound -= (epsilon / 100.0)
                 end_min = tuple(i + (j - i) * min_bound for i, j in zip(xrectangle.min_corner, xrectangle.max_corner))
                 end_max = tuple(i + (j - i) * max_bound for i, j in zip(xrectangle.min_corner, xrectangle.max_corner))
                 mod_rectangle = Rectangle(end_min, end_max)
                 rect_diag = mod_rectangle.diag()
-                flag = 1
                 y_in, y_cover, intersect_indicator, steps_binsearch = intersection_expansion_search(rect_diag, f1, f2,
                                                                                                     error, False)
             else:
@@ -1222,7 +1232,7 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
             intersect_region = [xrectangle]
             break
         elif intersect_indicator == INTERNULL:
-            if flag == 1:  # (min_bound > 0 and max_bound < 1):
+            if inside_bound:  # (min_bound > 0 and max_bound < 1):
                 yrectangle = Rectangle(rect_diag.low, rect_diag.high)
                 i = interirect(incomparable_segment, yrectangle, xrectangle)
                 lower_rect = Rectangle(xrectangle.min_corner, yrectangle.max_corner)
@@ -1331,7 +1341,18 @@ def pos_overlap_box_gen(incomparable, incomparable_segment, yIn, yCover, xrectan
 
     return i
 
-
+@cython.ccall
+@cython.returns(object)
+@cython.locals(xspace=object, list_constraints=list, oracle1=object, oracle2=object, epsilon=cython.double,
+               delta=cython.double, max_step=cython.ulonglong, blocking=cython.bint, sleep=cython.double,
+               logging=cython.bint, n=cython.ushort, comparable=list, incomparable=list, incomparable_segment=list,
+               incomp_pos=list, incomp_neg_down=list, incomp_neg_up=list, border=object, error=tuple,
+               vol_total=cython.double, vol_xrest=cython.double, vol_border=cython.double, vol_boxes=cython.double,
+               step=cython.ulonglong, intersect_box=list, intersect_region=list, tempdir=str, xrectangle=object,
+               current_privilege=cython.double, want_to_expand=cython.bint, y_in=object, y_cover=object,
+               intersect_indicator=cython.short, steps_binsearch=cython.ushort, y=object, yrectangle=object,
+               pos_box=object, neg_box1=object, neg_box2=object, i=list, lower_rect=object, upper_rect=object,
+               b0=object, b1=object, rect=object, rs=object, name=str)
 def multidim_intersection_search_opt_1(xspace, list_constraints,
                                        oracle1, oracle2,
                                        epsilon=EPS,
@@ -1464,7 +1485,7 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
             if intersection_empty(rect.diag(), f1, f2):
                 vol_xrest += rect.volume()
             else:
-                rect.privilege = current_privilege + 1
+                rect.privilege = current_privilege + 1.0
                 border.add(rect)
                 vol_boxes += rect.volume()
 
@@ -1499,7 +1520,17 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
 
     return ResultSet(border, intersect_region, intersect_box, xspace)
 
-
+@cython.ccall
+@cython.returns(object)
+@cython.locals(xspace=object, list_constraints=list, oracle1=object, oracle2=object, epsilon=cython.double,
+               delta=cython.double, max_step=cython.ulonglong, blocking=cython.bint, sleep=cython.double,
+               logging=cython.bint, n=cython.ushort, comparable=list, incomparable=list, incomparable_segment=list,
+               border=object, error=tuple, vol_total=cython.double, vol_xrest=cython.double, vol_border=cython.double,
+               vol_boxes=cython.double, step=cython.ulonglong, intersect_box=list, intersect_region=list, tempdir=str,
+               xrectangle=object, current_privilege=cython.double, want_to_expand=cython.bint, y_in=object,
+               y_cover=object, intersect_indicator=cython.short, steps_binsearch=cython.ushort,
+               y=object, yrectangle=object, pos_box=object, neg_box1=object, neg_box2=object, i=list, lower_rect=object,
+               upper_rect=object, b0=object, b1=object, rect=object, rs=object, name=str)
 def multidim_intersection_search_opt_2(xspace, list_constraints,
                                        oracle1, oracle2,
                                        epsilon=EPS,
@@ -1628,7 +1659,7 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
             if intersection_empty(rect.diag(), f1, f2):
                 vol_xrest += rect.volume()
             else:
-                rect.privilege = current_privilege + 1
+                rect.privilege = current_privilege + 1.0
                 border.add(rect)
                 vol_boxes += rect.volume()
 
