@@ -37,7 +37,7 @@ RootOracle = ParetoLib.Oracle
 # @cython.cclass
 class OracleSTLe(Oracle):
     cython.declare(stl_prop_file=str, csv_signal_file=str, stl_param_file=str, _stl_formula=str, _stl_parameters=list,
-                   pattern=object, num_oracle_calls=cython.ulong, stle_oracle=object, initialized=cython.bint)
+                   pattern=object, num_oracle_calls=cython.ulong, _stle_oracle=object)
 
     @cython.locals(stl_prop_file=str, csv_signal_file=str, stl_param_file=str)
     @cython.returns(cython.void)
@@ -67,10 +67,7 @@ class OracleSTLe(Oracle):
         self.num_oracle_calls = 0
 
         # STLe oracle
-        self.stle_oracle = None
-
-        # Flag for indicating that Oracle is not initialized yet
-        self.initialized = False
+        self._stle_oracle = None
 
     @property
     def stl_formula(self):
@@ -78,8 +75,8 @@ class OracleSTLe(Oracle):
         """
         Getter of stl_formula class attribute.
         """
-        if not self.initialized:
-            self._lazy_init()
+        if self._stl_formula is None and self.stl_prop_file != '':
+            self._stl_formula = OracleSTLe._load_stl_formula(self.stl_prop_file)
 
         return self._stl_formula
 
@@ -90,7 +87,7 @@ class OracleSTLe(Oracle):
         Setter of stl_formula class attribute.
 
         Args:
-            self (_OracleSTLeCommon): The _OracleSTLeCommon.
+            self (OracleSTLe): The OracleSTLe.
             value (str): The value
 
         Returns:
@@ -98,7 +95,7 @@ class OracleSTLe(Oracle):
         """
         self._stl_formula = value
 
-    # _stle_oracle = property(getname, setname, delname)
+    # _stl_formula = property(getname, setname, delname)
 
     @property
     def stl_parameters(self):
@@ -106,8 +103,8 @@ class OracleSTLe(Oracle):
         """
         Getter of stl_parameters class attribute.
         """
-        if not self.initialized:
-            self._lazy_init()
+        if self._stl_parameters is None and self.stl_param_file != '':
+            self._stl_parameters = OracleSTLe._get_parameters_stl(self.stl_param_file)
 
         return self._stl_parameters
 
@@ -118,7 +115,7 @@ class OracleSTLe(Oracle):
         Setter of stl_parameters class attribute.
 
         Args:
-            self (_OracleSTLeCommon): The _OracleSTLeCommon.
+            self (OracleSTLe): The OracleSTLe.
             value (list): The value
 
         Returns:
@@ -128,28 +125,48 @@ class OracleSTLe(Oracle):
 
     # _stl_parameters = property(getname, setname, delname)
 
-    def _lazy_init(self):
+    @property
+    def stle_oracle(self):
+        # type: (OracleSTLe) -> subprocess.Popen | STLeLibInterface
+        """
+        Getter of stle_oracle class attribute.
+        """
+        if self._stle_oracle is None and self.csv_signal_file != '':
+            self._load_stle_oracle()
+
+        return self._stle_oracle
+
+    @stle_oracle.setter
+    def stle_oracle(self, value):
+        # type: (OracleSTLe, subprocess.Popen | STLeLibInterface) -> None
+        """
+        Setter of stle class attribute.
+
+        Args:
+            self (OracleSTLe): The OracleSTLe.
+            value (subprocess.Popen): The value
+
+        Returns:
+            None: self.stle_oracle = value.
+        """
+        self._stle_oracle = value
+
+    # _stle_oracle = property(getname, setname, delname)
+
+    def _load_stle_oracle(self):
         # type: (OracleSTLe) -> None
-        assert self.stl_prop_file != ''
-        assert self.stl_param_file != ''
         assert self.csv_signal_file != ''
 
         # Lazy initialization of the OracleSTLe
         RootOracle.logger.debug('Initializing OracleSTLe')
 
-        self.stl_formula = OracleSTLe._load_stl_formula(self.stl_prop_file)
-        self.stl_parameters = OracleSTLe._get_parameters_stl(self.stl_param_file)
-
         # Start STLe oracle in interactive mode (i.e., more efficient)
         args = [STLE_BIN, STLE_INTERACTIVE]
         RootOracle.logger.debug('Starting: {0}'.format(args))
-        self.stle_oracle = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, universal_newlines=True, bufsize=0)
+        self._stle_oracle = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, universal_newlines=True, bufsize=0)
 
         # Loading the signal in memory
         self._load_signal_in_mem()
-
-        # Marking the Oracle as initialized
-        self.initialized = True
 
     def _load_signal_in_mem(self):
         # type: (OracleSTLe) -> None
@@ -157,10 +174,10 @@ class OracleSTLe(Oracle):
         # (read-signal-csv "file_name")
         expression = '({0} "{1}")'.format(STLE_READ_SIGNAL, self.csv_signal_file)
         RootOracle.logger.debug('Running: {0}'.format(expression))
-        self.stle_oracle.stdin.write(expression)
-        self.stle_oracle.stdin.flush()
+        self._stle_oracle.stdin.write(expression)
+        self._stle_oracle.stdin.flush()
         #
-        ok = self.stle_oracle.stdout.readline()
+        ok = self._stle_oracle.stdout.readline()
         ok = ok.strip(' \n\t')
         #
         RootOracle.logger.debug('ok: {0}'.format(ok))
@@ -169,19 +186,20 @@ class OracleSTLe(Oracle):
             RootOracle.logger.error(message)
             raise RuntimeError(message)
 
+    @cython.returns(cython.void)
     def _clean_cache(self):
         # type: (OracleSTLe) -> None
-        assert self.stle_oracle is not None
-        assert not self.stle_oracle.stdin.closed
-        assert not self.stle_oracle.stdout.closed
+        assert self._stle_oracle is not None
+        assert not self._stle_oracle.stdin.closed
+        assert not self._stle_oracle.stdout.closed
 
         # Cleaning cache
         # (clear-monitor)
         expression = '({0})'.format(STLE_RESET)
         RootOracle.logger.debug('Running: {0}'.format(expression))
-        self.stle_oracle.stdin.write(expression)
-        self.stle_oracle.stdin.flush()
-        res2 = self.stle_oracle.stdout.readline()
+        self._stle_oracle.stdin.write(expression)
+        self._stle_oracle.stdin.flush()
+        res2 = self._stle_oracle.stdout.readline()
         RootOracle.logger.debug('result: {0}'.format(res2))
 
     @cython.returns(cython.void)
@@ -244,8 +262,8 @@ class OracleSTLe(Oracle):
         """
         Removes 'self' from the namespace.
         """
-        if self.initialized and self.stle_oracle is not None:
-            self.stle_oracle.terminate()
+        if self._stle_oracle is not None:
+            self._stle_oracle.terminate()
 
     @cython.returns(object)
     def __copy__(self):
@@ -582,12 +600,12 @@ class OracleSTLe(Oracle):
 # @cython.final
 # @cython.cclass
 class OracleSTLeLib(OracleSTLe):
-    cython.declare(stl_prop_file=str, stl_formula=str, stl_param_file=str, stl_parameters=list, csv_signal_file=str,
-                   pattern=object, num_oracle_calls=cython.ulong, stle=object, signalvars=object, signal=object,
-                   exprset=c_void_p, monitor=object, initialized=cython.bint)
+    cython.declare(stl_prop_file=str, csv_signal_file=str, stl_param_file=str, _stl_formula=str, _stl_parameters=list,
+                   pattern=object, num_oracle_calls=cython.ulong, _stle_oracle=object, signalvars=object, signal=object,
+                   exprset=object, monitor=object)
 
-    # cython.declare(_stle=object, signalvars=object, signal=object, exprset=object, monitor=object)
-
+    @cython.locals(stl_prop_file=str, csv_signal_file=str, stl_param_file=str)
+    @cython.returns(cython.void)
     def __init__(self, stl_prop_file='', csv_signal_file='', stl_param_file=''):
         # type: (OracleSTLeLib, str, str, str) -> None
         """
@@ -596,28 +614,11 @@ class OracleSTLeLib(OracleSTLe):
         OracleSTLeLib should be usually faster than OracleSTLe
         """
 
-        Oracle.__init__(self)
-
-        # Load STLe formula
-        self.stl_prop_file = stl_prop_file.strip(' \n\t')
-        self.stl_formula = None
-
-        # Load parameters of the STLe formula
-        self.stl_param_file = stl_param_file.strip(' \n\t')
-        self.stl_parameters = None
-
-        # Load the signal
-        self.csv_signal_file = csv_signal_file.strip(' \n\t')
-
-        # Load the pattern for evaluating arithmetic expressions in STLe
-        self.pattern = super(OracleSTLeLib, self)._regex_arithm_expr_stl_eval()
-
-        # Number of calls to the STLe oracle
-        self.num_oracle_calls = 0
+        super(OracleSTLeLib, self).__init__(stl_prop_file, csv_signal_file, stl_param_file)
 
         # Load interface with STLeLib (C)
         # STLeLibInterface()
-        self._stle = None
+        # self._stle_oracle = None
 
         # signalvars are the parameters of STLe formula in C API format
         self.signalvars = None
@@ -627,50 +628,23 @@ class OracleSTLeLib(OracleSTLe):
         self.exprset = None
         self.monitor = None
 
-        # Flag for indicating that Oracle is not initialized yet
-        self.initialized = False
-
-    @property
-    def stle(self):
-        # type: (OracleSTLeLib) -> STLeLibInterface
-        """
-        Getter of stle_oracle class attribute.
-        """
-        if not self.initialized:
-            self._lazy_init()
-
-        return self._stle
-
-    @stle.setter
-    def stle(self, value):
-        # type: (OracleSTLeLib, STLeLibInterface) -> None
-        """
-        Setter of stle class attribute.
-
-        Args:
-            self (OracleSTLeLib): The OracleSTLeLib.
-            value (STLeLibInterface): The value
-
-        Returns:
-            None: self.stle = value.
-        """
-        self._stle = value
-
-    # _stle = property(getname, setname, delname)
+    # @property
+    # def stle_oracle(self):
+    #     # type: (OracleSTLeLib) -> STLeLibInterface
+    #
+    # @stle_oracle.setter
+    # def stle_oracle(self, value):
+    #     # type: (OracleSTLeLib, STLeLibInterface) -> None
 
     @cython.returns(cython.void)
-    def _lazy_init(self):
+    def _load_stle_oracle(self):
         # type: (OracleSTLeLib) -> None
-        assert self.stl_prop_file != ''
-        assert self.stl_param_file != ''
         assert self.csv_signal_file != ''
 
         # Lazy initialization of the OracleSTLeLib
         RootOracle.logger.debug('Initializing OracleSTLeLib')
 
-        self.stl_formula = super(OracleSTLeLib, self)._load_stl_formula(self.stl_prop_file)
-        self.stl_parameters = super(OracleSTLeLib, self)._get_parameters_stl(self.stl_param_file)
-        self._stle = STLeLibInterface()
+        self._stle_oracle = STLeLibInterface()
         RootOracle.logger.debug('Starting: {0}'.format(self.csv_signal_file))
 
         # Loading the signal in memory
@@ -679,32 +653,29 @@ class OracleSTLeLib(OracleSTLe):
         # Creating signal monitor and expression set
         self._create_monitor_exprset()
 
-        # Marking the Oracle as initialized
-        self.initialized = True
-
     @cython.locals(message=str, n=object)
     @cython.returns(cython.void)
     def _load_signal_in_mem(self):
         # type: (OracleSTLeLib) -> None
-        assert self.stle is not None
+        assert self._stle_oracle is not None
 
         # Load the signal in memory
         RootOracle.logger.debug('Loading signal "{0}" into memory'.format(self.csv_signal_file))
-        self.signal = self.stle.stl_read_pcsignal_csv_fname(self.csv_signal_file)
+        self.signal = self._stle_oracle.stl_read_pcsignal_csv_fname(self.csv_signal_file)
 
         if self.signal is None:
             message = 'Unexpected error when loading {0}'.format(self.csv_signal_file)
             RootOracle.logger.error(message)
             raise RuntimeError(message)
 
-        n = self.stle.stl_pcsignal_size(self.signal)
-        self.signalvars = self.stle.stl_make_signalvars_xn(n)
+        n = self._stle_oracle.stl_pcsignal_size(self.signal)
+        self.signalvars = self._stle_oracle.stl_make_signalvars_xn(n)
         RootOracle.logger.debug('Signalvars created: {0}'.format(self.signalvars))
 
     @cython.returns(cython.void)
     def _clean_cache(self):
         # type: (OracleSTLeLib) -> None
-        assert self.stle is not None
+        assert self._stle_oracle is not None
         assert self.signalvars is not None
 
         # Remove signal monitor and expression set
@@ -716,33 +687,34 @@ class OracleSTLeLib(OracleSTLe):
     @cython.returns(cython.void)
     def _remove_monitor_exprset(self):
         # type: (OracleSTLeLib) -> None
-        assert self.stle is not None
+        assert self._stle_oracle is not None
         assert self.signalvars is not None
 
         RootOracle.logger.debug('Cleaning cache of exprsets')
 
         # Remove exprset
         if self.exprset is not None:
-            self.stle.stl_delete_exprset(self.exprset)
+            self._stle_oracle.stl_delete_exprset(self.exprset)
 
         # Remove monitor
         if self.monitor is not None:
-            self.stle.stl_delete_offlinepcmonitor(self.monitor)
+            self._stle_oracle.stl_delete_offlinepcmonitor(self.monitor)
 
     @cython.returns(cython.void)
     def _create_monitor_exprset(self):
         # type: (OracleSTLeLib) -> None
-        assert self.stle is not None
+        assert self._stle_oracle is not None
         assert self.signalvars is not None
 
         # Create a new exprset
-        self.exprset = self.stle.stl_make_exprset()
+        self.exprset = self._stle_oracle.stl_make_exprset()
         RootOracle.logger.debug('Exprset created: {0}'.format(self.exprset))
 
         # Create a monitor for analyzing the signal
-        self.monitor = self.stle.stl_make_offlinepcmonitor(self.signal, self.signalvars, self.exprset)
+        self.monitor = self._stle_oracle.stl_make_offlinepcmonitor(self.signal, self.signalvars, self.exprset)
         RootOracle.logger.debug('Monitor created: {0}'.format(self.monitor))
 
+    @cython.returns(str)
     def _to_str(self):
         # type: (OracleSTLeLib) -> str
         """
@@ -760,15 +732,15 @@ class OracleSTLeLib(OracleSTLe):
         """
         Removes 'self' from the namespace.
         """
-        if self.initialized and self.stle is not None:
+        if self._stle_oracle is not None:
             if self.signal is not None:
-                self.stle.stl_delete_pcsignal(self.signal)
+                self._stle_oracle.stl_delete_pcsignal(self.signal)
             if self.signalvars is not None:
-                self.stle.stl_delete_signalvars(self.signalvars)
+                self._stle_oracle.stl_delete_signalvars(self.signalvars)
             if self.exprset is not None:
-                self.stle.stl_delete_exprset(self.exprset)
+                self._stle_oracle.stl_delete_exprset(self.exprset)
             if self.monitor is not None:
-                self.stle.stl_delete_offlinepcmonitor(self.monitor)
+                self._stle_oracle.stl_delete_offlinepcmonitor(self.monitor)
 
     @cython.returns(object)
     def __copy__(self):
@@ -797,7 +769,7 @@ class OracleSTLeLib(OracleSTLe):
         """
         Version of STLeLib.
         """
-        return self.stle.stl_version()
+        return self.stle_oracle.stl_version()
 
     # @cython.ccall
     @cython.locals(stl_formula=str, expr=object, stl_series=object, res=object)
@@ -819,7 +791,7 @@ class OracleSTLeLib(OracleSTLe):
         >>> ora.eval_stl_formula(stl_formula)
         >>> False
         """
-        assert self.stle is not None
+        assert self.stle_oracle is not None
         assert self.monitor is not None
         assert self.signal is not None
         assert self.signalvars is not None
@@ -828,19 +800,19 @@ class OracleSTLeLib(OracleSTLe):
         RootOracle.logger.debug('Evaluating: {0}'.format(stl_formula))
 
         # Add STLe formula to the expression set
-        expr = self.stle.stl_parse_sexpr_str(self.exprset, stl_formula)
+        expr = self.stle_oracle.stl_parse_sexpr_str(self.exprset, stl_formula)
 
         RootOracle.logger.debug('STLe formula parsed: {0}'.format(expr))
 
         # Evaluating formula
-        stl_series = self.stle.stl_offlinepcmonitor_make_output(self.monitor, expr)
+        stl_series = self.stle_oracle.stl_offlinepcmonitor_make_output(self.monitor, expr)
         RootOracle.logger.debug('STLe series: {0}'.format(stl_series))
 
-        res = self.stle.stl_pcseries_value0(stl_series)
+        res = self.stle_oracle.stl_pcseries_value0(stl_series)
         RootOracle.logger.debug('Result: {0}'.format(res))
 
         # Remove STLe formula from the expression set
-        self.stle.stl_unref_expr(expr)
+        self.stle_oracle.stl_unref_expr(expr)
 
         # Return the result of evaluating the STL formula.
         return OracleSTLeLib._parse_stle_result(res)
@@ -868,9 +840,11 @@ class OracleSTLeLib(OracleSTLe):
         RootOracle.logger.debug('Result: {0}'.format(result))
         return int(result) == 1
 
-
+    # @cython.ccall
+    @cython.locals(stl_formula=str, epsilon=object, expr=object, stl_series=object, res=object)
+    @cython.returns(cython.bint)
     def eps_separate_stl_formula(self, stl_formula, epsilon):
-        # type: (OracleSTLeLib, str, double) -> bool
+        # type: (OracleSTLeLib, str, c_double) -> bool
         """
         Evaluates the instance of a parametrized STL formula.
 
@@ -886,7 +860,7 @@ class OracleSTLeLib(OracleSTLe):
         >>> ora.eval_stl_formula(stl_formula)
         >>> False
         """
-        assert self.stle is not None
+        assert self._stle_oracle is not None
         assert self.monitor is not None
         assert self.signal is not None
         assert self.signalvars is not None
@@ -895,19 +869,23 @@ class OracleSTLeLib(OracleSTLe):
         RootOracle.logger.debug('Evaluating: {0}'.format(stl_formula))
 
         # Add STLe formula to the expression set
-        expr = self.stle.stl_parse_sexpr_str(self.exprset, stl_formula)
+        expr = self.stle_oracle.stl_parse_sexpr_str(self.exprset, stl_formula)
 
         RootOracle.logger.debug('STLe formula parsed: {0}'.format(expr))
 
         # Evaluating formula
-        stl_series = self.stle.stl_offlinepcmonitor_make_output(self.monitor, expr)
+        stl_series = self.stle_oracle.stl_offlinepcmonitor_make_output(self.monitor, expr)
         RootOracle.logger.debug('STLe series: {0}'.format(stl_series))
 
-        res = self.stle.stl_eps_separation_size(stl_series, epsilon)
+        res = self.stle_oracle.stl_eps_separation_size(stl_series, epsilon)
         RootOracle.logger.debug('Result: {0}'.format(res))
 
         return res
 
+    # @cython.ccall
+    @cython.locals(stl_formula=str, epsilon=object, expr=object, stl_series=object, pcseries_size=object,
+                   stl_series_dict=dict)
+    @cython.returns(dict)
     def get_stle_pcseries(self, stl_formula):
         # type: (OracleSTLeLib, str) -> dict
         """
@@ -926,7 +904,7 @@ class OracleSTLeLib(OracleSTLe):
         >>> d = ora.get_stle_pcseries(stl_formula)
         >>> {0: 0, 1: 0, ...}
         """
-        assert self.stle is not None
+        assert self.stle_oracle is not None
         assert self.monitor is not None
         assert self.signal is not None
         assert self.signalvars is not None
@@ -935,20 +913,20 @@ class OracleSTLeLib(OracleSTLe):
         RootOracle.logger.debug('Evaluating: {0}'.format(stl_formula))
 
         # Add STLe formula to the expression set
-        expr = self.stle.stl_parse_sexpr_str(self.exprset, stl_formula)
+        expr = self.stle_oracle.stl_parse_sexpr_str(self.exprset, stl_formula)
 
         RootOracle.logger.debug('STLe formula parsed: {0}'.format(expr))
 
         # Evaluating formula
-        stl_series = self.stle.stl_offlinepcmonitor_make_output(self.monitor, expr)
+        stl_series = self.stle_oracle.stl_offlinepcmonitor_make_output(self.monitor, expr)
         RootOracle.logger.debug('STLe series: {0}'.format(stl_series))
 
-        pcseries_size = self.stle.stl_pcseries_size(stl_series)
-        stl_series_dict = {self.stle.stl_pcseries_start_time(stl_series, i): self.stle.stl_pcseries_value(stl_series, i)
+        pcseries_size = self.stle_oracle.stl_pcseries_size(stl_series)
+        stl_series_dict = {self.stle_oracle.stl_pcseries_start_time(stl_series, i): self.stle_oracle.stl_pcseries_value(stl_series, i)
                            for i in range(pcseries_size)}
 
         # Remove STLe formula from the expression set
-        self.stle.stl_unref_expr(expr)
+        self.stle_oracle.stl_unref_expr(expr)
 
         # Return the Boolean signal resulting of the evaluation of the STL formula.
         return stl_series_dict
