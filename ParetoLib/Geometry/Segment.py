@@ -97,31 +97,31 @@ class Segment(object):
                 less_equal(xpoint, self.high))
 
     # Legacy code __setattr__: used for rounding floating tuples when assigning them to .low/.high attributes
-    @cython.locals(name=str)
-    @cython.returns(cython.void)
-    def __setattr__(self, name, value):
-        # type: (Segment, str, iter) -> None
-        """
-        Assignation of a value to a class attribute.
-
-        Args:
-            self (Segment): The Segment.
-            name (str): The attribute.
-            value (None): The value
-
-        Returns:
-            None: self.name = value.
-
-        Example:
-        >>> x = (2, 4, 6)
-        >>> y = (2, 4, 7)
-        >>> s = Segment(x, y)
-        >>> s.high = y
-        """
-        # Round the elements of 'value' when assigning them to self.low or self.high
-        # value = tuple(r(vi) for vi in value)
-        # self.__dict__[name] = val
-        object.__setattr__(self, name, value)
+    # @cython.locals(name=str)
+    # @cython.returns(cython.void)
+    # def __setattr__(self, name, value):
+    #     # type: (Segment, str, iter) -> None
+    #     """
+    #     Assignation of a value to a class attribute.
+    #
+    #     Args:
+    #         self (Segment): The Segment.
+    #         name (str): The attribute.
+    #         value (None): The value
+    #
+    #     Returns:
+    #         None: self.name = value.
+    #
+    #     Example:
+    #     >>> x = (2, 4, 6)
+    #     >>> y = (2, 4, 7)
+    #     >>> s = Segment(x, y)
+    #     >>> s.high = y
+    #     """
+    #     # Round the elements of 'value' when assigning them to self.low or self.high
+    #     # value = tuple(r(vi) for vi in value)
+    #     # self.__dict__[name] = val
+    #     object.__setattr__(self, name, value)
 
     @cython.cfunc
     @cython.locals(_string=str)

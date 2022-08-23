@@ -25,9 +25,13 @@ import filecmp
 from ctypes import c_double
 import cython
 
-import ParetoLib.Oracle as RootOracle
+# import ParetoLib.Oracle as RootOracle
+import ParetoLib.Oracle
 from ParetoLib.Oracle.Oracle import Oracle
-from ParetoLib.STLe.STLe import STLeLibInterface, STLE_BIN, STLE_INTERACTIVE, STLE_READ_SIGNAL, STLE_EVAL, STLE_RESET, STLE_VERSION, STLE_OK, MAX_STLE_CALLS
+from ParetoLib.STLe.STLe import STLeLibInterface, STLE_BIN, STLE_INTERACTIVE, STLE_READ_SIGNAL, STLE_EVAL, STLE_RESET, \
+    STLE_VERSION, STLE_OK, MAX_STLE_CALLS
+
+RootOracle = ParetoLib.Oracle
 
 
 # @cython.cclass
@@ -262,33 +266,6 @@ class OracleSTLe(Oracle):
         # deepcopy cannot handle neither regex nor Popen processes
         return OracleSTLe(stl_prop_file=self.stl_prop_file, csv_signal_file=self.csv_signal_file, stl_param_file=self.stl_param_file)
 
-    def __getattr__(self, name):
-        # type: (OracleSTLe, str) -> _
-        """
-        Returns:
-            self.name (object attribute)
-        """
-        elem = object.__getattribute__(self, name)
-        if elem is None:
-            RootOracle.logger.debug('Initializing Oracle')
-            self._lazy_init()
-            elem = object.__getattribute__(self, name)
-            RootOracle.logger.debug('Initialized Oracle')
-        RootOracle.logger.debug('__getattr__: {0}, {1}'.format(name, elem))
-        return elem
-
-    def __getattribute__(self, name):
-        # type: (OracleSTLe, str) -> _
-        """
-        Returns:
-            self.name (object attribute)
-        """
-        elem = object.__getattribute__(self, name)
-        RootOracle.logger.debug('__getattribute__: {0}'.format(name))
-        if elem is None:
-            raise AttributeError
-        return elem
-
     @cython.locals(res1=str)
     @cython.returns(str)
     def version(self):
@@ -421,7 +398,7 @@ class OracleSTLe(Oracle):
         Evaluates the instance of a parametrized STL formula.
 
         Args:
-            self (OracleSTLeLib): The Oracle.
+            self (OracleSTLe): The Oracle.
             stl_formula: String representing the instance of the parametrized STL formula that will be evaluated.
         Returns:
             bool: True if the stl_formula is satisfied.
@@ -605,9 +582,9 @@ class OracleSTLe(Oracle):
 # @cython.final
 # @cython.cclass
 class OracleSTLeLib(OracleSTLe):
-    # cython.declare(stl_prop_file=str, stl_formula=str, stl_param_file=str, stl_parameters=list, csv_signal_file=str,
-    #                pattern=object, num_oracle_calls=cython.ulong, stle=object, signalvars=object, signal=object,
-    #                exprset=c_void_p, monitor=object, initialized=cython.bint)
+    cython.declare(stl_prop_file=str, stl_formula=str, stl_param_file=str, stl_parameters=list, csv_signal_file=str,
+                   pattern=object, num_oracle_calls=cython.ulong, stle=object, signalvars=object, signal=object,
+                   exprset=c_void_p, monitor=object, initialized=cython.bint)
 
     # cython.declare(_stle=object, signalvars=object, signal=object, exprset=object, monitor=object)
 
@@ -694,7 +671,6 @@ class OracleSTLeLib(OracleSTLe):
         self.stl_formula = super(OracleSTLeLib, self)._load_stl_formula(self.stl_prop_file)
         self.stl_parameters = super(OracleSTLeLib, self)._get_parameters_stl(self.stl_param_file)
         self._stle = STLeLibInterface()
-
         RootOracle.logger.debug('Starting: {0}'.format(self.csv_signal_file))
 
         # Loading the signal in memory
@@ -822,22 +798,6 @@ class OracleSTLeLib(OracleSTLe):
         Version of STLeLib.
         """
         return self.stle.stl_version()
-
-    def __getattr__(self, name):
-        # type: (OracleSTLeLib, str) -> _
-        """
-        Returns:
-            self.name (object attribute)
-        """
-        return super(OracleSTLeLib, self).__getattr__(name)
-
-    def __getattribute__(self, name):
-        # type: (OracleSTLeLib, str) -> _
-        """
-        Returns:
-            self.name (object attribute)
-        """
-        return super(OracleSTLeLib, self).__getattribute__(name)
 
     # @cython.ccall
     @cython.locals(stl_formula=str, expr=object, stl_series=object, res=object)

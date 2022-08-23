@@ -1,5 +1,5 @@
-pip install -r requirements.txt --user
 :: pip uninstall ParetoLib
+pip install -r requirements.txt --user
 python setup_cython.py clean --all
 python setup_cython.py bdist_wheel --universal
 python setup_cython.py bdist_egg

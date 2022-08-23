@@ -35,7 +35,10 @@ from matplotlib.figure import Figure
 
 from ParetoLib.Oracle.NDTree import NDTree
 from ParetoLib.Geometry.Rectangle import Rectangle
-import ParetoLib.Search as RootSearch
+# import ParetoLib.Search as RootSearch
+import ParetoLib.Search
+
+RootSearch = ParetoLib.Search
 
 
 # @cython.cclass

@@ -29,7 +29,10 @@ import cython
 
 from sortedcontainers import SortedListWithKey, SortedSet
 
-import ParetoLib.Search as RootSearch
+# import ParetoLib.Search as RootSearch
+import ParetoLib.Search
+
+RootSearch = ParetoLib.Search
 
 from ParetoLib.Search.CommonSearch import EPS, DELTA, STEPS, INTERFULL, INTERNULL, INTER, DKNOW, NO_INTER, \
     binary_search, intersection_empty, \

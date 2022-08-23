@@ -99,7 +99,7 @@ if __name__ == '__main__':
         url='https://gricad-gitlab.univ-grenoble-alpes.fr/verimag/tempo/multidimensional_search',
         install_requires=[
             'cython>=0.29',
-            'matplotlib>=2.0.2,<=3.0.3',
+            'matplotlib>=2.0.2',
             'numpy>=1.15',
             'pandas>=1.3.0',
             'PyQt5>=5.15.6',
@@ -124,7 +124,7 @@ if __name__ == '__main__':
             "License :: GNU GPL",
             "Operating System :: OS Independent",
         ],
-        use_2to3=True,
+        # use_2to3=True,
         test_suite=os.path.dirname(__file__) + '.Tests',
         # convert_2to3_doctests=['src/your/module/README.txt'],
         # use_2to3_fixers=['your.fixers'],

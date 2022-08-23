@@ -26,9 +26,11 @@ from sympy import simplify, expand, default_sort_key, Expr, Symbol
 
 import cython
 
-import ParetoLib.Oracle as RootOracle
+# import ParetoLib.Oracle as RootOracle
+import ParetoLib.Oracle
 from ParetoLib.Oracle.Oracle import Oracle
 
+RootOracle = ParetoLib.Oracle
 
 # from ParetoLib._py3k import getoutput, viewvalues, viewitems
 

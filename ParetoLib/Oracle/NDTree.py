@@ -26,7 +26,10 @@ import cython
 
 from ParetoLib.Geometry.Rectangle import Rectangle
 from ParetoLib.Geometry.Point import less, less_equal, distance, dim
-import ParetoLib.Oracle as RootOracle
+# import ParetoLib.Oracle as RootOracle
+import ParetoLib.Oracle
+
+RootOracle = ParetoLib.Oracle
 
 
 @cython.cclass

@@ -1,8 +1,11 @@
 import cython
 
-import ParetoLib.Oracle as RootOracle
+# import ParetoLib.Oracle as RootOracle
+import ParetoLib.Oracle
 from ParetoLib.Oracle.OracleSTLe import OracleSTLeLib
 from ParetoLib.STLe.STLe import MAX_STLE_CALLS
+
+RootOracle = ParetoLib.Oracle
 
 
 class OracleEpsSTLe(OracleSTLeLib):

@@ -51,7 +51,10 @@ from ParetoLib.Geometry.Rectangle import Rectangle
 
 import ParetoLib.Search.SeqSearch as SeqSearch
 import ParetoLib.Search.ParSearch as ParSearch
-import ParetoLib.Search as RootSearch
+# import ParetoLib.Search as RootSearch
+import ParetoLib.Search
+
+RootSearch = ParetoLib.Search
 
 from ParetoLib.Search.CommonSearch import EPS, DELTA, STEPS
 from ParetoLib.Search.ResultSet import ResultSet

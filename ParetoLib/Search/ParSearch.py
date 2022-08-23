@@ -25,7 +25,10 @@ import cython
 from multiprocessing import Manager, Pool, cpu_count
 from sortedcontainers import SortedSet
 
-import ParetoLib.Search as RootSearch
+# import ParetoLib.Search as RootSearch
+import ParetoLib.Search
+
+RootSearch = ParetoLib.Search
 
 from ParetoLib.Search.CommonSearch import EPS, DELTA, STEPS, binary_search
 from ParetoLib.Search.ParResultSet import ParResultSet
