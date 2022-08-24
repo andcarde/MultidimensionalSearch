@@ -860,7 +860,7 @@ class OracleSTLeLib(OracleSTLe):
         >>> ora.eval_stl_formula(stl_formula)
         >>> False
         """
-        assert self._stle_oracle is not None
+        assert self.stle_oracle is not None
         assert self.monitor is not None
         assert self.signal is not None
         assert self.signalvars is not None
