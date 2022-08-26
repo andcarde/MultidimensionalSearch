@@ -494,7 +494,7 @@ class STLeLibInterface(object):
         return self._stl_pcseries_size(stle_series)
 
     @cython.ccall
-    @cython.locals(stle_series=object)
+    @cython.locals(stle_series=object, epsilon=object)
     @cython.returns(object)
     def stl_eps_separation_size(self, stle_series, epsilon):
         # type: (STLeLibInterface, c_void_p, c_double) -> c_int
