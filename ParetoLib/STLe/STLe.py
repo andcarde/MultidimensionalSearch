@@ -362,6 +362,9 @@ class STLeLibInterface(object):
         # deepcopy cannot handle regex
         return STLeLibInterface()
 
+    # If arg/restypes are defined, python tries to automatically cast values when calling functions.
+    # E.g., stl_pcsignal_size(signal) returns 'int' instead of 'c_int'
+
     @cython.ccall
     @cython.returns(str)
     def stl_version(self):

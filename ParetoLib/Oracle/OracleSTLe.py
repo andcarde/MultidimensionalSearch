@@ -22,7 +22,6 @@ import io
 import sys
 import os
 import filecmp
-from ctypes import c_double
 import cython
 
 # import ParetoLib.Oracle as RootOracle
@@ -818,16 +817,15 @@ class OracleSTLeLib(OracleSTLe):
         return OracleSTLeLib._parse_stle_result(res)
 
     @staticmethod
-    # @cython.ccall
-    @cython.locals(result=object)
+    @cython.locals(result=cython.double)
     @cython.returns(cython.bint)
     def _parse_stle_result(result):
-        # type: (c_double) -> bool
+        # type: (float) -> bool
         """
         Interprets the result of evaluating a parametrized STL formula.
 
         Args:
-            result (str): The result provided by STLe.
+            result (float): The result provided by STLe.
         Returns:
             bool: True if the STL formula is satisfied.
         """
@@ -838,49 +836,8 @@ class OracleSTLeLib(OracleSTLe):
         # - a real value (i.e., min/max of a real value signal).
         # We assume that the output is a boolean value.
         RootOracle.logger.debug('Result: {0}'.format(result))
-        return int(result) == 1
+        return result == 1.0
 
-    # @cython.ccall
-    @cython.locals(stl_formula=str, epsilon=object, expr=object, stl_series=object, res=object)
-    @cython.returns(cython.bint)
-    def eps_separate_stl_formula(self, stl_formula, epsilon):
-        # type: (OracleSTLeLib, str, c_double) -> bool
-        """
-        Evaluates the instance of a parametrized STL formula.
-
-        Args:
-            self (OracleSTLeLib): The Oracle.
-            stl_formula: String representing the instance of the parametrized STL formula that will be evaluated.
-        Returns:
-            bool: True if the stl_formula is satisfied.
-
-        Example:
-        >>> ora = OracleSTLeLib()
-        >>> stl_formula = '(< (On (0 inf) (- (Max x0) (Min x0))) 0.5)'
-        >>> ora.eval_stl_formula(stl_formula)
-        >>> False
-        """
-        assert self.stle_oracle is not None
-        assert self.monitor is not None
-        assert self.signal is not None
-        assert self.signalvars is not None
-        assert self.exprset is not None
-
-        RootOracle.logger.debug('Evaluating: {0}'.format(stl_formula))
-
-        # Add STLe formula to the expression set
-        expr = self.stle_oracle.stl_parse_sexpr_str(self.exprset, stl_formula)
-
-        RootOracle.logger.debug('STLe formula parsed: {0}'.format(expr))
-
-        # Evaluating formula
-        stl_series = self.stle_oracle.stl_offlinepcmonitor_make_output(self.monitor, expr)
-        RootOracle.logger.debug('STLe series: {0}'.format(stl_series))
-
-        res = self.stle_oracle.stl_eps_separation_size(stl_series, epsilon)
-        RootOracle.logger.debug('Result: {0}'.format(res))
-
-        return res
 
     # @cython.ccall
     @cython.locals(stl_formula=str, epsilon=object, expr=object, stl_series=object, pcseries_size=object,
