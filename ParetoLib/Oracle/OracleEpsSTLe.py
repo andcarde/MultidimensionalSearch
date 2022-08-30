@@ -9,9 +9,9 @@ RootOracle = ParetoLib.Oracle
 
 # @cython.cclass
 class OracleEpsSTLe(OracleSTLeLib):
-    cython.declare(epsilon=float, bound=int)
+    cython.declare(epsilon=cython.double, bound=cython.int)
 
-    @cython.locals(intvl_epsilon=int, bound_on_count=int, stl_prop_file=str, csv_signal_file=str, stl_param_file=str)
+    @cython.locals(bound_on_count=cython.int, intvl_epsilon=cython.double, stl_prop_file=str, csv_signal_file=str, stl_param_file=str)
     @cython.returns(cython.void)
     def __init__(self, bound_on_count, intvl_epsilon=5.0, stl_prop_file='', csv_signal_file='', stl_param_file=''):
         # type: (OracleEpsSTLe, int, float, str, str, str) -> None
@@ -21,13 +21,15 @@ class OracleEpsSTLe(OracleSTLeLib):
         OracleSTLeLib should be usually faster than OracleSTLe
         This class is an extension of the STLe oracle.
         It is intended for computing the size of minimal epsilon covering.
+        intvl_epsilon represents the distance between events
+
         """
 
         super(OracleEpsSTLe, self).__init__(stl_prop_file, csv_signal_file, stl_param_file)
         self.epsilon = intvl_epsilon
         self.bound = bound_on_count
 
-    @cython.locals(xpoint=tuple, val_stl_formula=str, eps_separation_size=int)
+    @cython.locals(xpoint=tuple, val_stl_formula=str, eps_separation_size=cython.int)
     @cython.returns(cython.bint)
     def member(self, xpoint):
         # type: (OracleEpsSTLe, tuple) -> bool
@@ -50,8 +52,8 @@ class OracleEpsSTLe(OracleSTLeLib):
         return self._parse_stle_result(eps_separation_size)
 
     # @cython.ccall
-    @cython.locals(stl_formula=str, epsilon=object, expr=object, stl_series=object, res=int)
-    @cython.returns(int)
+    @cython.locals(stl_formula=str, expr=object, stl_series=object, res=cython.int)
+    @cython.returns(cython.int)
     def eval_stl_formula(self, stl_formula):
         # type: (OracleEpsSTLe, str) -> int
         """
@@ -60,7 +62,6 @@ class OracleEpsSTLe(OracleSTLeLib):
         Args:
             self (OracleEpsSTLe): The Oracle.
             stl_formula: String representing the instance of the parametrized STL formula that will be evaluated.
-            epsilon: c_double Distance between events
         Returns:
             int: 1 if the stl_formula is satisfied.
 
@@ -96,7 +97,7 @@ class OracleEpsSTLe(OracleSTLeLib):
         # Return the result of evaluating the STL formula.
         return res
 
-    @cython.locals(result=object)
+    @cython.locals(result=cython.int)
     @cython.returns(cython.bint)
     def _parse_stle_result(self, result):
         # type: (OracleEpsSTLe, int) -> bool

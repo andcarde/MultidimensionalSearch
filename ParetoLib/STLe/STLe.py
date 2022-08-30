@@ -373,7 +373,7 @@ class STLeLibInterface(object):
         return str(version.decode("utf-8"))
 
     @cython.ccall
-    @cython.locals(csv_signal_file=str, val=int, fname=bytes)
+    @cython.locals(csv_signal_file=str, val=cython.int, fname=bytes)
     @cython.returns(object)
     def stl_read_pcsignal_csv_fname(self, csv_signal_file, val=0):
         # type: (STLeLibInterface, str, int) -> c_void_p
@@ -415,7 +415,7 @@ class STLeLibInterface(object):
         return self._stl_get_expr_impl(expr)
 
     @cython.ccall
-    @cython.locals(exprset=object, stl_formula=str, val=int, pos=object, stl_formula_utf=bytes)
+    @cython.locals(exprset=object, stl_formula=str, val=cython.int, pos=object, stl_formula_utf=bytes)
     @cython.returns(object)
     def stl_parse_sexpr_str(self, exprset, stl_formula, val=0):
         # type: (STLeLibInterface, c_void_p, str, int) -> c_void_p
@@ -426,13 +426,13 @@ class STLeLibInterface(object):
 
     @cython.ccall
     @cython.locals(signal=object)
-    @cython.returns(object)
+    @cython.returns(cython.int)
     def stl_pcsignal_size(self, signal):
         # type: (STLeLibInterface, c_void_p) -> c_int
         return self._stl_pcsignal_size(signal)
 
     @cython.ccall
-    @cython.locals(n=object)
+    @cython.locals(n=cython.int)
     @cython.returns(object)
     def stl_make_signalvars_xn(self, n):
         # type: (STLeLibInterface, c_int) -> c_void_p
@@ -453,7 +453,7 @@ class STLeLibInterface(object):
         return self._stl_make_offlinepcmonitor(signal, signalvars, exprset)
 
     @cython.ccall
-    @cython.locals(monitor=object, expr=object, val_rewrite=int, val_rewritten=int, rewrite=object, rewritten=object)
+    @cython.locals(monitor=object, expr=object, val_rewrite=cython.int, val_rewritten=cython.int, rewrite=object, rewritten=object)
     @cython.returns(object)
     def stl_offlinepcmonitor_make_output(self, monitor, expr, val_rewrite=1, val_rewritten=0):
         # type: (STLeLibInterface, c_void_p, c_void_p, int, int) -> c_void_p
@@ -470,35 +470,35 @@ class STLeLibInterface(object):
 
     @cython.ccall
     @cython.locals(stle_series=object)
-    @cython.returns(object)
+    @cython.returns(cython.double)
     def stl_pcseries_value0(self, stle_series):
         # type: (STLeLibInterface, c_void_p) -> c_double
         return self._stl_pcseries_value0(stle_series)
 
     @cython.ccall
-    @cython.locals(stle_series=object, i=object)
-    @cython.returns(object)
+    @cython.locals(stle_series=object, i=cython.int)
+    @cython.returns(cython.double)
     def stl_pcseries_value(self, stle_series, i):
         # type: (STLeLibInterface, c_void_p, c_int) -> c_double
         return self._stl_pcseries_value(stle_series, i)
 
     @cython.ccall
-    @cython.locals(stle_series=object, i=object)
-    @cython.returns(object)
+    @cython.locals(stle_series=object, i=cython.int)
+    @cython.returns(cython.double)
     def stl_pcseries_start_time(self, stle_series, i):
         # type: (STLeLibInterface, c_void_p, c_int) -> c_double
         return self._stl_pcseries_start_time(stle_series, i)
 
     @cython.ccall
     @cython.locals(stle_series=object)
-    @cython.returns(object)
+    @cython.returns(cython.int)
     def stl_pcseries_size(self, stle_series):
         # type: (STLeLibInterface, c_void_p) -> c_int
         return self._stl_pcseries_size(stle_series)
 
     @cython.ccall
-    @cython.locals(stle_series=object, epsilon=object)
-    @cython.returns(object)
+    @cython.locals(stle_series=object, epsilon=cython.double)
+    @cython.returns(cython.int)
     def stl_eps_separation_size(self, stle_series, epsilon):
         # type: (STLeLibInterface, c_void_p, c_double) -> c_int
         return self._stl_eps_separation_size(stle_series, epsilon)

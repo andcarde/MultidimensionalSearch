@@ -652,7 +652,7 @@ class OracleSTLeLib(OracleSTLe):
         # Creating signal monitor and expression set
         self._create_monitor_exprset()
 
-    @cython.locals(message=str, n=object)
+    @cython.locals(message=str, n=cython.int)
     @cython.returns(cython.void)
     def _load_signal_in_mem(self):
         # type: (OracleSTLeLib) -> None
@@ -771,7 +771,7 @@ class OracleSTLeLib(OracleSTLe):
         return self.stle_oracle.stl_version()
 
     # @cython.ccall
-    @cython.locals(stl_formula=str, expr=object, stl_series=object, res=object)
+    @cython.locals(stl_formula=str, expr=object, stl_series=object, res=cython.double)
     @cython.returns(cython.bint)
     def eval_stl_formula(self, stl_formula):
         # type: (OracleSTLeLib, str) -> bool
@@ -838,10 +838,9 @@ class OracleSTLeLib(OracleSTLe):
         RootOracle.logger.debug('Result: {0}'.format(result))
         return result == 1.0
 
-
     # @cython.ccall
-    @cython.locals(stl_formula=str, epsilon=object, expr=object, stl_series=object, pcseries_size=object,
-                   stl_series_dict=dict)
+    @cython.locals(stl_formula=str, expr=object, stl_series=object, pcseries_size=cython.int, stl_series_dict=dict,
+                   i=cython.int)
     @cython.returns(dict)
     def get_stle_pcseries(self, stl_formula):
         # type: (OracleSTLeLib, str) -> dict
