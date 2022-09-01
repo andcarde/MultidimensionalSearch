@@ -41,6 +41,15 @@ def pareto_ND_Intersection_eps(ecg_name, num_params, stl_template1, stl_template
 
 
 if __name__ == "__main__":
+    # This script learns to classify the day the ECG was recorded. The classifier consists of a Parametric STL formula
+    # with parameters (p1, p2, p3). The PSTL is a binary classifier that determines if the ECG was recorded on day 1 or
+    # on day 5 for the same patient. The result of training the classifier is the set of valuations of the parameter
+    # space such that the detector misclassifies 'bound1' false negatives and 'bound2' false positives.
+    #
+    # In this example, the following call classifies an ECG taken in day 5 with a resolution of the parameter space
+    # of 1/10 (delta = 10). The opt_level = 0 means that the algorithm extracts a single point of the parameter space
+    # instead of the full satisfaction area (green boxes).
+    #
     # python3 ./examplend_intersection_eps.py 5 0 10
     # Work without constraints on parameters.
     list_intervals = [(0, 30), (0, 20), (-10, 10), (-10, 10), (-10, 10), (0, 100), (0, 100)]

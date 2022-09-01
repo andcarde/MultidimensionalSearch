@@ -81,6 +81,14 @@ def pareto_3d_intersection(ecg_name, num_params, stl_template1, stl_template2, m
 
 
 if __name__ == "__main__":
+    # This script learns to detect pulses in ECGs. The detector consists of a Parametric STL formula with
+    # parameters (p1, p2, p3). The result of training the detector is the set of valuations of the parameter space such
+    # that the detector misclassifies 'bound1' false negatives and 'bound2' false positives.
+    #
+    # In this example, the following call optimizes the detector for the ECG 221, with up to 0 false negatives, 1 false
+    # positives and a resolution of the parameter space of 1/10 (delta = 10). The opt_level = 2 means that the algorithm
+    # computes the satisfaction area of the parameter space (green boxes) instead of a single point.
+    #
     # python3 ./example3d_intersection_eps.py 221 0 1 2 10
     min_tuple = (0.0, -1.0, -1.0)
     max_tuple = (70.0, 1.00, 1.0)
