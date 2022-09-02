@@ -90,7 +90,8 @@ from ParetoLib._py3k import red
 
 @cython.cclass
 class Rectangle(object):
-    cython.declare(_min_corner=tuple, _max_corner=tuple, vol=cython.double, vertx=list, privilege=cython.double)
+    privilege = cython.declare(cython.double, visibility='public')
+    cython.declare(_min_corner=tuple, _max_corner=tuple, vol=cython.double, vertx=list) #, privilege=cython.double)
 
     def __init__(self,
                  min_corner=(float('-inf'),) * 2,
@@ -133,6 +134,7 @@ class Rectangle(object):
         # self.snInf = None
         # self.sigVol = None
         self.vertx = None
+        self.privilege = 1.0
 
     # _min_corner = property(getname, setname, delname)
 
@@ -1579,13 +1581,13 @@ Numerical codification of (in)comparable segments:
 '''
 
 
-@cython.ccall
+#@cython.ccall
 @cython.locals(d=cython.ushort)
 @cython.returns(list)
 def incomp_segment_neg_remove_down(d):
     # type: (int) -> list
     if d > 0:
-        return incomp_segment_neg_remove_down_e(d)
+        return [tuple(int(li) for li in inc_seg_e) for inc_seg_e in incomp_segment_neg_remove_down_e(d)]
     else:
         return []
 
@@ -1603,13 +1605,13 @@ def incomp_segment_neg_remove_down_e(d):
         return elist
 
 
-@cython.ccall
+#@cython.ccall
 @cython.locals(d=cython.ushort)
 @cython.returns(list)
 def incomp_segment_neg_remove_up(d):
     # type: (int) -> list
     if d > 0:
-        return incomp_segment_neg_remove_up_e(d)
+        return [tuple(int(li) for li in inc_seg_e) for inc_seg_e in incomp_segment_neg_remove_up_e(d)]
     else:
         return []
 
@@ -1627,13 +1629,13 @@ def incomp_segment_neg_remove_up_e(d):
         return elist
 
 
-@cython.ccall
+#@cython.ccall
 @cython.locals(d=cython.ushort)
 @cython.returns(list)
 def incomp_segmentpos(d):
     # type: (int) -> list
     if d > 0:
-        return incomp_segmentpos_e(d)
+        return [tuple(int(li) for li in inc_seg_e) for inc_seg_e in incomp_segmentpos_e(d)]
     else:
         return []
 
@@ -1652,13 +1654,13 @@ def incomp_segmentpos_e(d):
         return elistDown + elistUp + elist1
 
 
-@cython.ccall
+#@cython.ccall
 @cython.locals(d=cython.ushort)
 @cython.returns(list)
 def incomp_segment(d):
     # type: (int) -> list
     if d > 0:
-        return incomp_segment_e(d)
+        return [tuple(int(li) for li in inc_seg_e) for inc_seg_e in incomp_segment_e(d)]
     else:
         return []
 
@@ -1759,19 +1761,19 @@ def E(d):
 def intercpoint(i, alphai, yspace, xspace):
     # type: (int, int, Rectangle, Rectangle) -> Rectangle
     result_xspace = Rectangle(xspace.min_corner, xspace.max_corner)
-    if alphai == '0':
+    if alphai == 0:
         # result_xspace.min_corner = subt(i, xspace.min_corner, xspace.min_corner)
         result_xspace.max_corner = subt(i, xspace.max_corner, yspace.min_corner)
-    elif alphai == '1':
+    elif alphai == 1:
         result_xspace.min_corner = subt(i, xspace.min_corner, yspace.min_corner)
         result_xspace.max_corner = subt(i, xspace.max_corner, yspace.max_corner)
-    elif alphai == '2':
+    elif alphai == 2:
         result_xspace.min_corner = subt(i, xspace.min_corner, yspace.max_corner)
         # result_xspace.max_corner = subt(i, xspace.max_corner, xspace.max_corner)
-    elif alphai == '3':
+    elif alphai == 3:
         # result_xspace.min_corner = subt(i, xspace.min_corner, xspace.min_corner)
         result_xspace.max_corner = subt(i, xspace.max_corner, yspace.max_corner)
-    elif alphai == '4':
+    elif alphai == 4:
         result_xspace.min_corner = subt(i, xspace.min_corner, yspace.min_corner)
         # result_xspace.max_corner = subt(i, xspace.max_corner, xspace.max_corner)
     # elif alpha == '5': # Nothing to be done here.

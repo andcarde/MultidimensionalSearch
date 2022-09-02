@@ -1,5 +1,4 @@
 import sys
-import time
 
 from ParetoLib.Oracle.OracleEpsSTLe import OracleEpsSTLe
 from ParetoLib.Search.Search import SearchIntersection3D, EPS
@@ -39,7 +38,7 @@ def create_project_file(project_file, stl_template_file, ecg_file, param_file):
 
 def pareto_3d_intersection(ecg_name, num_params, stl_template1, stl_template2, min_tuple, max_tuple, bound1, bound2,
                            delta, opt_level):
-    # type: (str, int, str, str, tuple, tuple, int, int float, int) -> ResultSet
+    # type: (str, int, str, str, tuple, tuple, int, int, float, int) -> ResultSet
 
     param_name = "ecgLearn"
     create_param_file(param_name, num_params)
@@ -97,12 +96,9 @@ if __name__ == "__main__":
     bound2 = int(sys.argv[3])
     opt_level = int(sys.argv[4])
     delta = 1.0 / float(sys.argv[5])
-    t0 = time.time()
     rs1 = pareto_3d_intersection(ecg_name, 3, 'ecgInterTemplateFn3D', 'ecgInterTemplateFp3D', min_tuple, max_tuple,
                                  bound1, bound2, delta, opt_level)
-    t1 = time.time()
     intersection = rs1.yup
     print("num intersection boxes:", len(intersection))
-    print('TRESIMP: Time taken for intersection pareto (1):', t1 - t0)
     rs1.plot_3D(opacity=0.1, fig_title='Intersection of pareto fronts', var_names=['p1', 'p2', 'p3'])
     rs1.to_file(ecg_name + "_characterizeOnlyOne" + sys.argv[5] + ".zip")

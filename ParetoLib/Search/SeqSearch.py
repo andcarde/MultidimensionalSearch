@@ -1527,10 +1527,10 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
 @cython.returns(object)
 @cython.locals(xspace=object, list_constraints=list, oracle1=object, oracle2=object, epsilon=cython.double,
                delta=cython.double, max_step=cython.ulonglong, blocking=cython.bint, sleep=cython.double,
-               logging=cython.bint, n=cython.ushort, comparable=list, incomparable=list, incomparable_segment=list,
+               logging=cython.bint, n=cython.ushort, incomparable=list, incomparable_segment=list,
                border=object, error=tuple, vol_total=cython.double, vol_xrest=cython.double, vol_border=cython.double,
                vol_boxes=cython.double, step=cython.ulonglong, intersect_box=list, intersect_region=list, tempdir=str,
-               xrectangle=object, current_privilege=cython.double, want_to_expand=cython.bint, y_in=object,
+               current_privilege=cython.double, want_to_expand=cython.bint, y_in=object,
                y_cover=object, intersect_indicator=cython.short, steps_binsearch=cython.ushort,
                y=object, yrectangle=object, pos_box=object, neg_box1=object, neg_box2=object, i=list, lower_rect=object,
                upper_rect=object, b0=object, b1=object, rect=object, rs=object, name=str)
@@ -1553,9 +1553,9 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
     n = xspace.dim()
 
     # Set of comparable and incomparable rectangles, represented by 'alpha' indices
-    comparable = comp(n)
     incomparable = incomp(n)
     incomparable_segment = incomp_segment(n)
+    # comparable = comp(n)
     # comparable = [zero, one]
     # incomparable = list(set(alpha) - set(comparable))
     # with:
@@ -1587,7 +1587,6 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
     RootSearch.logger.debug('delta: {0}'.format(delta))
     RootSearch.logger.debug('step: {0}'.format(step))
     RootSearch.logger.debug('incomparable: {0}'.format(incomparable))
-    RootSearch.logger.debug('comparable: {0}'.format(comparable))
 
     # Create temporary directory for storing the result of each step
     tempdir = tempfile.mkdtemp()
