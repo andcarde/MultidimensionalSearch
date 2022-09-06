@@ -100,5 +100,9 @@ if __name__ == "__main__":
                                  bound1, bound2, delta, opt_level)
     intersection = rs1.yup
     print("num intersection boxes:", len(intersection))
-    rs1.plot_3D(opacity=0.1, fig_title='Intersection of pareto fronts', var_names=['p1', 'p2', 'p3'])
+    # rs1.plot_3D(opacity=0.1, fig_title='Intersection of pareto fronts', var_names=['p1', 'p2', 'p3'])
     rs1.to_file(ecg_name + "_characterizeOnlyOne" + sys.argv[5] + ".zip")
+    rs1.ylow = []
+    rs1.border = []
+    rs1.plot_3D(fig_title='Intersection of pareto fronts', var_names=['p1', 'p2', 'p3'])
+
