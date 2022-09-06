@@ -35,8 +35,7 @@ import ParetoLib.Search
 RootSearch = ParetoLib.Search
 
 from ParetoLib.Search.CommonSearch import EPS, DELTA, STEPS, INTERFULL, INTERNULL, INTER, DKNOW, NO_INTER, \
-    binary_search, intersection_empty, \
-    intersection_empty_constrained, intersection_expansion_search
+    binary_search, intersection_empty, intersection_empty_constrained, intersection_expansion_search
 from ParetoLib.Search.ResultSet import ResultSet
 
 from ParetoLib.Oracle.Oracle import Oracle

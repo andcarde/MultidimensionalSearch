@@ -310,8 +310,13 @@ def SearchIntersection2D(ora1, ora2,
     assert (ora1.dim() == ora1.dim()), 'Oracle 1 and Oracle 2 have different dimensions'
 
     xyspace = create_2D_space(min_cornerx, min_cornery, max_cornerx, max_cornery)
-    intersection_result = SeqSearch.multidim_intersection_search(xyspace, [], ora1, ora2, epsilon, delta, max_step,
-                                                                 blocking, sleep, opt_level, logging)
+
+    if parallel:
+        intersection_result = ParSearch.multidim_intersection_search(xyspace, [], ora1, ora2, epsilon, delta, max_step,
+                                                                     blocking, sleep, opt_level, logging)
+    else:
+        intersection_result = SeqSearch.multidim_intersection_search(xyspace, [], ora1, ora2, epsilon, delta, max_step,
+                                                                     blocking, sleep, opt_level, logging)
     if simplify:
         intersection_result.simplify()
         intersection_result.fusion()
@@ -346,8 +351,12 @@ def SearchIntersection3D(ora1, ora2,
     assert (ora1.dim() == ora1.dim()), 'Oracle 1 and Oracle 2 have different dimensions'
 
     xyspace = create_3D_space(min_cornerx, min_cornery, min_cornerz, max_cornerx, max_cornery, max_cornerz)
-    intersection_result = SeqSearch.multidim_intersection_search(xyspace, [], ora1, ora2, epsilon, delta, max_step,
-                                                                 blocking, sleep, opt_level, logging)
+    if parallel:
+        intersection_result = ParSearch.multidim_intersection_search(xyspace, [], ora1, ora2, epsilon, delta, max_step,
+                                                                     blocking, sleep, opt_level, logging)
+    else:
+        intersection_result = SeqSearch.multidim_intersection_search(xyspace, [], ora1, ora2, epsilon, delta, max_step,
+                                                                     blocking, sleep, opt_level, logging)
     if simplify:
         intersection_result.simplify()
         intersection_result.fusion()
@@ -381,7 +390,11 @@ def SearchIntersectionND(ora1, ora2,
     maxc = (max_corner,) * d
     xyspace = Rectangle(minc, maxc)
 
-    intersection_result = SeqSearch.multidim_intersection_search(xyspace, [], ora1, ora2, epsilon, delta, max_step,
+    if parallel:
+        intersection_result = ParSearch.multidim_intersection_search(xyspace, [], ora1, ora2, epsilon, delta, max_step,
+                                                                     blocking, sleep, opt_level, logging)
+    else:
+        intersection_result = SeqSearch.multidim_intersection_search(xyspace, [], ora1, ora2, epsilon, delta, max_step,
                                                                  blocking, sleep, opt_level, logging)
     if simplify:
         intersection_result.simplify()
@@ -413,8 +426,14 @@ def SearchIntersectionND_2(ora1, ora2,
     # list_intervals = [(minx, maxx), (miny, maxy),..., (minz, maxz)]
     xyspace = create_ND_space(list_intervals)
 
-    intersection_result = SeqSearch.multidim_intersection_search(xyspace, list_constraints, ora1, ora2, epsilon, delta,
-                                                                 max_step, blocking, sleep, opt_level, logging)
+    if parallel:
+        intersection_result = ParSearch.multidim_intersection_search(xyspace, list_constraints, ora1, ora2, epsilon,
+                                                                     delta, max_step, blocking, sleep, opt_level,
+                                                                     logging)
+    else:
+        intersection_result = SeqSearch.multidim_intersection_search(xyspace, list_constraints, ora1, ora2, epsilon,
+                                                                     delta, max_step, blocking, sleep, opt_level,
+                                                                     logging)
     if simplify:
         intersection_result.simplify()
         intersection_result.fusion()
