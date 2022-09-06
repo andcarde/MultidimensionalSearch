@@ -29,6 +29,26 @@ class OracleEpsSTLe(OracleSTLeLib):
         self.epsilon = intvl_epsilon
         self.bound = bound_on_count
 
+    @cython.returns(object)
+    def __copy__(self):
+        # type: (OracleEpsSTLe) -> OracleEpsSTLe
+        """
+        other = copy.copy(self)
+        """
+        return OracleEpsSTLe(bound_on_count=self.bound, intvl_epsilon=self.epsilon, stl_prop_file=self.stl_prop_file,
+                             csv_signal_file=self.csv_signal_file, stl_param_file=self.stl_param_file)
+
+    @cython.returns(object)
+    def __deepcopy__(self, memo):
+        # type: (OracleEpsSTLe) -> OracleEpsSTLe
+        """
+        other = copy.deepcopy(self)
+        """
+        # deepcopy function is required for creating multiple instances of the Oracle in ParSearch.
+        # deepcopy cannot handle neither regex nor Popen processes
+        return OracleEpsSTLe(bound_on_count=self.bound, intvl_epsilon=self.epsilon, stl_prop_file=self.stl_prop_file,
+                             csv_signal_file=self.csv_signal_file, stl_param_file=self.stl_param_file)
+
     @cython.locals(xpoint=tuple, val_stl_formula=str, eps_separation_size=cython.int)
     @cython.returns(cython.bint)
     def member(self, xpoint):

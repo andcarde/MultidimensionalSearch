@@ -1226,8 +1226,8 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
             else:
                 y_in, y_cover, intersect_indicator, steps_binsearch = intersection_expansion_search(rect_diag, f1, f2,
                                                                                                     error, False)
-        y = y_cover
-        RootSearch.logger.debug('y: {0}'.format(y))
+            RootSearch.logger.debug('y_in: {0}'.format(y_in))
+            RootSearch.logger.debug('y_cover: {0}'.format(y_cover))
 
         if intersect_indicator >= INTER:
             intersect_box = [Rectangle(y_in.low, y_in.high)]
@@ -1244,17 +1244,17 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
                 vol_xrest += xrectangle.volume()  # Temporary hack. Must purge the implementation of the algo.
                 continue
         else:
-            b0 = Rectangle(xrectangle.min_corner, y.low)
+            b0 = Rectangle(xrectangle.min_corner, y_cover.low)
             vol_xrest += b0.volume()
 
             RootSearch.logger.debug('b0: {0}'.format(b0))
 
-            b1 = Rectangle(y.high, xrectangle.max_corner)
+            b1 = Rectangle(y_cover.high, xrectangle.max_corner)
             vol_xrest += b1.volume()
 
             RootSearch.logger.debug('b1: {0}'.format(b1))
 
-            yrectangle = Rectangle(y.low, y.high)
+            yrectangle = Rectangle(y_cover.low, y_cover.high)
             i = irect(incomparable, yrectangle, xrectangle)
 
         for rect in i:

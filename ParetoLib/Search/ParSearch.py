@@ -36,8 +36,8 @@ from ParetoLib.Search.SeqSearch import pos_neg_box_gen, pos_overlap_box_gen, bou
 from ParetoLib.Search.ParResultSet import ParResultSet
 
 from ParetoLib.Oracle.Oracle import Oracle
-from ParetoLib.Geometry.Rectangle import Rectangle, irect, idwc, iuwc, comp, incomp, incomp_segment, incomp_segmentpos,\
-    incomp_segment_neg_remove_down, incomp_segment_neg_remove_up
+from ParetoLib.Geometry.Rectangle import Rectangle, irect, idwc, iuwc, comp, incomp, incomp_segment, incomp_segmentpos, \
+    incomp_segment_neg_remove_down, incomp_segment_neg_remove_up, interirect
 from ParetoLib.Geometry.ParRectangle import pvol
 from ParetoLib.Geometry.Lattice import Lattice
 
@@ -137,6 +137,11 @@ def pborder_nondominatedby_b1(args):
 
 # Multidimensional search
 # The search returns a set of Rectangles in Yup, Ylow and Border
+@cython.ccall
+@cython.returns(object)
+@cython.locals(xspace=object, oracle=object, epsilon=cython.double, delta=cython.double, max_step=cython.ulonglong,
+               blocking=cython.bint, sleep=cython.double, opt_level=cython.uint, logging=cython.bint, md_search=list,
+               start=cython.double, end=cython.double, time0=cython.double, rs=object)
 def multidim_search(xspace,
                     oracle,
                     epsilon=EPS,
@@ -1293,6 +1298,84 @@ def multidim_search_deep_first_opt_0(xspace,
 ######## EPSILON METHOD ########
 ################################
 
+def pintersection_empty_constrained(args):
+    xrectangle, dict_man, list_constraints = args
+    RootSearch.logger.debug('Executing parallel intersection empty constrained search')
+    RootSearch.logger.debug('xrectangle: {0}'.format(xrectangle))
+    RootSearch.logger.debug('dict_man[{0}]: {1}'.format(mp.current_process().name, dict_man[mp.current_process().name]))
+
+    ora1, ora2 = dict_man[mp.current_process().name]
+    f1 = ora1.membership()
+    f2 = ora2.membership()
+
+    RootSearch.logger.debug('f1 = {0}'.format(f1))
+    RootSearch.logger.debug('f2 = {0}'.format(f2))
+
+    intersects = intersection_empty_constrained(xrectangle.diag(), f1, f2, list_constraints)
+    vol = xrectangle.volume()
+
+    return (xrectangle, intersects, vol,)
+
+
+def pintersection_empty(args):
+    xrectangle, dict_man, current_privilege = args
+    RootSearch.logger.debug('Executing parallel intersection empty search')
+    RootSearch.logger.debug('xrectangle: {0}'.format(xrectangle))
+    RootSearch.logger.debug('dict_man[{0}]: {1}'.format(mp.current_process().name, dict_man[mp.current_process().name]))
+    ora1, ora2 = dict_man[mp.current_process().name]
+    f1 = ora1.membership()
+    f2 = ora2.membership()
+
+    RootSearch.logger.debug('f1 = {0}'.format(f1))
+    RootSearch.logger.debug('f2 = {0}'.format(f2))
+
+    intersects = intersection_empty(xrectangle.diag(), f1, f2)
+    vol = xrectangle.volume()
+
+    if not intersects:
+        xrectangle.privilege = current_privilege + 1.0
+
+    return (xrectangle, intersects, vol,)
+
+
+@cython.ccall
+@cython.returns(object)
+@cython.locals(xspace=object, list_constraints=list, oracle1=object, oracle2=object, epsilon=cython.double,
+               delta=cython.double, max_step=cython.ulonglong, blocking=cython.bint, sleep=cython.double,
+               opt_level=cython.uint, logging=cython.bint, md_inter_search=list, start=cython.double, end=cython.double,
+               time0=cython.double, intersect_result=object)
+def multidim_intersection_search(xspace, listconstraints,
+                                 oracle1,
+                                 oracle2,
+                                 epsilon=EPS,
+                                 delta=DELTA,
+                                 max_step=STEPS,
+                                 blocking=False,
+                                 sleep=0.0,
+                                 opt_level=2,
+                                 logging=True):
+    # type: (Rectangle, list, Oracle, Oracle, float, float, int, bool, float, int, bool) -> ParResultSet
+    md_inter_search = [multidim_intersection_search_opt_0,
+                       multidim_intersection_search_opt_1,
+                       multidim_intersection_search_opt_2]
+
+    RootSearch.logger.info('Starting multidimensional intersection search')
+    start = time.time()
+    rs = md_inter_search[opt_level](xspace, listconstraints,
+                                    oracle1, oracle2,
+                                    epsilon=epsilon,
+                                    delta=delta,
+                                    max_step=max_step,
+                                    blocking=blocking,
+                                    sleep=sleep,
+                                    logging=logging)
+    end = time.time()
+    time0 = end - start
+    RootSearch.logger.info('Time multidim intersection search: ' + str(time0))
+
+    return rs
+
+
 # @cython.ccall
 @cython.returns(object)
 @cython.locals(xspace=object, list_constraints=list, oracle1=object, oracle2=object, epsilon=cython.double,
@@ -1312,7 +1395,7 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
                                        blocking=False,
                                        sleep=0.0,
                                        logging=True):
-    # type: (Rectangle, list, Oracle, Oracle, float, float, float, bool, float, bool) -> ResultSet
+    # type: (Rectangle, list, Oracle, Oracle, float, float, float, bool, float, bool) -> ParResultSet
 
     # Xspace is a particular case of maximal rectangle
     # Xspace = [min_corner, max_corner]^n = [0, 1]^n
@@ -1352,8 +1435,8 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
     p = Pool(num_proc)
 
     # oracle function
-    # f1 = oracle1.membership()
-    # f2 = oracle2.membership()
+    f1 = oracle1.membership()
+    f2 = oracle2.membership()
 
     man = Manager()
     dict_man = man.dict()
@@ -1363,7 +1446,7 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
     for proc in mp.active_children():
         RootSearch.logger.debug('cloning: {0}'.format(oracle1))
         RootSearch.logger.debug('cloning: {0}'.format(oracle2))
-        dict_man[proc.name] = (copy.deepcopy(oracle1), copy.deepcopy(oracle2), )
+        dict_man[proc.name] = (copy.deepcopy(oracle1), copy.deepcopy(oracle2),)
 
     RootSearch.logger.debug('xspace: {0}'.format(xspace))
     RootSearch.logger.debug('vol_border: {0}'.format(vol_border))
@@ -1388,7 +1471,8 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
         min_bound, max_bound = bound_box_with_constraints(xrectangle, list_constraints)
         inside_bound = False
         rect_diag = xrectangle.diag()
-        if (max_bound < 0.0) or (min_bound > 1.0) or (min_bound > max_bound) or (min_bound + (epsilon / 100.0) > max_bound):
+        if (max_bound < 0.0) or (min_bound > 1.0) or (min_bound > max_bound) or (
+                min_bound + (epsilon / 100.0) > max_bound):
             intersect_indicator = INTERNULL
             continue
         else:
@@ -1407,8 +1491,8 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
             else:
                 y_in, y_cover, intersect_indicator, steps_binsearch = intersection_expansion_search(rect_diag, f1, f2,
                                                                                                     error, False)
-        y = y_cover
-        RootSearch.logger.debug('y: {0}'.format(y))
+            RootSearch.logger.debug('y_in: {0}'.format(y_in))
+            RootSearch.logger.debug('y_cover: {0}'.format(y_cover))
 
         if intersect_indicator >= INTER:
             intersect_box = [Rectangle(y_in.low, y_in.high)]
@@ -1425,24 +1509,32 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
                 vol_xrest += xrectangle.volume()  # Temporary hack. Must purge the implementation of the algo.
                 continue
         else:
-            b0 = Rectangle(xrectangle.min_corner, y.low)
+            b0 = Rectangle(xrectangle.min_corner, y_cover.low)
             vol_xrest += b0.volume()
 
             RootSearch.logger.debug('b0: {0}'.format(b0))
 
-            b1 = Rectangle(y.high, xrectangle.max_corner)
+            b1 = Rectangle(y_cover.high, xrectangle.max_corner)
             vol_xrest += b1.volume()
 
             RootSearch.logger.debug('b1: {0}'.format(b1))
 
-            yrectangle = Rectangle(y.low, y.high)
+            yrectangle = Rectangle(y_cover.low, y_cover.high)
             i = irect(incomparable, yrectangle, xrectangle)
 
-        for rect in i:
-            if intersection_empty_constrained(rect.diag(), f1, f2, list_constraints):
-                vol_xrest += rect.volume()
-            else:
-                border.add(rect)
+        # for rect in i:
+        #     if intersection_empty_constrained(rect.diag(), f1, f2, list_constraints):
+        #         vol_xrest += rect.volume()
+        #     else:
+        #         border.add(rect)
+        args_pinter_empty_constr = [(rect, dict_man, copy.deepcopy(list_constraints)) for rect in i]
+        inter_empty_constr = p.map(pintersection_empty_constrained, args_pinter_empty_constr)
+
+        vols = (v for (_, inter, v) in inter_empty_constr if inter)
+        vol_xrest += sum(vols)
+
+        rect_filt = (r for (r, inter, _) in inter_empty_constr if not inter)
+        border.update(rect_filt)
 
         RootSearch.logger.debug('irect: {0}'.format(i))
 
@@ -1473,7 +1565,11 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
     RootSearch.logger.info('total volume: {0}'.format(vol_total))
     RootSearch.logger.info('percentage unexplored: {0}'.format((100.0 * vol_border) / vol_total))
 
-    return ResultSet(border, intersect_region, intersect_box, xspace)
+    # Stop multiprocessing
+    p.close()
+    p.join()
+
+    return ParResultSet(border, intersect_region, intersect_box, xspace)
 
 
 @cython.ccall
@@ -1538,8 +1634,8 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
     p = Pool(num_proc)
 
     # oracle function
-    # f1 = oracle1.membership()
-    # f2 = oracle2.membership()
+    f1 = oracle1.membership()
+    f2 = oracle2.membership()
 
     man = Manager()
     dict_man = man.dict()
@@ -1549,7 +1645,7 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
     for proc in mp.active_children():
         RootSearch.logger.debug('cloning: {0}'.format(oracle1))
         RootSearch.logger.debug('cloning: {0}'.format(oracle2))
-        dict_man[proc.name] = (copy.deepcopy(oracle1), copy.deepcopy(oracle2), )
+        dict_man[proc.name] = (copy.deepcopy(oracle1), copy.deepcopy(oracle2),)
 
     RootSearch.logger.debug('xspace: {0}'.format(xspace))
     RootSearch.logger.debug('vol_border: {0}'.format(vol_border))
@@ -1629,13 +1725,25 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
 
             i = irect(incomparable, yrectangle, xrectangle)
 
-        for rect in i:
-            if intersection_empty(rect.diag(), f1, f2):
-                vol_xrest += rect.volume()
-            else:
-                rect.privilege = current_privilege + 1.0
-                border.add(rect)
-                vol_boxes += rect.volume()
+        # for rect in i:
+        #     if intersection_empty(rect.diag(), f1, f2):
+        #         vol_xrest += rect.volume()
+        #     else:
+        #         rect.privilege = current_privilege + 1.0
+        #         border.add(rect)
+        #         vol_boxes += rect.volume()
+
+        args_pinter_empty = [(xrectangle, dict_man, current_privilege) for xrectangle in i]
+        inter_empty = p.map(pintersection_empty, args_pinter_empty)
+
+        vols = (v for (_, inter, v) in inter_empty if inter)
+        vol_xrest += sum(vols)
+
+        vols = (v for (_, inter, v) in inter_empty if not inter)
+        vol_boxes += sum(vols)
+
+        rect_filt = (r for (r, inter, _) in inter_empty if not inter)
+        border.update(rect_filt)
 
         RootSearch.logger.debug('irect: {0}'.format(i))
 
@@ -1666,7 +1774,12 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
     RootSearch.logger.info('total volume: {0}'.format(vol_total))
     RootSearch.logger.info('percentage unexplored: {0}'.format((100.0 * vol_border) / vol_total))
 
+    # Stop multiprocessing
+    p.close()
+    p.join()
+
     return ParResultSet(border, intersect_region, intersect_box, xspace)
+
 
 @cython.ccall
 @cython.returns(object)
@@ -1727,8 +1840,8 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
     p = Pool(num_proc)
 
     # oracle function
-    # f1 = oracle1.membership()
-    # f2 = oracle2.membership()
+    f1 = oracle1.membership()
+    f2 = oracle2.membership()
 
     man = Manager()
     dict_man = man.dict()
@@ -1738,7 +1851,7 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
     for proc in mp.active_children():
         RootSearch.logger.debug('cloning: {0}'.format(oracle1))
         RootSearch.logger.debug('cloning: {0}'.format(oracle2))
-        dict_man[proc.name] = (copy.deepcopy(oracle1), copy.deepcopy(oracle2), )
+        dict_man[proc.name] = (copy.deepcopy(oracle1), copy.deepcopy(oracle2),)
 
     RootSearch.logger.debug('xspace: {0}'.format(xspace))
     RootSearch.logger.debug('vol_border: {0}'.format(vol_border))
@@ -1815,13 +1928,33 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
 
             i = irect(incomparable, yrectangle, xrectangle)
 
-        for rect in i:
-            if intersection_empty(rect.diag(), f1, f2):
-                vol_xrest += rect.volume()
+        # for rect in i:
+        #     if intersection_empty(rect.diag(), f1, f2):
+        #         vol_xrest += rect.volume()
+        #     else:
+        #         rect.privilege = current_privilege + 1.0
+        #         border.add(rect)
+        #         vol_boxes += rect.volume()
+
+        args_pinter_empty = ((rect, dict_man, current_privilege) for rect in i)
+        # inter_empty = p.map(pintersection_empty, args_pinter_empty)
+        #
+        # vols = (v for (_, inter, v) in inter_empty if inter)
+        # vol_xrest += sum(vols)
+        #
+        # vols = (v for (_, inter, v) in inter_empty if not inter)
+        # vol_boxes += sum(vols)
+        #
+        # rect_filt = [r for (r, inter, _) in inter_empty if not inter]
+        # border.update(rect_filt)
+        inter_empty = p.imap_unordered(pintersection_empty, args_pinter_empty)
+
+        for r, inter, v in inter_empty:
+            if inter:
+                vol_xrest += v
             else:
-                rect.privilege = current_privilege + 1.0
-                border.add(rect)
-                vol_boxes += rect.volume()
+                vol_boxes += v
+                border.add(r)
 
         RootSearch.logger.debug('irect: {0}'.format(i))
 
@@ -1851,5 +1984,9 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
     RootSearch.logger.info('remaining volume: {0}'.format(vol_border))
     RootSearch.logger.info('total volume: {0}'.format(vol_total))
     RootSearch.logger.info('percentage unexplored: {0}'.format((100.0 * vol_border) / vol_total))
+
+    # Stop multiprocessing
+    p.close()
+    p.join()
 
     return ParResultSet(border, intersect_region, intersect_box, xspace)
