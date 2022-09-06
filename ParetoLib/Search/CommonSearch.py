@@ -79,7 +79,7 @@ def binary_search(x,
 # There can be no intersection in the whole of the search space: -3
 (INTERFULL, INTER, DKNOW, NO_INTER, INTERNULL) = (2, 1, -1, -2, -3)
 
-@cython.locals(y1=object, y2=tuple)
+@cython.locals(y1=object, y2=object)
 @cython.returns((object, cython.short))
 def determine_intersection(y1, y2):
     # type: (Segment, Segment) -> (Segment, int)
