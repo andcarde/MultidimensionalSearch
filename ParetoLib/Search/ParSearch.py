@@ -1522,12 +1522,7 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
             yrectangle = Rectangle(y_cover.low, y_cover.high)
             i = irect(incomparable, yrectangle, xrectangle)
 
-        # for rect in i:
-        #     if intersection_empty_constrained(rect.diag(), f1, f2, list_constraints):
-        #         vol_xrest += rect.volume()
-        #     else:
-        #         border.add(rect)
-        args_pinter_empty_constr = [(rect, dict_man, copy.deepcopy(list_constraints)) for rect in i]
+        args_pinter_empty_constr = ((rect, dict_man, copy.deepcopy(list_constraints)) for rect in i)
         inter_empty_constr = p.map(pintersection_empty_constrained, args_pinter_empty_constr)
 
         vols = (v for (_, inter, v) in inter_empty_constr if inter)
@@ -1725,15 +1720,7 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
 
             i = irect(incomparable, yrectangle, xrectangle)
 
-        # for rect in i:
-        #     if intersection_empty(rect.diag(), f1, f2):
-        #         vol_xrest += rect.volume()
-        #     else:
-        #         rect.privilege = current_privilege + 1.0
-        #         border.add(rect)
-        #         vol_boxes += rect.volume()
-
-        args_pinter_empty = [(xrectangle, dict_man, current_privilege) for xrectangle in i]
+        args_pinter_empty = ((xrectangle, dict_man, current_privilege) for xrectangle in i)
         inter_empty = p.map(pintersection_empty, args_pinter_empty)
 
         vols = (v for (_, inter, v) in inter_empty if inter)
@@ -1928,13 +1915,6 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
 
             i = irect(incomparable, yrectangle, xrectangle)
 
-        # for rect in i:
-        #     if intersection_empty(rect.diag(), f1, f2):
-        #         vol_xrest += rect.volume()
-        #     else:
-        #         rect.privilege = current_privilege + 1.0
-        #         border.add(rect)
-        #         vol_boxes += rect.volume()
 
         args_pinter_empty = ((rect, dict_man, current_privilege) for rect in i)
         # inter_empty = p.map(pintersection_empty, args_pinter_empty)
