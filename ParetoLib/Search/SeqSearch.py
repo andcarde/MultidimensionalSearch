@@ -1272,9 +1272,7 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
         vol_border = vol_total - vol_xrest
 
         RootSearch.logger.info(
-            '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_total,
-                                             len(border),
-                                             steps_binsearch))
+            '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_total, len(border), steps_binsearch))
         if sleep > 0.0:
             rs = ResultSet(border, [], intersect_region, xspace)
             if n == 2:
@@ -1445,9 +1443,7 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
             vol_xrest += xrectangle.volume()
             vol_border = vol_total - vol_xrest
             RootSearch.logger.info(
-                '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_xrest + vol_boxes,
-                                                 len(border),
-                                                 steps_binsearch))
+                '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_xrest + vol_boxes, len(border), steps_binsearch))
             continue
         elif intersect_indicator == INTER:
             pos_box = Rectangle(y_in.low, y_in.high)
@@ -1468,9 +1464,7 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
             vol_xrest += xrectangle.volume()
             vol_border = vol_total - vol_xrest
             RootSearch.logger.info(
-                '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_boxes + vol_xrest,
-                                                 len(border),
-                                                 steps_binsearch))
+                '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_xrest + vol_boxes, len(border), steps_binsearch))
             continue
         else:
             b0 = Rectangle(xrectangle.min_corner, y.low)
@@ -1500,9 +1494,7 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
         vol_border = vol_total - vol_xrest
 
         RootSearch.logger.info(
-            '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_boxes + vol_xrest,
-                                             len(border),
-                                             steps_binsearch))
+            '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_xrest + vol_boxes, len(border), steps_binsearch))
         if sleep > 0.0:
             rs = ResultSet(border, [], intersect_region, xspace)
             if n == 2:
@@ -1618,9 +1610,7 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
             vol_xrest += xrectangle.volume()
             vol_border = vol_total - vol_xrest
             RootSearch.logger.info(
-                '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_xrest + vol_boxes,
-                                                 len(border),
-                                                 steps_binsearch))
+                '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_xrest + vol_boxes, len(border), steps_binsearch))
             continue
         elif intersect_indicator == INTER:
             pos_box = Rectangle(y_in.low, y_in.high)
@@ -1641,9 +1631,7 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
             vol_xrest += xrectangle.volume()
             vol_border = vol_total - vol_xrest
             RootSearch.logger.info(
-                '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_boxes + vol_xrest,
-                                                 len(border),
-                                                 steps_binsearch))
+                '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_xrest + vol_boxes, len(border), steps_binsearch))
             continue
         else:
             b0 = Rectangle(xrectangle.min_corner, y.low)
@@ -1673,9 +1661,7 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
         vol_border = vol_total - vol_xrest
 
         RootSearch.logger.info(
-            '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_boxes + vol_xrest,
-                                             len(border),
-                                             steps_binsearch))
+            '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_xrest + vol_boxes, len(border), steps_binsearch))
         if sleep > 0.0:
             rs = ResultSet(border, [], intersect_region, xspace)
             if n == 2:
