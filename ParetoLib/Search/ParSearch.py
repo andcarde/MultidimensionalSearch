@@ -1308,9 +1308,9 @@ def multidim_search_deep_first_opt_0(xspace,
                y_cover=object, steps_binsearch=cython.ushort, yrectangle=object, i=list, lower_rect=object,
                upper_rect=object, b0=object, b1=object, rect=object)
 def pintersection_search_opt_0(args):
-    xrectangle, dict_man, epsilon, n, list_constraints, incomparable, incomparable_segment = args
+    xrectangle, dict_man, epsilon, n = args
 
-    ora1, ora2 = dict_man[mp.current_process().name]
+    ora1, ora2, list_constraints, incomparable, incomparable_segment = dict_man[mp.current_process().name]
     f1, f2 = ora1.membership(), ora2.membership()
 
     RootSearch.logger.debug('f1 = {0}'.format(f1))
@@ -1389,10 +1389,10 @@ def pintersection_search_opt_0(args):
                pos_box=object, neg_box1=object, neg_box2=object, i=list, lower_rect=object, upper_rect=object,
                b0=object, b1=object, rect=object)
 def pintersection_search_opt_1(args):
-    xrectangle, dict_man, epsilon, n, incomparable, incomparable_segment, incomp_pos, incomp_neg_down, \
-    incomp_neg_up = args
+    xrectangle, dict_man, epsilon, n = args
 
-    ora1, ora2 = dict_man[mp.current_process().name]
+    ora1, ora2, incomparable, incomparable_segment, incomp_pos, incomp_neg_down, incomp_neg_up = dict_man[
+        mp.current_process().name]
     f1, f2 = ora1.membership(), ora2.membership()
 
     RootSearch.logger.debug('f1 = {0}'.format(f1))
@@ -1472,9 +1472,9 @@ def pintersection_search_opt_1(args):
                pos_box=object, neg_box1=object, neg_box2=object, i=list, lower_rect=object, upper_rect=object,
                b0=object, b1=object, rect=object)
 def pintersection_search_opt_2(args):
-    xrectangle, dict_man, epsilon, n, incomparable, incomparable_segment = args
+    xrectangle, dict_man, epsilon, n = args
 
-    ora1, ora2 = dict_man[mp.current_process().name]
+    ora1, ora2, incomparable, incomparable_segment = dict_man[mp.current_process().name]
     f1, f2 = ora1.membership(), ora2.membership()
 
     RootSearch.logger.debug('f1 = {0}'.format(f1))
@@ -1699,7 +1699,8 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
     for proc in mp.active_children():
         RootSearch.logger.debug('cloning: {0}'.format(oracle1))
         RootSearch.logger.debug('cloning: {0}'.format(oracle2))
-        dict_man[proc.name] = (copy.deepcopy(oracle1), copy.deepcopy(oracle2),)
+        dict_man[proc.name] = (copy.deepcopy(oracle1), copy.deepcopy(oracle2), copy.deepcopy(list_constraints),
+                               copy.deepcopy(incomparable), copy.deepcopy(incomparable_segment))
 
     RootSearch.logger.debug('xspace: {0}'.format(xspace))
     RootSearch.logger.debug('vol_border: {0}'.format(vol_border))
@@ -1732,9 +1733,7 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
         remaining_steps = max_step - step
 
         # Search the intersection point of the Pareto front and the diagonal
-        args_pintersect_search = ((xrectangle, dict_man, epsilon, n, copy.deepcopy(list_constraints),
-                                   copy.deepcopy(incomparable), copy.deepcopy(incomparable_segment))
-                                  for xrectangle in slice_border)
+        args_pintersect_search = ((xrectangle, dict_man, epsilon, n) for xrectangle in slice_border)
         y_list = p.map(pintersection_search_opt_0, args_pintersect_search)
 
         vol_xrest_list = (vol_xrest for (vol_xrest, _, _, _) in y_list)
@@ -2022,6 +2021,7 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
     vol_border = vol_total
     vol_boxes = vol_border
     step = 0
+    remaining_steps = max_step
 
     # intersection
     intersect_box = []
@@ -2042,7 +2042,9 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
     for proc in mp.active_children():
         RootSearch.logger.debug('cloning: {0}'.format(oracle1))
         RootSearch.logger.debug('cloning: {0}'.format(oracle2))
-        dict_man[proc.name] = (copy.deepcopy(oracle1), copy.deepcopy(oracle2),)
+        dict_man[proc.name] = (copy.deepcopy(oracle1), copy.deepcopy(oracle2),
+                               copy.deepcopy(incomparable), copy.deepcopy(incomparable_segment),
+                               copy.deepcopy(incomp_pos), copy.deepcopy(incomp_neg_down), copy.deepcopy(incomp_neg_up))
 
     RootSearch.logger.debug('xspace: {0}'.format(xspace))
     RootSearch.logger.debug('vol_border: {0}'.format(vol_border))
@@ -2076,10 +2078,7 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
 
         # Search the intersection point of the Pareto front and the diagonal
         vol_boxes -= sum(xrectangle.volume() for xrectangle in slice_border)
-        args_pintersect_search = ((xrectangle, dict_man, epsilon, n, copy.deepcopy(incomparable),
-                                   copy.deepcopy(incomparable_segment), copy.deepcopy(incomp_pos),
-                                   copy.deepcopy(incomp_neg_down), copy.deepcopy(incomp_neg_up))
-                                  for xrectangle in slice_border)
+        args_pintersect_search = ((xrectangle, dict_man, epsilon, n) for xrectangle in slice_border)
         y_list = p.map(pintersection_search_opt_1, args_pintersect_search)
 
         # vol_xrest, vol_boxes, local_border, intersect_box, intersect_region
@@ -2391,7 +2390,8 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
     for proc in mp.active_children():
         RootSearch.logger.debug('cloning: {0}'.format(oracle1))
         RootSearch.logger.debug('cloning: {0}'.format(oracle2))
-        dict_man[proc.name] = (copy.deepcopy(oracle1), copy.deepcopy(oracle2),)
+        dict_man[proc.name] = (copy.deepcopy(oracle1), copy.deepcopy(oracle2),
+                               copy.deepcopy(incomparable), copy.deepcopy(incomparable_segment))
 
     RootSearch.logger.debug('xspace: {0}'.format(xspace))
     RootSearch.logger.debug('vol_border: {0}'.format(vol_border))
@@ -2423,9 +2423,7 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
 
         # Search the intersection point of the Pareto front and the diagonal
         vol_boxes -= sum(xrectangle.volume() for xrectangle in slice_border)
-        args_pintersect_search = ((xrectangle, dict_man, epsilon, n, copy.deepcopy(incomparable),
-                                   copy.deepcopy(incomparable_segment))
-                                  for xrectangle in slice_border)
+        args_pintersect_search = ((xrectangle, dict_man, epsilon, n) for xrectangle in slice_border)
         y_list = p.map(pintersection_search_opt_2, args_pintersect_search)
 
         # vol_xrest, vol_boxes, local_border, intersect_box, intersect_region
