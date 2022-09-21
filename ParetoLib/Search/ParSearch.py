@@ -1298,9 +1298,9 @@ def multidim_search_deep_first_opt_0(xspace,
 ################################
 ######## EPSILON METHOD ########
 ################################
-@cython.ccall
+#@cython.ccall
 @cython.returns(object)
-@cython.locals(xrectangle=object, dict_man=object, epsilon=cython.double, n=cython.ushort, list_constraints=list,
+@cython.locals(dict_man=object, epsilon=cython.double, n=cython.ushort, list_constraints=list,
                incomparable=list, incomparable_segment=list, ora1=object, ora2=object, error=tuple,
                local_vol_xrest=cython.double, local_border=list, intersect_box=list, intersection_region=list,
                min_bound=cython.double, max_bound=cython.double, rect_diag=object, intersect_indicator=cython.short,
@@ -1379,7 +1379,7 @@ def pintersection_search_opt_0(args):
     return local_vol_xrest, local_border, intersect_box, intersect_region
 
 
-@cython.ccall
+#@cython.ccall
 @cython.returns(object)
 @cython.locals(xrectangle=object, dict_man=object, epsilon=cython.double, n=cython.ushort, incomparable=list,
                incomparable_segment=list, ora1=object, ora2=object, error=tuple, local_vol_xrest=cython.double,
@@ -1462,7 +1462,7 @@ def pintersection_search_opt_1(args):
     return local_vol_xrest, local_vol_boxes, local_border, intersect_box, intersect_region
 
 
-@cython.ccall
+#@cython.ccall
 @cython.returns(object)
 @cython.locals(xrectangle=object, dict_man=object, epsilon=cython.double, n=cython.ushort, incomparable=list,
                incomparable_segment=list, ora1=object, ora2=object, error=tuple, local_vol_xrest=cython.double,
@@ -1779,7 +1779,7 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
 
 # @cython.ccall
 @cython.returns(object)
-@cython.locals(xspace=object, list_constraints=list, oracle1=object, oracle2=object, epsilon=cython.double,
+@cython.locals(xspace=object, oracle1=object, oracle2=object, epsilon=cython.double,
                delta=cython.double, max_step=cython.ulonglong, blocking=cython.bint, sleep=cython.double,
                logging=cython.bint, n=cython.ushort, comparable=list, incomparable=list, incomparable_segment=list,
                border=object, error=tuple, vol_total=cython.double, vol_xrest=cython.double, vol_border=cython.double,
@@ -1787,7 +1787,7 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
                max_bound=cython.double, inside_bound=cython.bint, rect_diag=object, intersect_indicator=cython.short,
                end_min=tuple, end_max=tuple, mod_rectangle=object, y=object, y_in=object, y_cover=object,
                steps_binsearch=cython.ushort, tempdir=str, b0=object, b1=object, yrectangle=object,
-               i=list, lower_rect=object, upper_rect=object, rect=object, rs=object, name=str)
+               lower_rect=object, upper_rect=object, rect=object, rs=object, name=str)
 def multidim_intersection_search_opt_0_partial(xspace, list_constraints,
                                                oracle1, oracle2,
                                                epsilon=EPS,
@@ -1968,7 +1968,7 @@ def multidim_intersection_search_opt_0_partial(xspace, list_constraints,
     return ParResultSet(border, intersect_region, intersect_box, xspace)
 
 
-@cython.ccall
+#@cython.ccall
 @cython.returns(object)
 @cython.locals(xspace=object, list_constraints=list, oracle1=object, oracle2=object, epsilon=cython.double,
                delta=cython.double, max_step=cython.ulonglong, blocking=cython.bint, sleep=cython.double,
@@ -2125,7 +2125,7 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
     return ParResultSet(border, intersect_region, intersect_box, xspace)
 
 
-@cython.ccall
+#@cython.ccall
 @cython.returns(object)
 @cython.locals(xspace=object, list_constraints=list, oracle1=object, oracle2=object, epsilon=cython.double,
                delta=cython.double, max_step=cython.ulonglong, blocking=cython.bint, sleep=cython.double,
@@ -2135,7 +2135,7 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
                step=cython.ulonglong, intersect_box=list, intersect_region=list, tempdir=str, xrectangle=object,
                current_privilege=cython.double, want_to_expand=cython.bint, y_in=object, y_cover=object,
                intersect_indicator=cython.short, steps_binsearch=cython.ushort, y=object, yrectangle=object,
-               pos_box=object, neg_box1=object, neg_box2=object, i=list, lower_rect=object, upper_rect=object,
+               pos_box=object, neg_box1=object, neg_box2=object, lower_rect=object, upper_rect=object,
                b0=object, b1=object, rect=object, rs=object, name=str)
 def multidim_intersection_search_opt_1_partial(xspace, list_constraints,
                                                oracle1, oracle2,
@@ -2320,15 +2320,15 @@ def multidim_intersection_search_opt_1_partial(xspace, list_constraints,
     return ParResultSet(border, intersect_region, intersect_box, xspace)
 
 
-@cython.ccall
+#@cython.ccall
 @cython.returns(object)
 @cython.locals(xspace=object, list_constraints=list, oracle1=object, oracle2=object, epsilon=cython.double,
                delta=cython.double, max_step=cython.ulonglong, blocking=cython.bint, sleep=cython.double,
                logging=cython.bint, n=cython.ushort, incomparable=list, incomparable_segment=list,
                border=object, error=tuple, vol_total=cython.double, vol_xrest=cython.double, vol_border=cython.double,
                vol_boxes=cython.double, step=cython.ulonglong, remaining_steps=cython.ulonglong, intersect_box=list,
-               intersect_region=list, num_proc=cython.ushort, p=object, man=object, dict_man=object, tempdir=str,
-               chunk=cython.ushort, slice_border=list, y_list=list, rs=object, name=str)
+               intersect_region=list, num_proc=cython.ushort, p=object, man=object, tempdir=str,
+               chunk=cython.ushort, rs=object, name=str)
 def multidim_intersection_search_opt_2(xspace, list_constraints,
                                        oracle1, oracle2,
                                        epsilon=EPS,
@@ -2469,7 +2469,7 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
     return ParResultSet(border, intersect_region, intersect_box, xspace)
 
 
-@cython.ccall
+#@cython.ccall
 @cython.returns(object)
 @cython.locals(xspace=object, list_constraints=list, oracle1=object, oracle2=object, epsilon=cython.double,
                delta=cython.double, max_step=cython.ulonglong, blocking=cython.bint, sleep=cython.double,
@@ -2479,7 +2479,7 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
                num_proc=cython.ushort, p=object, man=object, proc=object, tempdir=str, current_privilege=cython.double,
                want_to_expand=cython.bint, y_in=object, y_cover=object, intersect_indicator=cython.short,
                steps_binsearch=cython.ushort, y=object, yrectangle=object, pos_box=object, neg_box1=object,
-               neg_box2=object, i=list, lower_rect=object, upper_rect=object, b0=object, b1=object, rect=object,
+               neg_box2=object, lower_rect=object, upper_rect=object, b0=object, b1=object, rect=object,
                rs=object, name=str)
 def multidim_intersection_search_opt_2_partial(xspace, list_constraints,
                                                oracle1, oracle2,

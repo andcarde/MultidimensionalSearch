@@ -106,7 +106,8 @@ if __name__ == '__main__':
             'pytest>=2.0',
             'seaborn>=0.11.2',
             'sortedcontainers>=1.5.10',
-            'sympy>=1.1.1'
+            'sympy>=1.1.1',
+            'wheel'
         ],
         ext_modules=cythonize(module_list=extension_list, exclude=exclude_list, nthreads=cpu_count()),
         # packages_dir={'': 'ParetoLib'},
