@@ -1,7 +1,7 @@
 import sys
 
 from typing import List
-from math import log, floor
+from math import log, ceil
 from itertools import product
 import numpy as np
 # from ParetoLib.Geometry.Point import add, subtract, mult, div
@@ -26,7 +26,7 @@ def cell_partition(pspace: Rectangle, num_cells: int) -> List:
     # num_cells = k^d
     k = log(num_cells, 10)/d
     print("k: {0}".format(k))
-    k = floor(pow(10, k)) + 1
+    k = ceil(pow(10, k))
     print("k: {0}".format(k))
     step = np.subtract(pspace.max_corner, pspace.min_corner)
     step = np.divide(step, k)
