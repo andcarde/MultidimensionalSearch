@@ -13,11 +13,12 @@ from PyQt5.QtWidgets import QApplication, QFileDialog, QMainWindow, QTableWidget
 import ParetoLib.GUI as RootGUI
 from ParetoLib.GUI.Window import Ui_MainWindow
 from ParetoLib.Oracle.OracleSTLe import OracleSTLeLib
-from ParetoLib.Search.Search import SearchND_2, EPS, DELTA, STEPS
+from ParetoLib.Oracle.OracleEpsSTLe import OracleEpsSTLe
+from ParetoLib.Search.Search import SearchND_2, SearchIntersectionND_2, EPS, DELTA, STEPS
 from ParetoLib.Search.ResultSet import ResultSet
 
-
 matplotlib.use('Qt5Agg')
+
 
 class StandardSolutionWindow(QWidget):
     """
@@ -63,7 +64,7 @@ class StandardSolutionWindow(QWidget):
         y = bool_signal.values()
         canvas = MplCanvas(parent=self)
         canvas.set_axis()
-        canvas.axes.step(x, y, where='post') # where='pre'
+        canvas.axes.step(x, y, where='post')  # where='pre'
         canvas.figure.tight_layout(pad=0)
         self.layout().addWidget(canvas)
 
@@ -89,8 +90,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.open_signal_file_button.clicked.connect(self.read_signal_filepath)
         self.open_param_file_button.clicked.connect(self.read_param_filepath)
         self.pareto_execution_button.clicked.connect(self.run_stle)
-        # Initialize empty Oracle
+        # Initialize empty Oracles:
+        # - BBMJ19: requires 1 Oracle
+        # - BDMJ20: requires 2 Oracles
         self.oracle = OracleSTLeLib()
+        self.oracle_2 = OracleSTLeLib()
         # Solution
         self.solution = None
 
@@ -103,7 +107,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def read_spec_filepath(self):
         # type: (_) -> None
-        fname = QFileDialog.getOpenFileName(self, 'Select a file', '../../Tests/Oracle/OracleSTLe', '(*.stl)')
+        fnames = QFileDialog.getOpenFileNames(self, 'Select a file', '../../Tests/Oracle/OracleSTLe', '(*.stl)')
+        fname = fnames[0]
+        # TODO: Show each spec file in fnames in a separated tab
         try:
             self.spec_filepath_textbox.setPlainText(fname[0])
             with open(self.spec_filepath_textbox.toPlainText()) as file:
@@ -115,6 +121,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def read_signal_filepath(self):
         # type: (_) -> None
         fname = QFileDialog.getOpenFileName(self, 'Select a file', '../../Tests/Oracle/OracleSTLe', '(*.csv)')
+        # TODO: Show each component of a single csv file in a separated tab
         try:
             self.signal_filepath_textbox.setPlainText(fname[0])
             self.plot_csv()
@@ -224,6 +231,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         csv_signal_file = self.signal_filepath_textbox.toPlainText()
         stl_param_file = self.param_filepath_textbox.toPlainText()
         rs = None
+        method = self.mining_comboBox.currentIndex()
         try:
             # Initialize the OracleSTLeLib
             RootGUI.logger.debug('Evaluating...')
@@ -231,26 +239,46 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             RootGUI.logger.debug(csv_signal_file)
             RootGUI.logger.debug(stl_param_file)
 
-            self.oracle = OracleSTLeLib(stl_prop_file, csv_signal_file, stl_param_file)
-
             # Read parameter intervals
             intervals = self.read_parameters_intervals()
             RootGUI.logger.debug('Intervals:')
             RootGUI.logger.debug(intervals)
+            assert len(intervals) >= 2, 'Warning! Invalid number of dimensions. Returning empty ResultSet.'
 
             # Mining the STLe expression
-            assert len(intervals) >= 2, 'Warning! Invalid number of dimensions. Returning empty ResultSet.'
-            rs = SearchND_2(ora=self.oracle,
-                            list_intervals=intervals,
-                            epsilon=EPS,
-                            delta=DELTA,
-                            max_step=STEPS,
-                            blocking=False,
-                            sleep=0,
-                            opt_level=0,
-                            parallel=False,
-                            logging=False,
-                            simplify=False)
+            if method == 0:
+                self.oracle = OracleSTLeLib(stl_prop_file, csv_signal_file, stl_param_file)
+                rs = SearchND_2(ora=self.oracle,
+                                list_intervals=intervals,
+                                epsilon=EPS,
+                                delta=DELTA,
+                                max_step=STEPS,
+                                blocking=False,
+                                sleep=0.0,
+                                opt_level=0,
+                                parallel=False,
+                                logging=False,
+                                simplify=False)
+            elif method == 1:
+                # TODO: correctly read the value of 'stl_prop_file_2'
+                stl_prop_file_2 = self.spec_filepath_textbox.toPlainText()
+                self.oracle = OracleEpsSTLe(bound_on_count=0, intvl_epsilon=10, stl_prop_file=stl_prop_file,
+                                            csv_signal_file=csv_signal_file, stl_param_file=stl_param_file)
+                self.oracle_2 = OracleEpsSTLe(bound_on_count=0, intvl_epsilon=10, stl_prop_file=stl_prop_file_2,
+                                              csv_signal_file=csv_signal_file, stl_param_file=stl_param_file)
+                rs = SearchIntersectionND_2(self.oracle, self.oracle_2,
+                                            intervals,
+                                            list_constraints=[],
+                                            epsilon=EPS,
+                                            delta=DELTA,
+                                            max_step=STEPS,
+                                            blocking=False,
+                                            sleep=0.0,
+                                            opt_level=0,
+                                            parallel=False,
+                                            logging=False,
+                                            simplify=False)
+
         except Exception as e:
             RootGUI.logger.debug(e)
         finally:
