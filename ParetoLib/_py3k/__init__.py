@@ -141,18 +141,18 @@ else:  # sys.version_info[0] < 3
 
 # Required for limiting the recursion in NDTree.
 # "resource" library is only available on linux/unix
-if platform.system() == 'Linux':
+if platform.system() == 'Windows':
+
+    def set_limit(max_rec):
+        None
+# MacOS patch for the moment
+else:
     from resource import setrlimit, RLIMIT_STACK, RLIM_INFINITY
 
     def set_limit(max_rec):
         setrlimit(RLIMIT_STACK, [0x100 * max_rec, RLIM_INFINITY])
-
-elif platform.system() == 'Windows':
-
-    def set_limit(max_rec):
-        None
-else:
-    raise RuntimeError('OS Platform \'{0}\' not compatible for "resource".\n'.format(platform.system()))
+# else:
+#    raise RuntimeError('OS Platform \'{0}\' not compatible for "resource".\n'.format(platform.system()))
 
 
 if sys.platform == "win32":
