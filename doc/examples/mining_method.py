@@ -7,6 +7,7 @@ import numpy as np
 # from ParetoLib.Geometry.Point import add, subtract, mult, div
 from ParetoLib.Geometry.Rectangle import Rectangle
 from ParetoLib.Search.ResultSet import ResultSet
+from ParetoLib.Oracle.OracleSTLe import OracleSTLeLib
 
 
 # def cell_partition(pspace: Rectangle, num_cells: int) -> List:
@@ -39,18 +40,22 @@ def cell_partition(pspace: Rectangle, num_cells: int) -> List:
     return res
 
 
-def mining_method(pspace: Rectangle, num_cells: int) -> ResultSet:
+# Inicializacion del Oracle
+def mining_method(pspace: Rectangle, num_cells: int, num_muestras: int, oracle: OracleSTLeLib) -> ResultSet:
     cells = cell_partition(pspace, num_cells)
     num_cells = len(cells)
     undef = []
     green = []
     red = []
-    half = num_cells // 2
-    for i in range(half):
-        green.append(cells[i])
 
-    for i in range(half, num_cells):
-        red.append(cells[i])
+    f = oracle.membership()
+    for cell in cells:
+        # Tomar N muestras uniformes (np.uniform), con las coordenadas min,max de cell
+        num_muestras = list()
+        for muestra in num_muestras:
+            # Llamar al oraculo con una muestra
+            f(muestra)
+            # Si las N muestras son ciertas, se anade cell a verdes, sino a rojas
 
     return ResultSet(undef, red, green, pspace)
 
