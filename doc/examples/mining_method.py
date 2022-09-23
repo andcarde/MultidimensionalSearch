@@ -41,6 +41,7 @@ def cell_partition(pspace: Rectangle, num_cells: int) -> List:
 
 
 # Inicializacion del Oracle
+# Num_muestras
 def mining_method(pspace: Rectangle, num_cells: int, num_muestras: int, oracle: OracleSTLeLib) -> ResultSet:
     cells = cell_partition(pspace, num_cells)
     num_cells = len(cells)
