@@ -1,4 +1,8 @@
+import copy
 import sys
+import time
+from multiprocessing import Pool, cpu_count
+from concurrent.futures import ThreadPoolExecutor
 
 from typing import List
 from math import log, ceil
@@ -57,6 +61,43 @@ def mining_method(pspace: Rectangle, num_cells: int, num_samples: int, oracle: O
     return ResultSet(undef, red, green, pspace)
 
 
+# def process(cell: Rectangle, f: callable, num_samples: int, d: int) -> bool:
+def process(args: tuple) -> bool:
+    cell, oracle, num_samples, d = args
+
+    f = oracle.membership()
+
+    # Take num_samples uniformly between cell.min_corner and cell.max_corner
+    samples = np.random.uniform(cell.min_corner, cell.max_corner, (num_samples, d))
+    # Call the oracle with the current sample
+    eval_samples = (f(sample) for sample in samples)
+    # executor = ThreadPoolExecutor(max_workers=5)
+    # eval_samples = executor.map(f, samples)
+    # If all the samples eval to True, then the cell goes to green. Otherwise, cell goes to red.
+    return all(eval_samples)
+
+
+def par_mining_method(pspace: Rectangle, num_cells: int, num_samples: int, oracle: OracleSTLeLib) -> ResultSet:
+
+    cells = cell_partition(pspace, num_cells)
+    undef = []
+    green = []
+    red = []
+
+    d = pspace.dim()
+
+    p = Pool(cpu_count())
+    args = ((cell, copy.deepcopy(oracle), num_samples, d) for cell in cells)
+    green_cells = p.map(process, args)
+    for i, cell in enumerate(cells):
+        if green_cells[i]:
+            green.append(cell)
+        else:
+            red.append(cell)
+
+    return ResultSet(undef, red, green, pspace)
+
+
 if __name__ == "__main__":
     # python3 this_file.py num_cells p0 alpha
     # python3 mining_method.py 1000 0.01 0.05
@@ -74,5 +115,16 @@ if __name__ == "__main__":
     min_x, min_y = (80.0, 0.0)
     max_x, max_y = (120.0, 0.005)
     pspace = Rectangle((min_x, min_y), (max_x, max_y))
+
+    start_time = time.time()
+    r = par_mining_method(pspace, num_cells, num_samples, oracle)
+    end_time = time.time()
+    print("Execution time: {0}".format(end_time - start_time))
+
+    r.plot_2D()
+
+    start_time = time.time()
     r = mining_method(pspace, num_cells, num_samples, oracle)
+    end_time = time.time()
+    print("Execution time: {0}".format(end_time - start_time))
     r.plot_2D()
