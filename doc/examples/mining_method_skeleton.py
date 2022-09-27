@@ -3,42 +3,41 @@
 import numpy as np
 from ParetoLib.Geometry.Rectangle import Rectangle
 from ParetoLib.Search.ResultSet import ResultSet
+from ParetoLib.Oracle.OracleSTLe import OracleSTLe, OracleSTLeLib
+from ParetoLib.Oracle.Oracle import Oracle
 
-# def opera_tupla(op, tup1, tup2):
-#     assert (len(tup1) == len(tup2))
-#     return tuple(map(op, tup1, tup2))
-
-
-# def escalar_tupla(op, esc, tup):
-#     return tuple([op(esc, x) for x in tup])
-
-
-# mining_method(pspace: Rectangle, n: int) -> ResultSet. Divide pspace into n Rectangles of the same size and classify them
-def mining_method(pspace, n):
-    verts = pspace.vertices() # Methods that start by _ usually are private methods
+def mining_method(pspace: Rectangle, n: int, alpha : float, p0 : float, oracle: Oracle) -> ResultSet:
+    verts = pspace.vertices()
     half = len(verts) // 2
-    # max_corner = verts[half], min_corner = verts[0]?
-    ver_dist = np.subtract(verts[half], verts[0]) # Equivalent to pspace.diag_vector() ?
+    ver_dist = np.subtract(verts[half], verts[0]) # Not equivalent to diag_vector. This is the "side length" of the rectangle
     rect_list = [Rectangle(np.add(verts[0], np.multiply(ver_dist, i / n)),
                            np.add(verts[half - 1], np.multiply(ver_dist, (i + 1) / n))) for i in range(n)]
+                           
+    num_samples = int(np.ceil(np.log(alpha) / np.log(1-p0)))
+    green = list()
+    red = list()
+    border = list()
+    f = oracle.membership()
 
-    ### Approach 1: Vertex matrix. Discarded for the moment ###
+    for cell in rect_list:
+        samples = np.random.uniform(cell.min_corner,cell.max_corner,size=(num_samples,cell.dim()))
+        witness = True
+        for s in samples:
+            witness = f(s)
+            if not witness:
+                red.append(cell)
+                break
+        if witness:
+            green.append(cell)
+            
+    return ResultSet(yup=green, ylow=red, border=border, xspace=pspace)
 
-    # mat_verts = list(list())
-    # for i in range(half):
-    #    ver_ini = verts[i]
-    #    ver_dist = opera_tupla(operator.sub,verts[i+half],verts[i])
-    #    mat_verts.append([opera_tupla(operator.add,ver_ini,escalar_tupla(operator.mul,j/n,ver_dist)) for j in range(n+1)])
 
-    # rect_list = [Rectangle(mat_verts[0][i],mat_verts[len(mat_verts)-1][i+1]) for i in range(len(mat_verts[0])-1)]
-
-    # n//2 should be equivalent
-    return ResultSet(yup=rect_list[:n // 2], ylow=rect_list[n // 2:], xspace=pspace)
-
-
-def plot_prueba(min_cor, max_cor, n):
+def plot_prueba(min_cor, max_cor, n, alpha, p0, filename):
     space = Rectangle(min_cor, max_cor)
-    rs = mining_method(space, n)
+    oracle = OracleSTLeLib()
+    oracle.from_file(filename,True)
+    rs = mining_method(space, n, alpha, p0, oracle)
     # It's better to check the dim() rather than the len.
     if space.dim() == 2:
         rs.plot_2D()
@@ -47,7 +46,10 @@ def plot_prueba(min_cor, max_cor, n):
 
 
 if __name__ == "__main__":
-    min_cor = (1, 2, 3)
-    max_cor = (5, 3, 7)
-    n = 10
-    plot_prueba(min_cor, max_cor, n)
+    min_cor = (1950.0, 0.0)
+    max_cor = (2000.0, 3.0)
+    n = np.random.randint(57,81)
+    alpha = 0.05
+    p0 = 0.01
+    file = 'Tests/Oracle/OracleSTLe/2D/triangular/integral/triangular_float.txt'
+    plot_prueba(min_cor, max_cor, n, alpha, p0, file)
