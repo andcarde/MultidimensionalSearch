@@ -1,0 +1,38 @@
+(and
+
+(not
+    (and
+        (and
+
+            (and
+            (>= (On (-p1 p1) (Max x0) ) (- 0 p3))
+            (>= x0 (- 0 p3))
+            )
+
+            (and
+            (<= ( On (p1  70)   ( - (Max x0)  (Min x0) ) ) p2)
+            (<= ( On (-70 -p1)  ( - (Max x0)  (Min x0) ) ) p2)
+            )
+
+        )
+
+        (F (0 p4)
+            (and
+
+                (and
+                (>= (On (-p1 p1) (Max x0) ) (- 0 p3))
+                (>= x0 (- 0 p3))
+                )
+
+                (and
+                (<= ( On (p1  70)   ( - (Max x0)  (Min x0) ) ) p2)
+                (<= ( On (-70 -p1)  ( - (Max x0)  (Min x0) ) ) p2)
+                )
+            )
+        )
+    )
+)
+
+(>= x2 1)
+
+)
