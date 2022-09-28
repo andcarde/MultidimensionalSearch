@@ -126,15 +126,3 @@ if __name__ == "__main__":
     min_x, min_y = (80.0, 0.0)
     max_x, max_y = (120.0, 0.005)
     pspace = Rectangle((min_x, min_y), (max_x, max_y))
-
-    start_time = time.time()
-    r = par_mining_method(pspace, num_cells, num_samples, oracles)
-    end_time = time.time()
-    print("Execution time: {0}".format(end_time - start_time))
-    r.plot_2D()
-
-    start_time = time.time()
-    r = mining_method(pspace, num_cells, num_samples, oracles)
-    end_time = time.time()
-    print("Execution time: {0}".format(end_time - start_time))
-    r.plot_2D()
