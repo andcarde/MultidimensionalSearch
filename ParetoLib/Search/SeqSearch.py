@@ -1198,6 +1198,7 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
     while (vol_border >= vol_total * delta) and (step <= max_step) and (len(border) > 0):
         step = step + 1
 
+        i = []
         xrectangle = border.pop()
 
         RootSearch.logger.debug('xrectangle: {0}'.format(xrectangle))
@@ -1417,6 +1418,8 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
     while (vol_border >= vol_total * delta) and (step <= max_step) and (len(border) > 0):
         step = step + 1
 
+        i = []
+
         xrectangle = border.pop()
         vol_boxes -= xrectangle.volume()
 
@@ -1585,6 +1588,8 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
     RootSearch.logger.info('Report\nStep, Border, Total, nBorder, BinSearch')
     while (vol_border >= vol_total * delta) and (step <= max_step) and (len(border) > 0):
         step = step + 1
+
+        i = []
 
         xrectangle = border.pop()
         vol_boxes -= xrectangle.volume()

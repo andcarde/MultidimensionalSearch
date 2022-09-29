@@ -1312,6 +1312,7 @@ def pintersection_search_opt_0(args):
 
     ora1, ora2, list_constraints, incomparable, incomparable_segment = dict_man[mp.current_process().name]
     f1, f2 = ora1.membership(), ora2.membership()
+    i = []
 
     RootSearch.logger.debug('f1 = {0}'.format(f1))
     RootSearch.logger.debug('f2 = {0}'.format(f2))
@@ -1681,8 +1682,8 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
     remaining_steps = max_step
 
     # intersection
-    intersect_box = None
-    intersect_region = None
+    intersect_box = []
+    intersect_region = []
 
     num_proc = cpu_count()
     p = Pool(num_proc)
@@ -1713,8 +1714,8 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
     tempdir = tempfile.mkdtemp()
 
     RootSearch.logger.info('Report\nStep, Ylow, Yup, Border, Total, nYlow, nYup, nBorder')
-    while (vol_border >= vol_total * delta) and (step <= max_step) and (len(border) > 0) and (intersect_box is not None) \
-            and (intersect_region is not None):
+    while (vol_border >= vol_total * delta) and (step <= max_step) and (len(border) > 0) and (len(intersect_box) == 0) \
+            and (len(intersect_region) == 0):
         # Divide the list of incomparable rectangles in chunks of 'num_proc' elements.
         # We get the 'num_proc' elements with highest volume.
 
@@ -1726,7 +1727,8 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
 
         # Remove elements of the slice_border from the original border
         # border = list(set(border).difference(set(slice_border)))
-        border -= slice_border
+        # border -= slice_border
+        del border[-chunk:]
 
         # Process the 'border' until the number of maximum steps is reached
         step += chunk
@@ -1742,9 +1744,9 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
         for (_, local_border, local_intersect_box, local_intersect_region) in y_list:
             border.update(local_border)
             if local_intersect_box is not None:
-                intersect_box = local_intersect_box
+                intersect_box.extend(local_intersect_box)
             if local_intersect_region is not None:
-                intersect_region = local_intersect_region
+                intersect_region.extend(local_intersect_region)
 
         # Remove boxes in the boundary with volume 0
         # border = border[border.bisect_key_right(0.0):]
