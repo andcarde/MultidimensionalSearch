@@ -89,6 +89,8 @@ if __name__ == "__main__":
     # computes the satisfaction area of the parameter space (green boxes) instead of a single point.
     #
     # python3 ./example3d_intersection_eps.py 221 0 1 2 10
+    # python3 ./example3d_intersection_eps.py 123 1 0 2 10
+    # python3 ./example3d_intersection_eps.py 100 0 33 2 10
     min_tuple = (0.0, -1.0, -1.0)
     max_tuple = (70.0, 1.00, 1.0)
     ecg_name = str(sys.argv[1])
