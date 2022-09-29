@@ -39,8 +39,8 @@ class ParResultSet(ResultSet):
     @cython.returns(cython.void)
     def __init__(self, border=list(), ylow=list(), yup=list(), xspace=Rectangle()):
         # type: (ParResultSet, iter, iter, iter, Rectangle) -> None
-        # super(ParResultSet, self).__init__(border, ylow, yup, xspace)
-        ResultSet.__init__(self, border, ylow, yup, xspace)
+        super(ParResultSet, self).__init__(border, ylow, yup, xspace)
+        # ResultSet.__init__(self, border, ylow, yup, xspace)
         self.p = Pool(cpu_count())
 
     @cython.returns(cython.void)
