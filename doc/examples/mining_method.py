@@ -95,6 +95,8 @@ def par_mining_method(pspace: Rectangle, num_cells: int, num_samples: int, oracl
         else:
             red.append(cell)
 
+    p.close()
+    p.join()
     return ResultSet(undef, red, green, pspace)
 
 
