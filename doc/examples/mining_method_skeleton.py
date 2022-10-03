@@ -4,9 +4,10 @@ import numpy as np
 from ParetoLib.Geometry.Rectangle import Rectangle
 from ParetoLib.Search.ResultSet import ResultSet
 from ParetoLib.Oracle.OracleSTLe import OracleSTLe, OracleSTLeLib
+from ParetoLib.Oracle.OracleFunction import OracleFunction, Condition
 from ParetoLib.Oracle.Oracle import Oracle
 
-def mining_method(pspace: Rectangle, n: int, alpha : float, p0 : float, oracle: Oracle) -> ResultSet:
+def mining_method_seq_fix(pspace: Rectangle, n: int, alpha : float, p0 : float, oracles: list[Oracle]) -> ResultSet:
     verts = pspace.vertices()
     half = len(verts) // 2
     ver_dist = np.subtract(verts[half], verts[0]) # Not equivalent to diag_vector. This is the "side length" of the rectangle
@@ -17,28 +18,29 @@ def mining_method(pspace: Rectangle, n: int, alpha : float, p0 : float, oracle: 
     green = list()
     red = list()
     border = list()
-    f = oracle.membership()
+    mems = [ora.membership() for ora in oracles]
 
     for cell in rect_list:
         samples = np.random.uniform(cell.min_corner,cell.max_corner,size=(num_samples,cell.dim()))
-        witness = True
-        for s in samples:
-            witness = f(s)
-            if not witness:
-                red.append(cell)
-                break
-        if witness:
+        if any([all([f(s) for f in mems]) for s in samples]):
             green.append(cell)
+        else:
+            red.append(cell)
+        
             
     return ResultSet(yup=green, ylow=red, border=border, xspace=pspace)
 
 
-def plot_prueba(min_cor, max_cor, n, alpha, p0, filename):
+def plot_prueba(min_cor, max_cor, n, alpha, p0, filenames):
     space = Rectangle(min_cor, max_cor)
-    oracle = OracleSTLeLib()
-    oracle.from_file(filename,True)
-    rs = mining_method(space, n, alpha, p0, oracle)
-    # It's better to check the dim() rather than the len.
+    oracle_list = []
+
+    for f in filenames:
+        ora = OracleSTLeLib()
+        ora.from_file(f,True)  
+        oracle_list.append(ora)
+
+    rs = mining_method_seq_fix(space, n, alpha, p0, oracle_list)
     if space.dim() == 2:
         rs.plot_2D()
     elif space.dim() == 3:
@@ -51,5 +53,8 @@ if __name__ == "__main__":
     n = np.random.randint(57,81)
     alpha = 0.05
     p0 = 0.01
-    file = 'Tests/Oracle/OracleSTLe/2D/triangular/integral/triangular_float.txt'
-    plot_prueba(min_cor, max_cor, n, alpha, p0, file)
+    files = list()
+    files.append('Tests/Oracle/OracleSTLe/2D/triangular/integral/triangular_float.txt')
+    files.append('Tests/Oracle/OracleSTLe/2D/stabilization/derivative/stabilization.txt')
+    plot_prueba(min_cor, max_cor, n, alpha, p0, files)
+

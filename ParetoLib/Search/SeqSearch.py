@@ -26,6 +26,7 @@ import time
 import tempfile
 import itertools
 import cython
+import numpy as np
 
 from sortedcontainers import SortedListWithKey, SortedSet
 
@@ -86,6 +87,31 @@ def multidim_search(xspace,
 
     return rs
 
+def mining_method_seq(pspace: Rectangle, oracles: list[Oracle], num_samples: int, num_cells: int, dyn_cell_creation=False) -> ResultSet:
+
+    if dyn_cell_creation:
+        # Iinsert dynamic cell creation here
+        print("Nothing here")
+    else: 
+        verts = pspace.vertices()
+        half = len(verts) // 2
+        ver_dist = np.subtract(verts[half], verts[0]) # Not equivalent to diag_vector. This is the "side length" of the rectangle
+        rect_list = [Rectangle(np.add(verts[0], np.multiply(ver_dist, i / num_cells)),
+                            np.add(verts[half - 1], np.multiply(ver_dist, (i + 1) / num_cells))) for i in range(num_cells)]
+                           
+    green = list()
+    red = list()
+    border = list()
+    mems = [ora.membership() for ora in oracles]
+
+    for cell in rect_list:
+        samples = np.random.uniform(cell.min_corner,cell.max_corner,size=(num_samples,cell.dim()))
+        if any([all([f(s) for f in mems]) for s in samples]):
+            green.append(cell)
+        else:
+            red.append(cell)
+        
+    return ResultSet(yup=green, ylow=red, border=border, xspace=pspace)
 
 # Multidimensional search
 # The search returns a rectangle containing a solution and a Border
