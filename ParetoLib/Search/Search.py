@@ -45,6 +45,8 @@ of the space X in three subspaces: a lower closure, an upper closure and a borde
  contains the Pareto front.
 """
 import time
+from math import ceil, log
+from tokenize import Double
 import cython
 
 from ParetoLib.Geometry.Rectangle import Rectangle
@@ -438,3 +440,30 @@ def SearchIntersectionND_2(ora1, ora2,
         intersection_result.simplify()
         intersection_result.fusion()
     return intersection_result
+
+
+
+@cython.ccall
+@cython.returns(object)
+@cython.locals(oralist=list, p0=cython.double, alpha=cython.double, list_intervals=list, numCells=cython.int, parallel=cython.bint, logging=cython.bint,
+               dyn_cell_creation=cython.bint, mining_result=object)
+def mining_method(ora_list: list[Oracle],
+                p0: float,
+                alpha: float,
+                list_intervals : list,
+                numCells: int,
+                parallel=False,
+                logging=True,
+                dyn_cell_creation=False):
+    # type: (list(Oracle), float, float, list, int,  bool, bool, bool) -> ResultSet
+    # assert (ora1.dim() == ora1.dim()), 'Oracle 1 and Oracle 2 have different dimensions'
+
+    xyspace = create_ND_space(list_intervals)
+    numSamples = ceil(log(alpha, 1.0 - p0))
+
+    if parallel:
+        mining_result = ParSearch.mining_method_par(xyspace, ora_list, numSamples, numCells, dyn_cell_creation)
+    else:
+        mining_result = SeqSearch.mining_method_seq(xyspace, ora_list, numSamples, numCells, dyn_cell_creation)
+
+    return mining_result
