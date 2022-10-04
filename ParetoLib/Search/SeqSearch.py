@@ -45,9 +45,9 @@ from ParetoLib.Geometry.Rectangle import Rectangle, interirect, irect, idwc, iuw
 from ParetoLib.Geometry.Lattice import Lattice
 
 
-################################
-####### STANDARD METHOD ########
-################################
+########################################
+######## STANDARD METHOD: BBMJ19 #######
+########################################
 
 # Multidimensional search
 # The search returns a set of Rectangles in Yup, Ylow and Border
@@ -87,31 +87,10 @@ def multidim_search(xspace,
 
     return rs
 
-def mining_method_seq(pspace: Rectangle, oracles: list[Oracle], num_samples: int, num_cells: int, dyn_cell_creation=False) -> ResultSet:
 
-    if dyn_cell_creation:
-        # Iinsert dynamic cell creation here
-        print("Nothing here")
-    else: 
-        verts = pspace.vertices()
-        half = len(verts) // 2
-        ver_dist = np.subtract(verts[half], verts[0]) # Not equivalent to diag_vector. This is the "side length" of the rectangle
-        rect_list = [Rectangle(np.add(verts[0], np.multiply(ver_dist, i / num_cells)),
-                            np.add(verts[half - 1], np.multiply(ver_dist, (i + 1) / num_cells))) for i in range(num_cells)]
-                           
-    green = list()
-    red = list()
-    border = list()
-    mems = [ora.membership() for ora in oracles]
-
-    for cell in rect_list:
-        samples = np.random.uniform(cell.min_corner,cell.max_corner,size=(num_samples,cell.dim()))
-        if any([all([f(s) for f in mems]) for s in samples]):
-            green.append(cell)
-        else:
-            red.append(cell)
-        
-    return ResultSet(yup=green, ylow=red, border=border, xspace=pspace)
+#############################################
+######## INTERSECTION METHOD: BDMJ20 ########
+#############################################
 
 # Multidimensional search
 # The search returns a rectangle containing a solution and a Border
@@ -149,6 +128,54 @@ def multidim_intersection_search(xspace, list_constraints,
 
     return intersect_result
 
+
+########################################
+######## ADVANCED METHOD: BMNN22 #######
+########################################
+
+# Multidimensional search
+# The search returns a set of Rectangles in Yup, Ylow and Border
+@cython.ccall
+@cython.returns(object)
+@cython.locals(xspace=object, oracle=object, epsilon=cython.double, delta=cython.double, max_step=cython.ulonglong,
+               blocking=cython.bint, sleep=cython.double, opt_level=cython.uint, logging=cython.bint, md_search=list,
+               start=cython.double, end=cython.double, time0=cython.double, rs=object)
+def multidim_search_BMNN22(xspace,
+                           oracles,
+                           num_samples,
+                           num_cells,
+                           blocking=False,
+                           sleep=0.0,
+                           opt_level=1,
+                           logging=True):
+    # type: (Rectangle, list[Oracle], float, float, int, bool, float, int, bool) -> ResultSet
+
+    # TODO:
+    # - Rewrite assert.
+    # - Revise and complete the type hints: @cython.locals, # type: ....
+
+    md_search = [multidim_search_BMNN22_opt_0,
+                 multidim_search_BMNN22_opt_1]
+
+    RootSearch.logger.info('Starting multidimensional search (BMNN22)')
+    start = time.time()
+    rs = md_search[opt_level](xspace,
+                              oracles,
+                              num_samples=num_samples,
+                              num_cells=num_cells,
+                              blocking=blocking,
+                              sleep=sleep,
+                              logging=logging)
+    end = time.time()
+    time0 = end - start
+    RootSearch.logger.info('Time multidim search (Pareto front): ' + str(time0))
+
+    return rs
+
+
+########################################
+######## STANDARD METHOD: BBMJ19 #######
+########################################
 
 ##############################
 # opt_3 = Equivalent to opt_2 but using a Lattice for detecting dominated cubes in the boundary
@@ -1112,10 +1139,17 @@ def multidim_search_opt_0(xspace,
     return ResultSet(border, ylow, yup, xspace)
 
 
-################################
-######## EPSILON METHOD ########
-################################
+#############################################
+######## INTERSECTION METHOD: BDMJ20 ########
+#############################################
 
+##############################
+# opt_2 = Maximum optimisation: find a single point in the intersection of positive areas for the input Oracles
+# opt_1
+# opt_0 = No optimisation: find the complete intersection of positive areas for the input Oracles
+##############################
+
+########################################################################################################################
 @cython.ccall
 @cython.returns((cython.double, cython.double))
 @cython.locals(box=object, list_constraints=list, d=cython.ushort, max_bound=cython.double, min_bound=cython.double,
@@ -1234,7 +1268,8 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
         min_bound, max_bound = bound_box_with_constraints(xrectangle, list_constraints)
         inside_bound = False
         rect_diag = xrectangle.diag()
-        if (max_bound < 0.0) or (min_bound > 1.0) or (min_bound > max_bound) or (min_bound + (epsilon / 100.0) > max_bound):
+        if (max_bound < 0.0) or (min_bound > 1.0) or (min_bound > max_bound) or (
+                min_bound + (epsilon / 100.0) > max_bound):
             intersect_indicator = INTERNULL
             continue
         else:
@@ -1367,6 +1402,7 @@ def pos_overlap_box_gen(incomparable, incomparable_segment, yIn, yCover, xrectan
     i = i1 + i2 + i3
 
     return i
+
 
 @cython.ccall
 @cython.returns(object)
@@ -1543,6 +1579,7 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
 
     return ResultSet(border, intersect_region, intersect_box, xspace)
 
+
 @cython.ccall
 @cython.returns(object)
 @cython.locals(xspace=object, list_constraints=list, oracle1=object, oracle2=object, epsilon=cython.double,
@@ -1711,3 +1748,101 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
     RootSearch.logger.info('percentage unexplored: {0}'.format((100.0 * vol_border) / vol_total))
 
     return ResultSet(border, intersect_region, intersect_box, xspace)
+
+
+########################################
+######## ADVANCED METHOD: BMNN22 #######
+########################################
+
+##############################
+# opt_1 = Dynamic size cell method
+# opt_0 = Fixed size cell method
+##############################
+
+########################################################################################################################
+
+# Fixed size cell method
+def multidim_search_BMNN22_opt_0(xspace: Rectangle,
+                                 oracles: list[Oracle],
+                                 num_samples: int,
+                                 num_cells: int,
+                                 blocking=False,
+                                 sleep=0.0,
+                                 logging=True) -> ResultSet:
+    # TODO:
+    # - Revise and complete the type hints: @cython.locals, # type: ....
+    # - Write asserts and logger info (useful for debugging and defensive programming)
+
+    # Dimension
+    n = xspace.dim()
+
+    # Create a cell_partition method for Rectangle class
+    # verts = pspace.vertices()
+    # half = len(verts) // 2
+    # ver_dist = np.subtract(verts[half],
+    #                        verts[0])  # Not equivalent to diag_vector. This is the "side length" of the rectangle
+    # rect_list = [Rectangle(np.add(verts[0], np.multiply(ver_dist, i / num_cells)),
+    #                        np.add(verts[half - 1], np.multiply(ver_dist, (i + 1) / num_cells))) for i in
+    #              range(num_cells)]
+    rect_list = xspace.cell_partition(num_cells)
+    green = list()
+    red = list()
+    border = list()
+    mems = [ora.membership() for ora in oracles]
+
+    step = 0
+
+    # Create temporary directory for storing the result of each step
+    tempdir = tempfile.mkdtemp()
+
+    RootSearch.logger.info('Report\nStep, Red, Green, Border, Total, nRed, nGreen, nBorder')
+
+    for cell in rect_list:
+        step = step + 1
+
+        # Write some Logg info here: step, red area size, green area size, ... total area (xspace), number of rectangles
+        # in each region, etc.
+
+        # Create a uniform_sampling method for Rectangle class
+        # samples = np.random.uniform(cell.min_corner, cell.max_corner, size=(num_samples, cell.dim()))
+        samples = cell.uniform_sampling(num_samples)
+
+        # We do not need to create a list inside 'any' and 'all'. See generators/iterators in python.
+        # if any([all([f(s) for f in mems]) for s in samples]):
+        if any(all(f(s) for f in mems) for s in samples):
+            green.append(cell)
+        else:
+            red.append(cell)
+
+        # Visualization
+        if sleep > 0.0:
+            rs = ResultSet(border, red, green, xspace)
+            if n == 2:
+                rs.plot_2D_light(blocking=blocking, sec=sleep, opacity=0.7)
+            elif n == 3:
+                rs.plot_3D_light(blocking=blocking, sec=sleep, opacity=0.7)
+
+        if logging:
+            rs = ResultSet(border, red, green, xspace)
+            name = os.path.join(tempdir, str(step))
+            rs.to_file(name)
+
+    return ResultSet(yup=green, ylow=red, border=border, xspace=xspace)
+
+
+# Dynamic size cell method
+def multidim_search_BMNN22_opt_1(xspace: Rectangle,
+                                 oracles: list[Oracle],
+                                 num_samples: int,
+                                 num_cells: int,
+                                 blocking=False,
+                                 sleep=0.0,
+                                 logging=True) -> ResultSet:
+    # TODO:
+    # - Revise and complete the type hints: @cython.locals, # type: ....
+    # - Write asserts and logger info (useful for debugging and defensive programming)
+
+    green = list()
+    red = list()
+    border = list()
+    return ResultSet(yup=green, ylow=red, border=border, xspace=xspace)
