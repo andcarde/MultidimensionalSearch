@@ -384,7 +384,7 @@ def SearchIntersectionND(ora1, ora2,
                          logging=True,
                          simplify=True):
     # type: (Oracle, Oracle, float, float, float, float, int, bool, float, int, bool, bool, bool) -> ResultSet
-    assert (ora1.dim() == ora1.dim()), 'Oracle 1 and Oracle 2 have different dimensions'
+    assert (ora1.dim() == ora2.dim()), 'Oracle 1 and Oracle 2 have different dimensions'
 
     d = ora1.dim()
 
@@ -397,7 +397,7 @@ def SearchIntersectionND(ora1, ora2,
                                                                      blocking, sleep, opt_level, logging)
     else:
         intersection_result = SeqSearch.multidim_intersection_search(xyspace, [], ora1, ora2, epsilon, delta, max_step,
-                                                                 blocking, sleep, opt_level, logging)
+                                                                     blocking, sleep, opt_level, logging)
     if simplify:
         intersection_result.simplify()
         intersection_result.fusion()
@@ -442,28 +442,169 @@ def SearchIntersectionND_2(ora1, ora2,
     return intersection_result
 
 
+@cython.ccall
+@cython.returns(object)
+@cython.locals(oralist=list, p0=cython.double, alpha=cython.double, list_intervals=list, numCells=cython.int,
+               parallel=cython.bint, logging=cython.bint, dyn_cell_creation=cython.bint, mining_result=object)
+def Search2D_BMNN22(ora_list: list[Oracle],
+                    min_cornerx=0.0,
+                    min_cornery=0.0,
+                    max_cornerx=1.0,
+                    max_cornery=1.0,
+                    p0: float = 0.01,  # Define constant P0 in ParetoLib.Search.CommonSearch
+                    alpha: float = 0.05,  # Define constant ALPHA in ParetoLib.Search.CommonSearch
+                    num_cells: int = 1000,  # Define constant NUMCELLS in ParetoLib.Search.CommonSearch
+                    blocking=False,
+                    sleep=0.0,
+                    opt_level=2,
+                    parallel=False,
+                    logging=True,
+                    simplify=True):
+    # type: (list(Oracle), float, float, float, float, float, float, int, bool, bool, bool) -> ResultSet
+    # assert (ora1.dim() == ora2.dim()), 'Oracle 1 and Oracle 2 have different dimensions'
+
+    # TODO:
+    # - Rewrite assert.
+    # - Revise and complete the type hints: @cython.locals, # type: ....
+    # - Complete function calls
+
+    # Comments: variables in python are usually lower case and separeted by "_".
+    # There are lost of PIP ("good programming policies").
+    xyspace = create_2D_space(min_cornerx, min_cornery, max_cornerx, max_cornery)
+    num_samples = ceil(log(alpha, 1.0 - p0))
+
+    if parallel:
+        rs = ParSearch.multidim_search_BMNN22(xyspace, ora_list, num_samples, num_cells, ...)
+    else:
+        rs = SeqSearch.multidim_search_BMNN22(xyspace, ora_list, num_samples, num_cells, ...)
+
+    if simplify:
+        rs.simplify()
+        rs.fusion()
+
+    rs.plot_2D_light(blocking=True, var_names=ora.get_var_names())
+    return rs
+
 
 @cython.ccall
 @cython.returns(object)
-@cython.locals(oralist=list, p0=cython.double, alpha=cython.double, list_intervals=list, numCells=cython.int, parallel=cython.bint, logging=cython.bint,
+@cython.locals(oralist=list, p0=cython.double, alpha=cython.double, list_intervals=list, numCells=cython.int,
+               parallel=cython.bint, logging=cython.bint, dyn_cell_creation=cython.bint, mining_result=object)
+def Search3D_BMNN22(ora_list: list[Oracle],
+                    min_cornerx=0.0,
+                    min_cornery=0.0,
+                    min_cornerz=0.0,
+                    max_cornerx=1.0,
+                    max_cornery=1.0,
+                    max_cornerz=1.0,
+                    p0: float = 0.01,  # Define constant P0
+                    alpha: float = 0.05,  # Define constant ALPHA
+                    num_cells: int = 1000,  # Define constant NUMCELLS
+                    blocking=False,
+                    sleep=0.0,
+                    opt_level=2,
+                    parallel=False,
+                    logging=True,
+                    simplify=True):
+    # type: (list(Oracle), float, float, list, int, bool, bool, bool) -> ResultSet
+    # assert (ora1.dim() == ora2.dim()), 'Oracle 1 and Oracle 2 have different dimensions'
+
+    # TODO:
+    # - Rewrite assert.
+    # - Revise and complete the type hints: @cython.locals, # type: ....
+    # - Complete function calls
+
+    xyspace = create_3D_space(min_cornerx, min_cornery, min_cornerz, max_cornerx, max_cornery, max_cornerz)
+    num_samples = ceil(log(alpha, 1.0 - p0))
+
+    if parallel:
+        rs = ParSearch.multidim_search_BMNN22(xyspace, ora_list, num_samples, num_cells, ...)
+    else:
+        rs = SeqSearch.multidim_search_BMNN22(xyspace, ora_list, num_samples, num_cells, ...)
+
+    if simplify:
+        rs.simplify()
+        rs.fusion()
+
+    rs.plot_3D_light(blocking=True, var_names=ora.get_var_names())
+    return rs
+
+
+@cython.ccall
+@cython.returns(object)
+@cython.locals(oralist=list, p0=cython.double, alpha=cython.double, list_intervals=list, numCells=cython.int,
+               parallel=cython.bint, logging=cython.bint, dyn_cell_creation=cython.bint, mining_result=object)
+def SearchND_BMNN22(ora_list: list[Oracle],
+                    min_corner=0.0,
+                    max_corner=1.0,
+                    p0: float = 0.01,  # Define constant P0
+                    alpha: float = 0.05,  # Define constant ALPHA
+                    num_cells: int = 1000,  # Define constant NUMCELLS
+                    blocking=False,
+                    sleep=0.0,
+                    opt_level=2,
+                    parallel=False,
+                    logging=True,
+                    simplify=True):
+    # type: (list(Oracle), float, float, list, int, bool, bool, bool) -> ResultSet
+    # assert (ora1.dim() == ora2.dim()), 'Oracle 1 and Oracle 2 have different dimensions'
+
+    # TODO:
+    # - Rewrite assert.
+    # - Revise and complete the type hints: @cython.locals, # type: ....
+    # - Complete function calls
+
+    d = ora_list[0].dim()
+
+    minc = (min_corner,) * d
+    maxc = (max_corner,) * d
+    xyspace = Rectangle(minc, maxc)
+    num_samples = ceil(log(alpha, 1.0 - p0))
+
+    if parallel:
+        rs = ParSearch.multidim_search_BMNN22(xyspace, ora_list, num_samples, num_cells, ...)
+    else:
+        rs = SeqSearch.multidim_search_BMNN22(xyspace, ora_list, num_samples, num_cells, ...)
+
+    if simplify:
+        rs.simplify()
+        rs.fusion()
+    return rs
+
+
+@cython.ccall
+@cython.returns(object)
+@cython.locals(oralist=list, p0=cython.double, alpha=cython.double, list_intervals=list, numCells=cython.int,
+               parallel=cython.bint, logging=cython.bint,
                dyn_cell_creation=cython.bint, mining_result=object)
-def mining_method(ora_list: list[Oracle],
-                p0: float,
-                alpha: float,
-                list_intervals : list,
-                numCells: int,
-                parallel=False,
-                logging=True,
-                dyn_cell_creation=False):
-    # type: (list(Oracle), float, float, list, int,  bool, bool, bool) -> ResultSet
-    # assert (ora1.dim() == ora1.dim()), 'Oracle 1 and Oracle 2 have different dimensions'
+def SearchND_2_BMNN22(ora_list: list[Oracle],
+                      list_intervals: list,
+                      p0: float = 0.01,  # Define constant P0
+                      alpha: float = 0.05,  # Define constant ALPHA
+                      num_cells: int = 1000,  # Define constant NUMCELLS
+                      blocking=False,
+                      sleep=0.0,
+                      opt_level=2,
+                      parallel=False,
+                      logging=True,
+                      simplify=True):
+    # type: (list(Oracle), float, float, list, int, bool, bool, bool) -> ResultSet
+    # assert (ora1.dim() == ora2.dim()), 'Oracle 1 and Oracle 2 have different dimensions'
+
+    # TODO:
+    # - Rewrite assert.
+    # - Revise and complete the type hints: @cython.locals, # type: ....
+    # - Complete function calls
 
     xyspace = create_ND_space(list_intervals)
     numSamples = ceil(log(alpha, 1.0 - p0))
 
     if parallel:
-        mining_result = ParSearch.mining_method_par(xyspace, ora_list, numSamples, numCells, dyn_cell_creation)
+        rs = ParSearch.multidim_search_BMNN22(xyspace, ora_list, numSamples, num_cells, ...)
     else:
-        mining_result = SeqSearch.mining_method_seq(xyspace, ora_list, numSamples, numCells, dyn_cell_creation)
+        rs = SeqSearch.multidim_search_BMNN22(xyspace, ora_list, numSamples, num_cells, ...)
 
-    return mining_result
+    if simplify:
+        rs.simplify()
+        rs.fusion()
+    return rs
