@@ -71,8 +71,8 @@ def mining_method_seq_fix(pspace: Rectangle, n: int, alpha : float, p0 : float, 
     return ResultSet(yup=green, ylow=red, border=border, xspace=pspace)
 
 
-def fix_process(args):
-    
+
+
 
 def mining_method_par_fix(pspace: Rectangle, n: int, alpha : float, p0 : float, oracles: list[Oracle]) -> ResultSet:
     rect_list = pspace.static_cell_partition(n)
