@@ -1375,6 +1375,28 @@ class Rectangle(object):
         faces.set_alpha(opacity)
         faces.set_facecolor(c)
         return faces
+    
+    @cython.locals(n=cython.uint, verts=list, half=cython.uint, ver_dist=list, i=cython.uint)
+    @cython.returns(list)
+    def static_cell_partition(self, n=50):
+        # type: (Rectangle, int) -> list
+        """
+          Given a rectangle, it 'slices' it in n smaller rectangles of equal sizes
+
+          Args:
+              self (Rectangle): The Rectangle.
+              n (int): Number of equal sized rectangles we want to have as a result
+
+          Returns:
+              list_rect (list): the result of 'slicing' self into n smaller rectangles
+         """
+        verts = self.vertices()
+        half = len(verts) // 2
+        ver_dist = np.subtract(verts[half], verts[0]) # Not equivalent to diag_vector. This is the "side length" of the rectangle
+        rect_list = [Rectangle(np.add(verts[0], np.multiply(ver_dist, i / n)),
+                        np.add(verts[half - 1], np.multiply(ver_dist, (i + 1) / n))) for i in range(n)]
+
+        return rect_list
 
     #####################
     # Auxiliary functions
