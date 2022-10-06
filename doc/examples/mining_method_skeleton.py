@@ -7,6 +7,26 @@ from ParetoLib.Oracle.OracleSTLe import OracleSTLe, OracleSTLeLib
 from ParetoLib.Oracle.OracleFunction import OracleFunction, Condition
 from ParetoLib.Oracle.Oracle import Oracle
 from multiprocessing import Pool
+import threading as thr
+import time
+
+lock = thr.Lock()
+
+class Mining_method_fix_thread(thr.Thread):
+    def __init__(self, threadID : int, cell : Rectangle, oracles : list[Oracle], num_samples : int):
+        thr.Thread.__init__(self)
+        self.threadID = threadID
+        self.cell = cell
+        self.oracles = oracles
+        self.nsamples = num_samples
+        self.green = True
+    def run(self):
+        lock.acquire()
+        fs = [ora.membership() for ora in self.oracles]
+        samples = np.random.uniform(self.cell.min_corner, self.cell.max_corner, (self.nsamples, self.cell.dim()))
+        self.green = any(all([f(sample) for f in fs]) for sample in samples)
+        lock.release()
+
 
 
 def mining_method_seq_dyn(cell: Rectangle, ps : float, m : int, g : tuple[float], alpha : float, p0 : float, oracles: list[Oracle]) -> ResultSet:
@@ -52,7 +72,11 @@ def mining_method_seq_dyn(cell: Rectangle, ps : float, m : int, g : tuple[float]
     return ResultSet(yup=list(green), ylow=list(red), border=list(border), xspace=cell)
 
 def mining_method_seq_fix(pspace: Rectangle, n: int, alpha : float, p0 : float, oracles: list[Oracle]) -> ResultSet:
-    rect_list = pspace.static_cell_partition(n)
+    verts = pspace.vertices()
+    half = len(verts) // 2
+    ver_dist = np.subtract(verts[half], verts[0]) # Not equivalent to diag_vector. This is the "side length" of the rectangle
+    rect_list = [Rectangle(np.add(verts[0], np.multiply(ver_dist, i / n)),
+                        np.add(verts[half - 1], np.multiply(ver_dist, (i + 1) / n))) for i in range(n)]
 
     num_samples = int(np.ceil(np.log(alpha) / np.log(1-p0)))
     green = list()
@@ -75,26 +99,41 @@ def mining_method_seq_fix(pspace: Rectangle, n: int, alpha : float, p0 : float, 
 
 
 def mining_method_par_fix(pspace: Rectangle, n: int, alpha : float, p0 : float, oracles: list[Oracle]) -> ResultSet:
-    rect_list = pspace.static_cell_partition(n)
+    verts = pspace.vertices()
+    half = len(verts) // 2
+    ver_dist = np.subtract(verts[half], verts[0]) # Not equivalent to diag_vector. This is the "side length" of the rectangle
+    rect_list = [Rectangle(np.add(verts[0], np.multiply(ver_dist, i / n)),
+                        np.add(verts[half - 1], np.multiply(ver_dist, (i + 1) / n))) for i in range(n)]
                            
     num_samples = int(np.ceil(np.log(alpha) / np.log(1-p0)))
     green = list()
     red = list()
     border = list()
-    mems = [ora.membership() for ora in oracles]
 
-    proc_pool = Pool(n)
-    proc_pool.map()
+    thread_list = list()
+    t_id = 0
 
-    for cell in rect_list:
-        samples = np.random.uniform(cell.min_corner,cell.max_corner,size=(num_samples,cell.dim()))
-        if any([all([f(s) for f in mems]) for s in samples]):
-            green.append(cell)
+    
+    for rect in rect_list:
+        thread = Mining_method_fix_thread(t_id,rect,oracles,num_samples)
+        thread.start()
+        thread_list.append(thread)
+        t_id += 1
+
+
+    for i in range(len(thread_list)):
+        thread_list[i].join()
+        if thread_list[i].green:
+            green.append(rect_list[i])
         else:
-            red.append(cell)
-        
+            red.append(rect_list[i])
             
     return ResultSet(yup=green, ylow=red, border=border, xspace=pspace)
+
+
+
+
+
 
 
 def plot_prueba(min_cor, max_cor, n, alpha, p0, filenames):
@@ -105,7 +144,18 @@ def plot_prueba(min_cor, max_cor, n, alpha, p0, filenames):
         ora = OracleSTLeLib()
         ora.from_file(f,True)  
         oracle_list.append(ora)
+    start = time.time()
     rs = mining_method_seq_fix(space, n, alpha, p0, oracle_list)
+    end = time.time()
+    print(end-start)
+    if space.dim() == 2:
+        rs.plot_2D()
+    elif space.dim() == 3:
+        rs.plot_3D()
+    start = time.time()
+    rs = mining_method_par_fix(space, n, alpha, p0, oracle_list)
+    end = time.time()
+    print(end-start)
     if space.dim() == 2:
         rs.plot_2D()
     elif space.dim() == 3:
@@ -128,7 +178,7 @@ def plot_prueba(min_cor, max_cor, n, alpha, p0, filenames):
 if __name__ == "__main__":
     min_cor = (1950.0, 0.0)
     max_cor = (2000.0, 3.0)
-    n = 10
+    n = 30
     alpha = 0.05
     p0 = 0.01
     files = list()

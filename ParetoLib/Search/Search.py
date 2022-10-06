@@ -602,11 +602,10 @@ def SearchND_2_BMNN22(ora_list: list[Oracle],
                       parallel=False,
                       logging=True,
                       simplify=True):
-    # type: (list(Oracle), float, float, list, int, bool, bool, bool) -> ResultSet
+    # type: (list(Oracle), list, float, float, int, bool, float, int, bool, bool, bool) -> ResultSet
     assert(fnt.reduce(operator.eq),[orac.dim() for orac in ora_list]) # Every oracle must have the same dimension
 
     # TODO:
-    # - Rewrite assert.
     # - Revise and complete the type hints: @cython.locals, # type: ....
     # - Complete function calls
 
