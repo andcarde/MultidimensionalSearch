@@ -35,6 +35,9 @@ EPS = 1e-5
 DELTA = 1e-5
 STEPS = max_integer_value()  # float('inf')
 
+P0 = 0.01
+ALPHA = 0.05
+NUMCELLS = 100
 
 @cython.locals(x=object, error=tuple, i=cython.ushort, y=object, yval=tuple, dist=cython.double)
 @cython.returns((object, cython.ushort))

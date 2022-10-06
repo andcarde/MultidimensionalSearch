@@ -14,7 +14,7 @@ import ParetoLib.GUI as RootGUI
 from ParetoLib.GUI.Window import Ui_MainWindow
 from ParetoLib.Oracle.OracleSTLe import OracleSTLeLib
 from ParetoLib.Oracle.OracleEpsSTLe import OracleEpsSTLe
-from ParetoLib.Search.Search import SearchND_2, SearchIntersectionND_2, EPS, DELTA, STEPS
+from ParetoLib.Search.Search import SearchND_2, SearchIntersectionND_2, Search_BMNN22, EPS, DELTA, STEPS
 from ParetoLib.Search.ResultSet import ResultSet
 
 matplotlib.use('Qt5Agg')
@@ -238,7 +238,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             RootGUI.logger.debug(csv_signal_file)
             RootGUI.logger.debug(stl_param_file)
 
-            # Read parameter intervals
+            # Read parameter intervals --> Guarda los parámetros
             intervals = self.read_parameters_intervals()
             RootGUI.logger.debug('Intervals:')
             RootGUI.logger.debug(intervals)
@@ -277,6 +277,23 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                                             parallel=False,
                                             logging=False,
                                             simplify=False)
+            elif method == 2:
+                # TODO: correctly read the value of 'stl_prop_file_2'
+                stl_prop_file_2 = self.spec_filepath_textbox.toPlainText()
+                """self.oracle = OracleSTLeLib(bound_on_count=0, intvl_epsilon=10, stl_prop_file=stl_prop_file,
+                                            csv_signal_file=csv_signal_file, stl_param_file=stl_param_file)"""
+                self.oracle = OracleSTLeLib()                            
+                self.oracle_2 = OracleSTLeLib()
+                self.oracle.from_file(stl_prop_file, human_readable=True)
+                self.oracle.from_file(stl_prop_file_2, human_readable=True)
+                rs = Search_BMNN22(ora=self.oracle,
+                                list_intervals=intervals,
+                                blocking=False,
+                                sleep=0.0,
+                                opt_level=0,
+                                parallel=False,
+                                logging=False,
+                                simplify=False)
 
         except Exception as e:
             RootGUI.logger.debug(e)
