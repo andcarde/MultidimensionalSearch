@@ -1771,15 +1771,7 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
     # Dimension
     n = xspace.dim()
 
-    # Create a cell_partition method for Rectangle class
-    # verts = pspace.vertices()
-    # half = len(verts) // 2
-    # ver_dist = np.subtract(verts[half],
-    #                        verts[0])  # Not equivalent to diag_vector. This is the "side length" of the rectangle
-    # rect_list = [Rectangle(np.add(verts[0], np.multiply(ver_dist, i / num_cells)),
-    #                        np.add(verts[half - 1], np.multiply(ver_dist, (i + 1) / num_cells))) for i in
-    #              range(num_cells)]
-    rect_list = xspace.cell_partition_fixed(num_cells)
+    rect_list = xspace.static_cell_partition(num_cells)
     green = list()
     red = list()
     border = list()

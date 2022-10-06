@@ -45,6 +45,8 @@ of the space X in three subspaces: a lower closure, an upper closure and a borde
  contains the Pareto front.
 """
 import time
+import functools as fnt
+import operator
 from math import ceil, log
 from tokenize import Double
 import cython
@@ -601,7 +603,7 @@ def SearchND_2_BMNN22(ora_list: list[Oracle],
                       logging=True,
                       simplify=True):
     # type: (list(Oracle), float, float, list, int, bool, bool, bool) -> ResultSet
-    # assert (ora1.dim() == ora2.dim()), 'Oracle 1 and Oracle 2 have different dimensions'
+    assert(fnt.reduce(operator.eq),[orac.dim() for orac in ora_list]) # Every oracle must have the same dimension
 
     # TODO:
     # - Rewrite assert.
