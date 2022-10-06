@@ -219,14 +219,29 @@
          <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
         </property>
         <layout class="QGridLayout" name="gridLayout">
-         <item row="0" column="0" alignment="Qt::AlignLeft">
-          <widget class="QLabel" name="interpolation_label">
-           <property name="text">
-            <string>Interpolation</string>
+         <item row="1" column="1" alignment="Qt::AlignRight">
+          <widget class="QComboBox" name="mining_comboBox">
+           <property name="currentText">
+            <string>BMNN22</string>
            </property>
+           <item>
+            <property name="text">
+             <string>BBMJ19</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>BDMJ20</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>BMNN22</string>
+            </property>
+           </item>
           </widget>
          </item>
-         <item row="3" column="0" alignment="Qt::AlignLeft">
+         <item row="5" column="0" alignment="Qt::AlignLeft">
           <widget class="QComboBox" name="param_stl_selection_comboBox">
            <item>
             <property name="text">
@@ -240,11 +255,81 @@
            </item>
           </widget>
          </item>
-         <item row="2" column="0" alignment="Qt::AlignLeft">
+         <item row="6" column="0">
+          <widget class="QLabel" name="mining_label_2">
+           <property name="text">
+            <string>Opt level</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLabel" name="type_search_label">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Type Search</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0" alignment="Qt::AlignLeft">
           <widget class="QLabel" name="param_stl_selection_label">
            <property name="text">
             <string>Parametric STL</string>
            </property>
+          </widget>
+         </item>
+         <item row="4" column="1" rowspan="2">
+          <widget class="QComboBox" name="searc_type_comboBox">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="sizeAdjustPolicy">
+            <enum>QComboBox::AdjustToContents</enum>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>16</width>
+             <height>16</height>
+            </size>
+           </property>
+           <item>
+            <property name="text">
+             <string>Parallel</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Sequential</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLabel" name="mining_label">
+           <property name="text">
+            <string>Mining method</string>
+           </property>
+          </widget>
+         </item>
+         <item row="7" column="0">
+          <widget class="QComboBox" name="comboBox">
+           <item>
+            <property name="text">
+             <string>0 - Fixed size cells</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>1 - Adaptative cells</string>
+            </property>
+           </item>
           </widget>
          </item>
          <item row="1" column="0" alignment="Qt::AlignLeft">
@@ -261,25 +346,11 @@
            </item>
           </widget>
          </item>
-         <item row="0" column="1" alignment="Qt::AlignRight">
-          <widget class="QLabel" name="mining_label">
+         <item row="0" column="0">
+          <widget class="QLabel" name="interpolation_label">
            <property name="text">
-            <string>Mining method</string>
+            <string>Interpolation</string>
            </property>
-          </widget>
-         </item>
-         <item row="1" column="1" alignment="Qt::AlignRight">
-          <widget class="QComboBox" name="mining_comboBox">
-           <item>
-            <property name="text">
-             <string>BBMJ19</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>BDMJ20</string>
-            </property>
-           </item>
           </widget>
          </item>
         </layout>
@@ -337,8 +408,11 @@
         <layout class="QVBoxLayout" name="verticalLayout_5">
          <item>
           <widget class="QPlainTextEdit" name="formula_textEdit">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
@@ -364,11 +438,65 @@
      <x>0</x>
      <y>0</y>
      <width>1053</width>
-     <height>22</height>
+     <height>20</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuCreate">
+    <property name="title">
+     <string>Create</string>
+    </property>
+    <addaction name="actionNew_project"/>
+   </widget>
+   <widget class="QMenu" name="menuOpen">
+    <property name="title">
+     <string>Open</string>
+    </property>
+    <addaction name="actionProject"/>
+   </widget>
+   <widget class="QMenu" name="menuSave_project">
+    <property name="title">
+     <string>Save project</string>
+    </property>
+    <addaction name="actionSave"/>
+    <addaction name="actionSave_as"/>
+   </widget>
+   <widget class="QMenu" name="menuClassification">
+    <property name="title">
+     <string>Classification</string>
+    </property>
+    <addaction name="actionIdentify_champion"/>
+   </widget>
+   <addaction name="menuCreate"/>
+   <addaction name="menuOpen"/>
+   <addaction name="menuSave_project"/>
+   <addaction name="menuClassification"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionNew_project">
+   <property name="text">
+    <string>New project</string>
+   </property>
+  </action>
+  <action name="actionProject">
+   <property name="text">
+    <string>Load project</string>
+   </property>
+  </action>
+  <action name="actionSave">
+   <property name="text">
+    <string>Save</string>
+   </property>
+  </action>
+  <action name="actionSave_as">
+   <property name="text">
+    <string>Save as...</string>
+   </property>
+  </action>
+  <action name="actionIdentify_champion">
+   <property name="text">
+    <string>Identify champion</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>

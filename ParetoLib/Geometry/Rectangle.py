@@ -74,6 +74,7 @@ FORMATS 2020: 76-93
 """
 
 import math
+from typing_extensions import Self
 import numpy as np
 import matplotlib.patches as patches
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
@@ -1525,6 +1526,28 @@ class Rectangle(object):
         # return list(new_rect)
         return Rectangle.fusion_rectangles(new_rect)
 
+    @cython.ccall
+    @cython.locals(num_samples=cython.integral)
+    @cython.returns(tuple)
+    def uniform_sampling(self, num_samples):
+        samples = np.random.uniform(self._min_corner, self.max_corner, size=(num_samples, self.dim()))
+        return samples
+
+    @cython.ccall
+    @cython.locals(num_cells=cython.integral)
+    @cython.returns(list)
+    def cell_partition_fixed(self, num_cells):
+        verts = self.vertices()
+        half = len(verts) // 2
+        ver_dist = np.subtract(verts[half], verts[0])  
+        rect_list = [Rectangle(np.add(verts[0], np.multiply(ver_dist, i / num_cells)),
+                        np.add(verts[half - 1], np.multiply(ver_dist, (i + 1) / num_cells))) for i in range(num_cells)]
+
+        return rect_list
+
+        
+
+
 
 ##################
 # Alpha generators
@@ -2020,3 +2043,4 @@ def iuwc(y, z):
         # brect(alpha, yrectangle, xspace)
 
     return result
+

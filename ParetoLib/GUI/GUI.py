@@ -19,7 +19,6 @@ from ParetoLib.Search.ResultSet import ResultSet
 
 matplotlib.use('Qt5Agg')
 
-
 class StandardSolutionWindow(QWidget):
     """
     This "window" is a QWidget. If it has no parent, it

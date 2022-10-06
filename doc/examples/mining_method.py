@@ -116,7 +116,7 @@ if __name__ == "__main__":
     p0 = float(sys.argv[2])
     alpha = float(sys.argv[3])
 
-    nfile = '../../Tests/Oracle/OracleSTLe/2D/stabilization/derivative/stabilization.txt'
+    nfile = 'Tests/Oracle/OracleSTLe/2D/stabilization/derivative/stabilization.txt'
     oracle = OracleSTLeLib()
     oracle.from_file(nfile, human_readable=True)
     oracles = [copy.deepcopy(oracle)] * 1
@@ -130,11 +130,11 @@ if __name__ == "__main__":
     start_time = time.time()
     r = par_mining_method(pspace, num_cells, num_samples, oracles)
     end_time = time.time()
-    print("Execution time: {0}".format(end_time - start_time))
+    print("Execution time of parallel method: {0}".format(end_time - start_time))
     r.plot_2D()
 
     start_time = time.time()
     r = mining_method(pspace, num_cells, num_samples, oracles)
     end_time = time.time()
-    print("Execution time: {0}".format(end_time - start_time))
+    print("Execution time of normal method: {0}".format(end_time - start_time))
     r.plot_2D()
