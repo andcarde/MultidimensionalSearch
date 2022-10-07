@@ -26,7 +26,7 @@ def mining_method_seq_dyn(cell: Rectangle, ps : float, m : int, g : tuple[float]
     
     if counter == 0:
         red.add(cell)
-    elif counter / num_samples >= ps or cell.diag_vector() <= g:
+    elif counter / num_samples >= ps or all(cell.diag_vector() <= g):
         green.add(cell)
     else:
         print(cell.diag_vector())
@@ -113,9 +113,9 @@ def plot_prueba(min_cor, max_cor, n, alpha, p0, filenames):
     
     ps = 0.95
     m = 7
-    g = [1] * space.dim()
+    g = np.multiply(space.diag_vector(),1/10)
 
-    rs = mining_method_seq_dyn(space, ps, m, tuple(g), alpha, p0, oracle_list)
+    rs = mining_method_seq_dyn(space, ps, m, g, alpha, p0, oracle_list)
     if space.dim() == 2:
         rs.plot_2D()
     elif space.dim() == 3:
