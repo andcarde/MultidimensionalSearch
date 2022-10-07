@@ -444,30 +444,33 @@ def SearchIntersectionND_2(ora1, ora2,
     return intersection_result
 
 
-# Overarching function draft
 
-# @cython.ccall
-# @cython.returns(object)
-# @cython.locals(ora_list=list, intervals=list, p0=cython.double, alpha=cython.double, numCells=cython.int,
-               # parallel=cython.bint, logging=cython.bint, dyn_cell_creation=cython.bint, mining_result=object)
-# def Search_BMNN22(ora_list: list[Oracle],
-                    # intervals: list,
-                    # blocking=False,
-                    # sleep=0.0,
-                    # opt_level=2,
-                    # parallel=False,
-                    # logging=True,
-                    # simplify=True):
+@cython.ccall
+@cython.returns(object)
+@cython.locals(oralist=list, list_intervals=list, blocking=cython.bint, sleep=cython.double,
+               parallel=cython.bint, logging=cython.bint, simplify=cython.bint, dyn_cell_creation=cython.bint,
+               mining_result=object)
+def Search_BMNN22(ora_list: list[Oracle],
+                      intervals: list,
+                      blocking=False,
+                      sleep=0.0,
+                      opt_level=2,
+                      parallel=False,
+                      logging=True,
+                      simplify=True,
+                      dyn_cell_creation=False):
+    assert(len(ora_list) > 0, "Oracle list can't be empty")
+    assert(fnt.reduce(operator.eq),[orac.dim() for orac in ora_list], "Every oracle in list must have the same diemension")
 
-    # if ora_list.dim() == 2:
-        # rs = Search2D_BMNN22(ora_list, intervals[0][0], intervals[0][1],
-                    # intervals[1][0], intervals[1][1], blocking, sleep, opt_level, parallel, logging, simplify)
-    # elif len(intervals[0]) == 3:
-        # rs = Search3D_BMNN22(ora_list, intervals[0][0], intervals[0][1], intervals[0][2],
-                    # intervals[1][0], intervals[1][1], intervals[1][2], blocking, sleep, opt_level, parallel, logging, simplify)
-    # elif len(intervals[0]) > 3:
-        # rs = SearchND_BMNN22(ora_list, intervals, blocking, sleep, opt_level, parallel, logging, simplify)
-    # return rs
+    if ora_list[0].dim() == 2:
+        rs = Search2D_BMNN22(ora_list, intervals[0][0], intervals[0][1],
+                    intervals[1][0], intervals[1][1], blocking, sleep, opt_level, parallel, logging, simplify)
+    elif ora_list[0].dim() == 3:
+        rs = Search3D_BMNN22(ora_list, intervals[0][0], intervals[0][1], intervals[0][2],
+                    intervals[1][0], intervals[1][1], intervals[1][2], blocking, sleep, opt_level, parallel, logging, simplify)
+    elif ora_list[0].dim() > 3:
+        rs = SearchND_BMNN22(ora_list, intervals, blocking, sleep, opt_level, parallel, logging, simplify)
+    return rs
 
 
 @cython.ccall
@@ -504,16 +507,16 @@ def Search2D_BMNN22(ora_list: list[Oracle],
     xyspace = create_2D_space(min_cornerx, min_cornery, max_cornerx, max_cornery)
     num_samples = ceil(log(ALPHA, 1.0 - P0))
 
-    if parallel:
-        rs = ParSearch.multidim_search_BMNN22(xyspace, ora_list, num_samples, NUMCELLS, ...)
-    else:
+    #if parallel:
+        #rs = ParSearch.multidim_search_BMNN22(xyspace, ora_list, num_samples, NUMCELLS)
+    if not parallel:
         rs = SeqSearch.multidim_search_BMNN22_opt_0(xyspace, ora_list, num_samples, NUMCELLS)
 
     if simplify:
         rs.simplify()
         rs.fusion()
 
-    rs.plot_2D_light(blocking=True, var_names=ora_list.get_var_names())
+    # rs.plot_2D_light(blocking=True, var_names=ora_list.get_var_names())
     return rs
 
 
@@ -549,16 +552,16 @@ def Search3D_BMNN22(ora_list: list[Oracle],
     xyspace = create_3D_space(min_cornerx, min_cornery, min_cornerz, max_cornerx, max_cornery, max_cornerz)
     num_samples = ceil(log(ALPHA, 1.0 - P0))
 
-    if parallel:
-        rs = ParSearch.multidim_search_BMNN22(xyspace, ora_list, num_samples, NUMCELLS, ...)
-    else:
+    #if parallel:
+        #rs = ParSearch.multidim_search_BMNN22(xyspace, ora_list, num_samples, NUMCELLS, ...)
+    if not parallel:
         rs = SeqSearch.multidim_search_BMNN22_opt_0(xyspace, ora_list, num_samples, NUMCELLS)
 
     if simplify:
         rs.simplify()
         rs.fusion()
 
-    rs.plot_3D_light(blocking=True, var_names=ora.get_var_names())
+    # rs.plot_3D_light(blocking=True, var_names=ora.get_var_names())
     return rs
 
 
@@ -625,9 +628,9 @@ def SearchND_2_BMNN22(ora_list: list[Oracle],
     xyspace = create_ND_space(list_intervals)
     num_samples = ceil(log(ALPHA, 1.0 - P0))
 
-    if parallel:
-        rs = ParSearch.multidim_search_BMNN22(xyspace, ora_list, num_samples, NUMCELLS, ...) # Not implemented at the moment
-    else:
+    #if parallel:
+        #rs = ParSearch.multidim_search_BMNN22(xyspace, ora_list, num_samples, NUMCELLS, ...) # Not implemented at the moment
+    if not parallel:
         rs = SeqSearch.multidim_search_BMNN22_opt_0(xyspace, ora_list, num_samples, NUMCELLS)
 
     if simplify:
