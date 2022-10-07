@@ -443,34 +443,36 @@ def SearchIntersectionND_2(ora1, ora2,
         intersection_result.fusion()
     return intersection_result
 
+
+# Overarching function draft
+
+# @cython.ccall
+# @cython.returns(object)
+# @cython.locals(ora_list=list, intervals=list, p0=cython.double, alpha=cython.double, numCells=cython.int,
+               # parallel=cython.bint, logging=cython.bint, dyn_cell_creation=cython.bint, mining_result=object)
+# def Search_BMNN22(ora_list: list[Oracle],
+                    # intervals: list,
+                    # blocking=False,
+                    # sleep=0.0,
+                    # opt_level=2,
+                    # parallel=False,
+                    # logging=True,
+                    # simplify=True):
+
+    # if ora_list.dim() == 2:
+        # rs = Search2D_BMNN22(ora_list, intervals[0][0], intervals[0][1],
+                    # intervals[1][0], intervals[1][1], blocking, sleep, opt_level, parallel, logging, simplify)
+    # elif len(intervals[0]) == 3:
+        # rs = Search3D_BMNN22(ora_list, intervals[0][0], intervals[0][1], intervals[0][2],
+                    # intervals[1][0], intervals[1][1], intervals[1][2], blocking, sleep, opt_level, parallel, logging, simplify)
+    # elif len(intervals[0]) > 3:
+        # rs = SearchND_BMNN22(ora_list, intervals, blocking, sleep, opt_level, parallel, logging, simplify)
+    # return rs
+
+
 @cython.ccall
 @cython.returns(object)
-@cython.locals(ora_list=list, intervals=list, p0=cython.double, alpha=cython.double, numCells=cython.int,
-               parallel=cython.bint, logging=cython.bint, dyn_cell_creation=cython.bint, mining_result=object)
-def Search_BMNN22(ora_list: list[Oracle],
-                    intervals: list,
-                    blocking=False,
-                    sleep=0.0,
-                    opt_level=2,
-                    parallel=False,
-                    logging=True,
-                    simplify=True):
-    
-    if len(intervals[0]) == 2:
-        rs = Search2D_BMNN22(ora_list, intervals[0][0], intervals[0][1],
-                    intervals[1][0], intervals[1][1], blocking, sleep, opt_level, parallel, logging, simplify)
-    elif len(intervals[0]) == 3:
-        rs = Search3D_BMNN22(ora_list, intervals[0][0], intervals[0][1], intervals[0][2],
-                    intervals[1][0], intervals[1][1], intervals[1][2], blocking, sleep, opt_level, parallel, logging, simplify)
-    elif len(intervals[0]) > 3:
-        rs = Search3D_BMNN22(ora_list, intervals, blocking, sleep, opt_level, parallel, logging, simplify)
-
-    return rs
-
-
-@cython.ccall
-@cython.returns(object)
-@cython.locals(oralist=list, p0=cython.double, alpha=cython.double, list_intervals=list, numCells=cython.int,
+@cython.locals(oralist=list, min_cornerx=cython.double, min_cornery=cython.double, max_cornerx=cython.double, max_cornery=cython.double,
                parallel=cython.bint, logging=cython.bint, dyn_cell_creation=cython.bint, mining_result=object)
 def Search2D_BMNN22(ora_list: list[Oracle],
                     min_cornerx=0.0,
@@ -482,9 +484,12 @@ def Search2D_BMNN22(ora_list: list[Oracle],
                     opt_level=2,
                     parallel=False,
                     logging=True,
-                    simplify=True):
-    # type: (list(Oracle), float, float, float, float, float, float, int, bool, bool, bool) -> ResultSet
-    # assert (ora1.dim() == ora2.dim()), 'Oracle 1 and Oracle 2 have different dimensions'
+                    simplify=True,
+                    dyn_cell_creation=False):
+    # type: (list(Oracle), float, float, float, float, bool, float, int, bool, bool, bool, bool) -> ResultSet
+    assert(len(ora_list) > 0, "Oracle list can't be empty")
+    assert(fnt.reduce(operator.eq),[orac.dim() for orac in ora_list], "Every oracle in list must have the same diemension")
+    assert(ora_list[0].dim() == 2, "Oracles in list must have dimension 2")
 
     # TODO:
     # - Rewrite assert.
@@ -499,7 +504,7 @@ def Search2D_BMNN22(ora_list: list[Oracle],
     if parallel:
         rs = ParSearch.multidim_search_BMNN22(xyspace, ora_list, num_samples, NUMCELLS, ...)
     else:
-        rs = SeqSearch.multidim_search_BMNN22(xyspace, ora_list, num_samples, NUMCELLS, ...)
+        rs = SeqSearch.multidim_search_BMNN22_opt_0(xyspace, ora_list, num_samples, NUMCELLS)
 
     if simplify:
         rs.simplify()
@@ -511,8 +516,9 @@ def Search2D_BMNN22(ora_list: list[Oracle],
 
 @cython.ccall
 @cython.returns(object)
-@cython.locals(oralist=list, p0=cython.double, alpha=cython.double, list_intervals=list, numCells=cython.int,
-               parallel=cython.bint, logging=cython.bint, dyn_cell_creation=cython.bint, mining_result=object)
+@cython.locals(oralist=list, list_intervals=list, min_cornerx=cython.double, min_cornery=cython.double, min_cornerz=cython.double, max_cornerx=cython.double, max_cornery=cython.double, max_cornerz=cython.double, 
+                blocking=cython.bint, sleep=cython.double, parallel=cython.bint, logging=cython.bint, simplify=cython.bint, dyn_cell_creation=cython.bint,
+                mining_result=object)
 def Search3D_BMNN22(ora_list: list[Oracle],
                     min_cornerx=0.0,
                     min_cornery=0.0,
@@ -525,9 +531,12 @@ def Search3D_BMNN22(ora_list: list[Oracle],
                     opt_level=2,
                     parallel=False,
                     logging=True,
-                    simplify=True):
-    # type: (list(Oracle), float, float, list, int, bool, bool, bool) -> ResultSet
-    # assert (ora1.dim() == ora2.dim()), 'Oracle 1 and Oracle 2 have different dimensions'
+                    simplify=True,
+                    dyn_cell_creation=False):
+    # type: (list(Oracle), float, float, float, float, float, float, bool, float, int, bool, bool, bool, bool) -> ResultSet
+    assert(len(ora_list) > 0, "Oracle list can't be empty")
+    assert(fnt.reduce(operator.eq),[orac.dim() for orac in ora_list], "Every oracle in list must have the same diemension")
+    assert(ora_list[0].dim() == 3, "Oracles in list must have dimension 2")
 
     # TODO:
     # - Rewrite assert.
@@ -540,7 +549,7 @@ def Search3D_BMNN22(ora_list: list[Oracle],
     if parallel:
         rs = ParSearch.multidim_search_BMNN22(xyspace, ora_list, num_samples, NUMCELLS, ...)
     else:
-        rs = SeqSearch.multidim_search_BMNN22(xyspace, ora_list, num_samples, NUMCELLS, ...)
+        rs = SeqSearch.multidim_search_BMNN22_opt_0(xyspace, ora_list, num_samples, NUMCELLS)
 
     if simplify:
         rs.simplify()
@@ -552,70 +561,31 @@ def Search3D_BMNN22(ora_list: list[Oracle],
 
 @cython.ccall
 @cython.returns(object)
-@cython.locals(oralist=list, p0=cython.double, alpha=cython.double, list_intervals=list, numCells=cython.int,
-               parallel=cython.bint, logging=cython.bint, dyn_cell_creation=cython.bint, mining_result=object)
+@cython.locals(oralist=list, list_intervals=list, blocking=cython.bint, sleep=cython.double,
+               parallel=cython.bint, logging=cython.bint, simplify=cython.bint, dyn_cell_creation=cython.bint,
+               mining_result=object)
 def SearchND_BMNN22(ora_list: list[Oracle],
-                    min_corner,
-                    max_corner,
-                    blocking=False,
-                    sleep=0.0,
-                    opt_level=2,
-                    parallel=False,
-                    logging=True,
-                    simplify=True):
-    # type: (list(Oracle), list, float, float, int, float, int, bool, bool, bool) -> ResultSet
-    # assert (ora1.dim() == ora2.dim()), 'Oracle 1 and Oracle 2 have different dimensions'
-
-    # TODO:
-    # - Rewrite assert.
-    # - Revise and complete the type hints: @cython.locals, # type: ....
-    # - Complete function calls
-
-    d = ora_list[0].dim()
-
-    minc = (min_corner,) * d
-    maxc = (max_corner,) * d
-    xyspace = Rectangle(minc, maxc)
-    num_samples = ceil(log(ALPHA, 1.0 - P0))
-
-    if parallel:
-        rs = ParSearch.multidim_search_BMNN22(xyspace, ora_list, num_samples, NUMCELLS, ...)
-    else:
-        rs = SeqSearch.multidim_search_BMNN22(xyspace, ora_list, num_samples, NUMCELLS, ...)
-
-    if simplify:
-        rs.simplify()
-        rs.fusion()
-    return rs
-
-
-@cython.ccall
-@cython.returns(object)
-@cython.locals(oralist=list, p0=cython.double, alpha=cython.double, list_intervals=list, numCells=cython.int,
-               parallel=cython.bint, logging=cython.bint,
-               dyn_cell_creation=cython.bint, mining_result=object)
-def SearchND_2_BMNN22(ora_list: list[Oracle],
                       list_intervals: list,
                       blocking=False,
                       sleep=0.0,
                       opt_level=2,
                       parallel=False,
                       logging=True,
-                      simplify=True):
-    # type: (list(Oracle), list, float, float, int, bool, float, int, bool, bool, bool) -> ResultSet
+                      simplify=True,
+                      dyn_cell_creation=False):
+    # type: (list(Oracle), list, bool, float, int, bool, bool, bool, bool) -> ResultSet
+    assert(len(ora_list) > 0, "Oracle list can't be empty")
     assert(fnt.reduce(operator.eq),[orac.dim() for orac in ora_list]) # Every oracle must have the same dimension
 
-    # TODO:
-    # - Revise and complete the type hints: @cython.locals, # type: ....
     # - Complete function calls
 
     xyspace = create_ND_space(list_intervals)
-    numSamples = ceil(log(ALPHA, 1.0 - P0))
+    num_samples = ceil(log(ALPHA, 1.0 - P0))
 
     if parallel:
-        rs = ParSearch.multidim_search_BMNN22(xyspace, ora_list, numSamples, NUMCELLS, ...)
+        rs = ParSearch.multidim_search_BMNN22(xyspace, ora_list, num_samples, NUMCELLS, ...) # Not implemented at the moment
     else:
-        rs = SeqSearch.multidim_search_BMNN22(xyspace, ora_list, numSamples, NUMCELLS, ...)
+        rs = SeqSearch.multidim_search_BMNN22_opt_0(xyspace, ora_list, num_samples, NUMCELLS)
 
     if simplify:
         rs.simplify()
