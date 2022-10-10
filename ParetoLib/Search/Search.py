@@ -46,7 +46,6 @@ of the space X in three subspaces: a lower closure, an upper closure and a borde
 """
 import time
 from math import ceil, log
-from tokenize import Double
 import cython
 
 from ParetoLib.Geometry.Rectangle import Rectangle
@@ -475,7 +474,7 @@ def Search_BMNN22(ora_list: list[Oracle],
 
 @cython.ccall
 @cython.returns(object)
-@cython.locals(oralist=list, min_cornerx=cython.double, min_cornery=cython.double, max_cornerx=cython.double,
+@cython.locals(ora_list=list, min_cornerx=cython.double, min_cornery=cython.double, max_cornerx=cython.double,
                max_cornery=cython.double, p0=cython.double, alpha=cython.double, num_cells=cython.int,
                blocking=cython.bint, sleep=cython.double, opt_level=cython.int, parallel=cython.bint,
                logging=cython.bint, simplify=cython.bint, rs=object)
@@ -518,7 +517,7 @@ def Search2D_BMNN22(ora_list,
 
 @cython.ccall
 @cython.returns(object)
-@cython.locals(oralist=list, list_intervals=list, min_cornerx=cython.double, min_cornery=cython.double,
+@cython.locals(ora_list=list, list_intervals=list, min_cornerx=cython.double, min_cornery=cython.double,
                min_cornerz=cython.double, max_cornerx=cython.double, max_cornery=cython.double,
                max_cornerz=cython.double, p0=cython.double, alpha=cython.double, num_cells=cython.int,
                blocking=cython.bint, sleep=cython.double, opt_level=cython.int, parallel=cython.bint,
