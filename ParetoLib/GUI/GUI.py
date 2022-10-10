@@ -278,6 +278,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                                             logging=False,
                                             simplify=False)
             elif method == 2:
+                # TODO: Use SearchND_2_BMNN22 rather than Search_BMNN22
                 # TODO: correctly read the value of 'stl_prop_file_2'
                 stl_prop_file_2 = self.spec_filepath_textbox.toPlainText()
                 """self.oracle = OracleSTLeLib(bound_on_count=0, intvl_epsilon=10, stl_prop_file=stl_prop_file,
