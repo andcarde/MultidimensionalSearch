@@ -460,7 +460,7 @@ def Search_BMNN22(ora_list: list[Oracle],
                       simplify=True,
                       dyn_cell_creation=False):
     assert(len(ora_list) > 0, "Oracle list can't be empty")
-    assert(fnt.reduce(operator.eq, [orac.dim() for orac in ora_list]), "Every oracle in list must have the same diemension")
+    assert fnt.reduce(operator.eq, [orac.dim() for orac in ora_list]), "Every oracle in list must have the same diemension"
 
     if ora_list[0].dim() == 2:
         rs = Search2D_BMNN22(ora_list, intervals[0][0], intervals[0][1],
@@ -494,7 +494,7 @@ def Search2D_BMNN22(ora_list: list[Oracle],
                     dyn_cell_creation=False):
     # type: (list(Oracle), float, float, float, float, bool, float, int, bool, bool, bool, bool) -> ResultSet
     assert(len(ora_list) > 0, "Oracle list can't be empty")
-    assert(fnt.reduce(operator.eq, [orac.dim() for orac in ora_list]), "Every oracle in list must have the same diemension")
+    assert fnt.reduce(operator.eq, [orac.dim() for orac in ora_list]), "Every oracle in list must have the same diemension"
     assert(ora_list[0].dim() == 2, "Oracles in list must have dimension 2")
 
     # TODO:
@@ -541,7 +541,7 @@ def Search3D_BMNN22(ora_list: list[Oracle],
                     dyn_cell_creation=False):
     # type: (list(Oracle), float, float, float, float, float, float, bool, float, int, bool, bool, bool, bool) -> ResultSet
     assert(len(ora_list) > 0, "Oracle list can't be empty")
-    assert(fnt.reduce(operator.eq, [orac.dim() for orac in ora_list]), "Every oracle in list must have the same diemension")
+    assert fnt.reduce(operator.eq, [orac.dim() for orac in ora_list]), "Every oracle in list must have the same diemension"
     assert(ora_list[0].dim() == 3, "Oracles in list must have dimension 2")
 
     # TODO:
@@ -621,7 +621,7 @@ def SearchND_2_BMNN22(ora_list: list[Oracle],
                       dyn_cell_creation=False):
     # type: (list(Oracle), list, bool, float, int, bool, bool, bool, bool) -> ResultSet
     assert(len(ora_list) > 0, "Oracle list can't be empty")
-    assert(fnt.reduce(operator.eq, [orac.dim() for orac in ora_list]), "Every oracle must have the same dimension")
+    assert fnt.reduce(operator.eq, [orac.dim() for orac in ora_list]), "Every oracle must have the same dimension"
 
     # - Complete function calls
 
