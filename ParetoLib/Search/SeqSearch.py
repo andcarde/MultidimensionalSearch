@@ -137,22 +137,18 @@ def multidim_intersection_search(xspace, list_constraints,
 # The search returns a set of Rectangles in Yup, Ylow and Border
 @cython.ccall
 @cython.returns(object)
-@cython.locals(xspace=object, oracle=object, epsilon=cython.double, delta=cython.double, max_step=cython.ulonglong,
-               blocking=cython.bint, sleep=cython.double, opt_level=cython.uint, logging=cython.bint, md_search=list,
-               start=cython.double, end=cython.double, time0=cython.double, rs=object)
+@cython.locals(xspace=object, oracles=list, num_samples=cython.int, num_cells=cython.int, blocking=cython.bint,
+               sleep=cython.double, opt_level=cython.uint, logging=cython.bint, md_search=list, start=cython.double,
+               end=cython.double, time0=cython.double, rs=object)
 def multidim_search_BMNN22(xspace,
                            oracles,
                            num_samples,
                            num_cells,
                            blocking=False,
                            sleep=0.0,
-                           opt_level=1,
+                           opt_level=0,
                            logging=True):
-    # type: (Rectangle, list[Oracle], float, float, int, bool, float, int, bool) -> ResultSet
-
-    # TODO:
-    # - Rewrite assert.
-    # - Revise and complete the type hints: @cython.locals, # type: ....
+    # type: (Rectangle, list[Oracle], int, int, bool, float, int, bool) -> ResultSet
 
     md_search = [multidim_search_BMNN22_opt_0,
                  multidim_search_BMNN22_opt_1]
@@ -1776,14 +1772,6 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
     # Dimension
     n = xspace.dim()
 
-    # Create a cell_partition method for Rectangle class
-    # verts = pspace.vertices()
-    # half = len(verts) // 2
-    # ver_dist = np.subtract(verts[half],
-    #                        verts[0])  # Not equivalent to diag_vector. This is the "side length" of the rectangle
-    # rect_list = [Rectangle(np.add(verts[0], np.multiply(ver_dist, i / num_cells)),
-    #                        np.add(verts[half - 1], np.multiply(ver_dist, (i + 1) / num_cells))) for i in
-    #              range(num_cells)]
     rect_list = xspace.cell_partition(num_cells)
     green = list()
     red = list()
