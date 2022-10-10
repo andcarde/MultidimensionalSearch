@@ -283,12 +283,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 stl_prop_file_2 = self.spec_filepath_textbox.toPlainText()
                 """self.oracle = OracleSTLeLib(bound_on_count=0, intvl_epsilon=10, stl_prop_file=stl_prop_file,
                                             csv_signal_file=csv_signal_file, stl_param_file=stl_param_file)"""
-                self.oracle = OracleSTLeLib()                            
-                self.oracle_2 = OracleSTLeLib()
-                self.oracle.from_file(stl_prop_file, human_readable=True)
-                self.oracle.from_file(stl_prop_file_2, human_readable=True)
-                rs = Search_BMNN22(ora=self.oracle,
-                                list_intervals=intervals,
+                self.oracle = OracleSTLeLib(stl_prop_file, csv_signal_file, stl_param_file)
+                self.oracle_2 = OracleSTLeLib(stl_prop_file, csv_signal_file, stl_param_file)
+                self.oracles = [self.oracle, self.oracle_2]
+                #self.oracle.from_file(stl_prop_file, human_readable=True)
+                #self.oracle.from_file(stl_prop_file_2, human_readable=True)
+                rs = Search_BMNN22(ora_list=self.oracles,
+                                intervals=intervals,
                                 blocking=False,
                                 sleep=0.0,
                                 opt_level=0,
