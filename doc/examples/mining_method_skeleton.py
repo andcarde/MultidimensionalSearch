@@ -10,23 +10,6 @@ from multiprocessing import Pool
 import threading as thr
 import time
 
-lock = thr.Lock()
-
-class Mining_method_fix_thread(thr.Thread):
-    def __init__(self, threadID : int, cell : Rectangle, oracles : list[Oracle], num_samples : int):
-        thr.Thread.__init__(self)
-        self.threadID = threadID
-        self.cell = cell
-        self.oracles = oracles
-        self.nsamples = num_samples
-        self.green = True
-    def run(self):
-        lock.acquire()
-        fs = [ora.membership() for ora in self.oracles]
-        samples = np.random.uniform(self.cell.min_corner, self.cell.max_corner, (self.nsamples, self.cell.dim()))
-        self.green = any(all([f(sample) for f in fs]) for sample in samples)
-        lock.release()
-
 
 
 def mining_method_seq_dyn(cell: Rectangle, ps : float, m : int, g : tuple[float], alpha : float, p0 : float, oracles: list[Oracle]) -> ResultSet:
@@ -48,16 +31,16 @@ def mining_method_seq_dyn(cell: Rectangle, ps : float, m : int, g : tuple[float]
         red.add(cell)
     elif counter / num_samples >= ps or all(cell.diag_vector() <= g):
         green.add(cell)
+        print(cell.diag_vector())
     else:
         print(cell.diag_vector())
-        print(g)
-        n = m//2
+        n = pow(2,m//2)
         verts = cell.vertices()
         half = len(verts) // 2
         ver_dist = np.subtract(verts[half], verts[0])
         rect_list = [Rectangle(np.add(verts[0], np.multiply(ver_dist, i / n)),
                             np.add(verts[half - 1], np.multiply(ver_dist, (i + 1) / n))) for i in range(n)]
-        rest = m-n
+        rest = pow(2,m-(m//2)) # m//2 != m/2 as m might be odd
         for rect in rect_list:
             verts = rect.vertices()
             ver_dist = np.subtract(verts[half-1],verts[0])
@@ -98,42 +81,6 @@ def mining_method_seq_fix(pspace: Rectangle, n: int, alpha : float, p0 : float, 
 
 
 
-def mining_method_par_fix(pspace: Rectangle, n: int, alpha : float, p0 : float, oracles: list[Oracle]) -> ResultSet:
-    verts = pspace.vertices()
-    half = len(verts) // 2
-    ver_dist = np.subtract(verts[half], verts[0]) # Not equivalent to diag_vector. This is the "side length" of the rectangle
-    rect_list = [Rectangle(np.add(verts[0], np.multiply(ver_dist, i / n)),
-                        np.add(verts[half - 1], np.multiply(ver_dist, (i + 1) / n))) for i in range(n)]
-                           
-    num_samples = int(np.ceil(np.log(alpha) / np.log(1-p0)))
-    green = list()
-    red = list()
-    border = list()
-
-    thread_list = list()
-    t_id = 0
-
-    
-    for rect in rect_list:
-        thread = Mining_method_fix_thread(t_id,rect,oracles,num_samples)
-        thread.start()
-        thread_list.append(thread)
-        t_id += 1
-
-
-    for i in range(len(thread_list)):
-        thread_list[i].join()
-        if thread_list[i].green:
-            green.append(rect_list[i])
-        else:
-            red.append(rect_list[i])
-            
-    return ResultSet(yup=green, ylow=red, border=border, xspace=pspace)
-
-
-
-
-
 
 
 def plot_prueba(min_cor, max_cor, n, alpha, p0, filenames):
@@ -152,20 +99,15 @@ def plot_prueba(min_cor, max_cor, n, alpha, p0, filenames):
         rs.plot_2D()
     elif space.dim() == 3:
         rs.plot_3D()
-    start = time.time()
-    rs = mining_method_par_fix(space, n, alpha, p0, oracle_list)
-    end = time.time()
-    print(end-start)
-    if space.dim() == 2:
-        rs.plot_2D()
-    elif space.dim() == 3:
-        rs.plot_3D()
     
     ps = 0.95
-    m = 7
+    m = 3
     g = np.multiply(space.diag_vector(),1/10)
-
+    
+    start = time.time()
     rs = mining_method_seq_dyn(space, ps, m, g, alpha, p0, oracle_list)
+    end = time.time()
+    print(end-start)
     if space.dim() == 2:
         rs.plot_2D()
     elif space.dim() == 3:

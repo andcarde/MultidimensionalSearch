@@ -1753,6 +1753,12 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
 ########################################################################################################################
 
 # Fixed size cell method
+@cython.ccall
+@cython.returns(object)
+@cython.locals(xpace=object, oracles=list, num_samples=cython.uint, num_cells=cython.uint,
+                blocking=cython.bint, sleep=cython.double, logging=cython.bint, n=cython.uint, rect_list=list, 
+                green=list, red=list, border=list, mems=list, step=cython.uint, tempdir=cython.std::string, 
+                cell=object, samples=list, rs=object, vol_green=cython.double, vol_red=cython.double, vol_border=cython.double)
 def multidim_search_BMNN22_opt_0(xspace: Rectangle,
                                  oracles: list[Oracle],
                                  num_samples: int,
@@ -1760,6 +1766,7 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
                                  blocking=False,
                                  sleep=0.0,
                                  logging=True) -> ResultSet:
+    # type: (Rectangle, list, int, int, bool, float, bool) -> ResultSet
     # TODO:
     # - Revise and complete the type hints: @cython.locals, # type: ....
     # - Write asserts and logger info (useful for debugging and defensive programming)
@@ -1771,6 +1778,7 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
     green = list()
     red = list()
     border = list()
+    vol_green, vol_red, vol_border = 0.0, 0.0, 0.0 # Area of all the regions for debugging purposes
     mems = [ora.membership() for ora in oracles]
 
     step = 0
@@ -1779,23 +1787,25 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
     tempdir = tempfile.mkdtemp()
 
     RootSearch.logger.info('Report\nStep, Red, Green, Border, Total, nRed, nGreen, nBorder')
+    RootSearch.logger.info(
+                '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(step, vol_red, vol_green, vol_border, xspace.volume(), len(red), len(green), len(border))) # 0th step
 
     for cell in rect_list:
         step = step + 1
-
         # Write some Logg info here: step, red area size, green area size, ... total area (xspace), number of rectangles
         # in each region, etc.
 
-        # Create a uniform_sampling method for Rectangle class
-        # samples = np.random.uniform(cell.min_corner, cell.max_corner, size=(num_samples, cell.dim()))
         samples = cell.uniform_sampling(num_samples)
 
-        # We do not need to create a list inside 'any' and 'all'. See generators/iterators in python.
-        # if any([all([f(s) for f in mems]) for s in samples]):
         if any(all(f(s) for f in mems) for s in samples):
             green.append(cell)
+            vol_green = vol_green + cell.volume()
         else:
             red.append(cell)
+            vol_red = vol_red + cell.volume()
+
+        RootSearch.logger.info(
+                '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(step, vol_red, vol_green, vol_border, xspace.volume(), len(red), len(green), len(border)))
 
         # Visualization
         if sleep > 0.0:
@@ -1814,18 +1824,57 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
 
 
 # Dynamic size cell method
+@cython.ccall
+@cython.returns(object)
+@cython.locals(xpace=object, oracles=list, num_samples=cython.uint, num_cells=cython.uint, g=tuple
+                blocking=cython.bint, sleep=cython.double, logging=cython.bint, ps=cython.double, m=cython.uint, 
+                n=cython.uint, rect_list=list, new_rect_list=list, green=set, red=set, border=set, mems=list, step=cython.uint, counter=cython.uint,
+                tempdir=cython.std::string, cell=object, samples=list, rs=object, vol_green=cython.double, vol_red=cython.double, vol_border=cython.double)
 def multidim_search_BMNN22_opt_1(xspace: Rectangle,
                                  oracles: list[Oracle],
                                  num_samples: int,
                                  num_cells: int,
+                                 g : tuple[float],
                                  blocking=False,
                                  sleep=0.0,
-                                 logging=True) -> ResultSet:
-    # TODO:
-    # - Revise and complete the type hints: @cython.locals, # type: ....
-    # - Write asserts and logger info (useful for debugging and defensive programming)
+                                 logging=True,
+                                 ps : float = 0.95,
+                                 m : int = 3) -> ResultSet:
+    # type: (Rectangle, list, int, int, tuple, bool, float, bool, float, int) -> ResultSet
 
-    green = list()
-    red = list()
-    border = list()
-    return ResultSet(yup=green, ylow=red, border=border, xspace=xspace)
+    green = set()
+    red = set()
+    border = set()
+    mems = [ora.membership() for ora in oracles]
+    samples = xspace.uniform_sampling(num_samples)
+    counter = 0
+    step = 0
+
+    # Create temporary directory for storing the result of each step
+    tempdir = tempfile.mkdtemp()
+
+    for s in samples:
+        if all([f(s) for f in mems]):
+            counter += 1
+    if counter == 0:
+        red.add(xspace)
+    elif counter / num_samples >= ps or all(xspace.diag_vector() <= g):
+        green.add(xspace)
+    else:
+        n = pow(2,m//2)
+        rect_list = xspace.cell_partition(n)
+        for rect in rect_list:
+            new_rect_list = rect.cell_partition(pow(2,int(np.ceil(m/2))),False)
+            for r in new_rect_list:
+                temp_rs = multidim_search_BMNN22_opt_1(r, oracles, num_samples, num_cells, blocking, sleep, logging, g, ps, m)
+                green = green.union(set(temp_rs.yup))
+                red = red.union(set(temp_rs.ylow))
+                border = border.union(set(temp_rs.border))
+
+
+    if logging:
+        rs = ResultSet(border, red, green, xspace)
+        name = os.path.join(tempdir, str(step))
+        rs.to_file(name)
+            
+    return ResultSet(yup=list(green), ylow=list(red), border=list(border), xspace=xspace)
