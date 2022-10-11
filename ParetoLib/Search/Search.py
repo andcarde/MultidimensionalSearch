@@ -496,8 +496,6 @@ def Search2D_BMNN22(ora_list,
     assert (len(ora_list) > 0, "Oracle list can't be empty")
     assert (all(orac.dim() == 2 for orac in ora_list), "Oracles in list must have dimension 2")
 
-    # Comments: variables in python are usually lower case and separeted by "_".
-    # There are lost of PIP ("good programming policies").
     xyspace = create_2D_space(min_cornerx, min_cornery, max_cornerx, max_cornery)
     num_samples = ceil(log(alpha, 1.0 - p0))
 
@@ -511,7 +509,7 @@ def Search2D_BMNN22(ora_list,
         rs.simplify()
         rs.fusion()
 
-    # rs.plot_2D_light(blocking=True, var_names=ora_list.get_var_names())
+    rs.plot_2D_light(blocking=True, var_names=ora_list.get_var_names())
     return rs
 
 
@@ -545,9 +543,9 @@ def Search3D_BMNN22(ora_list,
     xyspace = create_3D_space(min_cornerx, min_cornery, min_cornerz, max_cornerx, max_cornery, max_cornerz)
     num_samples = ceil(log(alpha, 1.0 - p0))
 
-    # if parallel:
-    # rs = ParSearch.multidim_search_BMNN22(xyspace, ora_list, num_samples, num_cells, ...)
-    if not parallel:
+    if parallel:
+        rs = ParSearch.multidim_search_BMNN22(xyspace, ora_list, num_samples, num_cells, ...)
+    else:
         rs = SeqSearch.multidim_search_BMNN22(xyspace, ora_list, num_samples, num_cells, blocking, sleep, opt_level,
                                               logging)
 
@@ -555,7 +553,7 @@ def Search3D_BMNN22(ora_list,
         rs.simplify()
         rs.fusion()
 
-    # rs.plot_3D_light(blocking=True, var_names=ora.get_var_names())
+    rs.plot_3D_light(blocking=True, var_names=ora.get_var_names())
     return rs
 
 

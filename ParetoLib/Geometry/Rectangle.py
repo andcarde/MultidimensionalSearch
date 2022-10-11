@@ -1380,8 +1380,8 @@ class Rectangle(object):
     @cython.ccall
     @cython.locals(n=cython.uint, verts=list, half=cython.uint, ver_dist=list, i=cython.uint)
     @cython.returns(list)
-    def cell_partition(self, n=50):
-        # type: (Rectangle, int) -> list
+    def cell_partition(self, n=50, vertical=True):
+        # type: (Rectangle, int, bool) -> list
         """
           Given a rectangle, it 'slices' it in n smaller rectangles of equal sizes
 
@@ -1395,8 +1395,12 @@ class Rectangle(object):
         verts = self.vertices()
         half = len(verts) // 2
         ver_dist = np.subtract(verts[half], verts[0])
-        rect_list = [Rectangle(np.add(verts[0], np.multiply(ver_dist, i / n)),
+        if vertical:
+            rect_list = [Rectangle(np.add(verts[0], np.multiply(ver_dist, i / n)),
                                np.add(verts[half - 1], np.multiply(ver_dist, (i + 1) / n))) for i in range(n)]
+        else:
+            rect_list = [Rectangle(np.add(verts[0], np.multiply(ver_dist, i / n)),
+                                np.add(verts[half], np.multiply(ver_dist, (i + 1) / n))) for i in range(n)]
 
         return rect_list
 

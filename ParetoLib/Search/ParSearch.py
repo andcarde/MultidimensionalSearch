@@ -2673,3 +2673,86 @@ def multidim_intersection_search_opt_2_partial(xspace, list_constraints,
     p.join()
 
     return ParResultSet(border, intersect_region, intersect_box, xspace)
+
+
+
+########################################
+######## ADVANCED METHOD: BMNN22 #######
+########################################
+
+##############################
+# opt_1 = Dynamic size cell method
+# opt_0 = Fixed size cell method
+##############################
+
+########################################################################################################################
+
+# Fixed size cell method
+def par_test_sample(args: tuple[iter, list[callable]]) -> bool:
+    sample, fs = args
+    return all(f(sample) for f in fs)
+
+
+def process(args: tuple[Rectangle, list[OracleSTLeLib], int, int]) -> bool:
+    cell, oracles, num_samples, d = args
+
+    fs = [ora.membership() for ora in oracles]
+
+    # Take num_samples uniformly between cell.min_corner and cell.max_corner
+    samples = np.random.uniform(cell.min_corner, cell.max_corner, (num_samples, d))
+    # Call the oracle with the current sample
+    res = any(test_sample(sample, fs) for sample in samples)
+
+    # args = ((copy.deepcopy(sample), copy.deepcopy(fs)) for sample in samples)
+    # executor = ThreadPoolExecutor(max_workers=5)
+    # res = any(executor.map(par_test_sample, args))
+
+    return res
+
+
+def par_mining_method(pspace: Rectangle, num_cells: int, num_samples: int, oracles: list[OracleSTLeLib]) -> ResultSet:
+    cells = cell_partition(pspace, num_cells)
+    undef = []
+    green = []
+    red = []
+
+    d = pspace.dim()
+
+    p = Pool(cpu_count())
+    args = ((cell, copy.deepcopy(oracles), num_samples, d) for cell in cells)
+    green_cells = p.map(process, args)
+    for i, cell in enumerate(cells):
+        if green_cells[i]:
+            green.append(cell)
+        else:
+            red.append(cell)
+
+    p.close()
+    p.join()
+    return ResultSet(undef, red, green, pspace)
+
+
+# Dynamic size cell method
+@cython.ccall
+@cython.returns(object)
+@cython.locals(xpace=object, oracles=list, num_samples=cython.uint, num_cells=cython.uint, g=tuple
+                blocking=cython.bint, sleep=cython.double, logging=cython.bint, ps=cython.double, m=cython.uint, 
+                n=cython.uint, rect_list=list, new_rect_list=list, green=set, red=set, border=set, mems=list, step=cython.uint, counter=cython.uint,
+                tempdir=cython.std::string, cell=object, samples=list, rs=object, vol_green=cython.double, vol_red=cython.double, vol_border=cython.double)
+def multidim_search_BMNN22_opt_1(xspace: Rectangle,
+                                 oracles: list[Oracle],
+                                 num_samples: int,
+                                 num_cells: int,
+                                 g : tuple[float],
+                                 blocking=False,
+                                 sleep=0.0,
+                                 logging=True,
+                                 ps : float = 0.95,
+                                 m : int = 3) -> ResultSet:
+    # type: (Rectangle, list, int, int, tuple, bool, float, bool, float, int) -> ResultSet
+
+    green = set()
+    red = set()
+    border = set()
+            
+    return ResultSet(yup=list(green), ylow=list(red), border=list(border), xspace=xspace)
