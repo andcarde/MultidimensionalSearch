@@ -1,6 +1,6 @@
 (and
 
-    (Until (0 p1)
+    (Until (0 p1) 1
         ( < (abs (D x)) 1)
         ( < (On (0 p2) (I x0)) p3)
     )
