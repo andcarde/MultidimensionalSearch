@@ -1,7 +1,7 @@
 (and
 
-    (Until (0 p1) 1
-        ( < (abs (D x)) 1)
+    (StlUntil (0 p1)
+        ( < (abs (D x0)) 1)
         ( < (On (0 p2) (I x0)) p3)
     )
 
