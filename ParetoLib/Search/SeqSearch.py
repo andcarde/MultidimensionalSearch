@@ -29,6 +29,7 @@ import cython
 import numpy as np
 
 from sortedcontainers import SortedListWithKey, SortedSet
+from ParetoLib.Oracle.OracleSTLe import OracleSTLeLib
 
 # import ParetoLib.Search as RootSearch
 import ParetoLib.Search
@@ -140,28 +141,27 @@ def multidim_intersection_search(xspace, list_constraints,
 @cython.locals(xspace=object, oracles=list, num_samples=cython.int, num_cells=cython.int, blocking=cython.bint,
                sleep=cython.double, opt_level=cython.uint, logging=cython.bint, md_search=list, start=cython.double,
                end=cython.double, time0=cython.double, rs=object)
-def multidim_search_BMNN22(xspace,
-                           oracles,
-                           num_samples,
-                           num_cells,
-                           blocking=False,
-                           sleep=0.0,
-                           opt_level=0,
-                           logging=True):
+def multidim_search_BMNN22(xspace : Rectangle,
+                           oracles : list[OracleSTLeLib],
+                           num_samples : int,
+                           num_cells : int,
+                           blocking=False : bool, 
+                           sleep=0.0 : float,
+                           opt_level=0 : int,
+                           logging=True : bool):
     # type: (Rectangle, list[Oracle], int, int, bool, float, int, bool) -> ResultSet
-
-    md_search = [multidim_search_BMNN22_opt_0,
-                 multidim_search_BMNN22_opt_1]
 
     RootSearch.logger.info('Starting multidimensional search (BMNN22)')
     start = time.time()
-    rs = md_search[opt_level](xspace,
+    if opt_level == 0: # Fixed cell creation
+        rs = multidim_search_BMNN22_opt_0(xspace,
                               oracles,
                               num_samples=num_samples,
                               num_cells=num_cells,
                               blocking=blocking,
                               sleep=sleep,
                               logging=logging)
+    else: # Dinamyc cell creation
     end = time.time()
     time0 = end - start
     RootSearch.logger.info('Time multidim search (Pareto front): ' + str(time0))
@@ -1826,7 +1826,7 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
 # Dynamic size cell method
 @cython.ccall
 @cython.returns(object)
-@cython.locals(xpace=object, oracles=list, num_samples=cython.uint, num_cells=cython.uint, g=tuple
+@cython.locals(xpace=object, oracles=list, num_samples=cython.uint, num_cells=cython.uint, g=tuple,
                 blocking=cython.bint, sleep=cython.double, logging=cython.bint, ps=cython.double, m=cython.uint, 
                 n=cython.uint, rect_list=list, new_rect_list=list, green=set, red=set, border=set, mems=list, step=cython.uint, counter=cython.uint,
                 tempdir=cython.std::string, cell=object, samples=list, rs=object, vol_green=cython.double, vol_red=cython.double, vol_border=cython.double)
@@ -1835,9 +1835,9 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
                                  num_samples: int,
                                  num_cells: int,
                                  g : tuple[float],
-                                 blocking=False,
-                                 sleep=0.0,
-                                 logging=True,
+                                 blocking : bool = False,
+                                 sleep : float = 0.0,
+                                 logging : bool = True,
                                  ps : float = 0.95,
                                  m : int = 3) -> ResultSet:
     # type: (Rectangle, list, int, int, tuple, bool, float, bool, float, int) -> ResultSet
