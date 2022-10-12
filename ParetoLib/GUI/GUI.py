@@ -138,8 +138,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.param_filepath, _ = QFileDialog.getOpenFileName(self, 'Select a file', '../../Tests/Oracle/OracleSTLe',
                                                              '(*.param)')
         try:
-            self.param_filepath_textbox.setPlainText(self.signal_filepaths)
-            self.load_parameters(self.signal_filepaths)
+            self.param_filepath_textbox.setPlainText(self.param_filepath)
+            self.load_parameters(self.param_filepath)
         except Exception as e:
             RootGUI.logger.debug(e)
 
@@ -268,7 +268,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                                 logging=False,
                                 simplify=False)
             elif method == 1:
-                # TODO: correctly read the value of 'stl_prop_file_2', _textbox.toPlainText()
+                # TODO: Popup window for reading the parameters "bound_on_count" and "intvl_epsilon"
+                #  for Oracle1 and Oracle2
+
                 RootGUI.logger.debug('Method 1...')
                 stl_prop_file = self.spec_filepaths[0]
                 stl_prop_file_2 = self.spec_filepaths[1]
