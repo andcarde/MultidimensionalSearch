@@ -145,10 +145,10 @@ def multidim_search_BMNN22(xspace : Rectangle,
                            oracles : list[OracleSTLeLib],
                            num_samples : int,
                            num_cells : int,
-                           blocking=False : bool, 
-                           sleep=0.0 : float,
-                           opt_level=0 : int,
-                           logging=True : bool):
+                           blocking : bool = False, 
+                           sleep : float = 0.0,
+                           opt_level : int = 0,
+                           logging : bool =True):
     # type: (Rectangle, list[Oracle], int, int, bool, float, int, bool) -> ResultSet
 
     RootSearch.logger.info('Starting multidimensional search (BMNN22)')
@@ -162,6 +162,19 @@ def multidim_search_BMNN22(xspace : Rectangle,
                               sleep=sleep,
                               logging=logging)
     else: # Dinamyc cell creation
+        ps = 0.95
+        m = 3
+        g = np.multiply(xspace.diag_vector(),1/10)
+        rs = multidim_search_BMNN22_opt_1(xspace,
+                              oracles,
+                              num_samples=num_samples,
+                              num_cells=num_cells,
+                              blocking=blocking,
+                              sleep=sleep,
+                              logging=logging,
+                              ps=ps,
+                              m = m,
+                              g = tuple(g))
     end = time.time()
     time0 = end - start
     RootSearch.logger.info('Time multidim search (Pareto front): ' + str(time0))
@@ -1757,7 +1770,7 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
 @cython.returns(object)
 @cython.locals(xpace=object, oracles=list, num_samples=cython.uint, num_cells=cython.uint,
                 blocking=cython.bint, sleep=cython.double, logging=cython.bint, n=cython.uint, rect_list=list, 
-                green=list, red=list, border=list, mems=list, step=cython.uint, tempdir=cython.std::string, 
+                green=list, red=list, border=list, mems=list, step=cython.uint, tempdir=cython.basestring, 
                 cell=object, samples=list, rs=object, vol_green=cython.double, vol_red=cython.double, vol_border=cython.double)
 def multidim_search_BMNN22_opt_0(xspace: Rectangle,
                                  oracles: list[Oracle],
@@ -1828,8 +1841,8 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
 @cython.returns(object)
 @cython.locals(xpace=object, oracles=list, num_samples=cython.uint, num_cells=cython.uint, g=tuple,
                 blocking=cython.bint, sleep=cython.double, logging=cython.bint, ps=cython.double, m=cython.uint, 
-                n=cython.uint, rect_list=list, new_rect_list=list, green=set, red=set, border=set, mems=list, step=cython.uint, counter=cython.uint,
-                tempdir=cython.std::string, cell=object, samples=list, rs=object, vol_green=cython.double, vol_red=cython.double, vol_border=cython.double)
+                n=cython.uint, rect_list=list, new_rect_list=list, green=set, red=set, border=set, mems=list, counter=cython.uint,
+                tempdir=cython.basestring, cell=object, samples=list, rs=object)
 def multidim_search_BMNN22_opt_1(xspace: Rectangle,
                                  oracles: list[Oracle],
                                  num_samples: int,

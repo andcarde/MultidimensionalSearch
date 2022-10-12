@@ -14,7 +14,7 @@ import ParetoLib.GUI as RootGUI
 from ParetoLib.GUI.Window import Ui_MainWindow
 from ParetoLib.Oracle.OracleSTLe import OracleSTLeLib
 from ParetoLib.Oracle.OracleEpsSTLe import OracleEpsSTLe
-from ParetoLib.Search.Search import SearchND_2, SearchIntersectionND_2, Search_BMNN22, EPS, DELTA, STEPS
+from ParetoLib.Search.Search import SearchND_2, SearchIntersectionND_2, SearchND_2_BMNN22, EPS, DELTA, STEPS
 from ParetoLib.Search.ResultSet import ResultSet
 
 matplotlib.use('Qt5Agg')
@@ -295,7 +295,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.oracles = [OracleSTLeLib(stl_prop_file, csv_signal_file, stl_param_file) for csv_signal_file in self.signal_filepaths]
                 # self.oracle.from_file(stl_prop_file, human_readable=True)
                 # self.oracle.from_file(stl_prop_file_2, human_readable=True)
-                rs = Search_BMNN22(ora_list=self.oracles,
+                rs = SearchND_2_BMNN22(ora_list=self.oracles,
                                    intervals=intervals,
                                    blocking=False,
                                    sleep=0.0,
