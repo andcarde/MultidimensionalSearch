@@ -214,7 +214,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
             # Initialize the OracleSTLeLib
             self.oracle = OracleSTLeLib(stl_prop_file, csv_signal_file, stl_param_file)
-
             # Evaluate the STLe expression
             stl_formula = self.oracle._load_stl_formula(stl_prop_file)
             satisfied = self.oracle.eval_stl_formula(stl_formula)
@@ -255,7 +254,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             RootGUI.logger.debug('Intervals:')
             RootGUI.logger.debug(intervals)
             assert len(intervals) >= 2, 'Warning! Invalid number of dimensions. Returning empty ResultSet.'
-
             # Mining the STLe expression
             if method == 0:
                 RootGUI.logger.debug('Method 0...')
@@ -296,12 +294,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                                             simplify=False)
             elif method == 2:
                 # TODO: Use SearchND_2_BMNN22 rather than Search_BMNN22
+                RootGUI.logger.debug('Method 2...')
                 self.oracles = [OracleSTLeLib(stl_prop_file, csv_signal_file, stl_param_file) for csv_signal_file in self.signal_filepaths]
                 # self.oracle.from_file(stl_prop_file, human_readable=True)
                 # self.oracle.from_file(stl_prop_file_2, human_readable=True)
                 rs = SearchND_2_BMNN22(ora_list=self.oracles,
                                    intervals=intervals,
                                    blocking=False,
+                                   num_cells=4,
                                    sleep=0.0,
                                    opt_level=self.opt_level,
                                    parallel=self.parallel,
@@ -331,7 +331,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             # Visualization
             self.solution = StandardSolutionWindow()
             if rs is not None:
-                self.solution.set_resultset(rs, self.oracle.get_var_names())
+                if self.oracles is not None: # For an oracle list
+                    param_list = list()
+                    for ora in self.oracles:
+                        param_list = param_list + ora.get_var_names()
+                    self.solution.set_resultset(rs, param_list)
+                else: # For a single oracle
+                    self.solution.set_resultset(rs, self.oracle.get_var_names())
 
         self.solution.show()
 
