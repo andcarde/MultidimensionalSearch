@@ -120,11 +120,11 @@ def plot_prueba(min_cor, max_cor, n, alpha, p0, filenames):
 if __name__ == "__main__":
     min_cor = (1950.0, 0.0)
     max_cor = (2000.0, 3.0)
-    n = 30
+    n = 4
     alpha = 0.05
     p0 = 0.01
     files = list()
-    files.append('Tests/Oracle/OracleSTLe/2D/triangular/integral/triangular_float.txt')
+    files.append('Tests/Oracle/OracleSTLe/2D/triangular/integral/triangular_int.txt')
     files.append('Tests/Oracle/OracleSTLe/2D/stabilization/derivative/stabilization.txt')
     plot_prueba(min_cor, max_cor, n, alpha, p0, files)
 

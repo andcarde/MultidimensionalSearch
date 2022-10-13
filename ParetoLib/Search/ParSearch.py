@@ -19,6 +19,7 @@ import copy
 import time
 import tempfile
 import itertools
+import numpy as np
 import multiprocessing as mp
 import cython
 
@@ -2721,12 +2722,7 @@ def multidim_search_BMNN22(xspace,
 ########################################################################################################################
 
 # Fixed size cell method
-def par_test_sample(args: tuple[iter, list[callable]]) -> bool:
-    sample, fs = args
-    return all(f(sample) for f in fs)
-
-
-def process(args: tuple[Rectangle, 
+def process_fix(args: tuple[Rectangle, 
             list[OracleSTLeLib], 
             int, 
             int]) -> bool:
@@ -2765,7 +2761,7 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
 
     p = Pool(cpu_count())
     args = ((cell, copy.deepcopy(oracles), num_samples, d) for cell in cells)
-    green_cells = p.map(process, args)
+    green_cells = p.map(process_fix, args)
     step=0
     vol_green, vol_red, vol_border = 0.0, 0.0, 0.0 # Area of all the regions for debugging purposess
     tempdir = tempfile.mkdtemp()
@@ -2802,12 +2798,50 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
 
 
 # Dynamic size cell method
+def process_dyn(args: tuple[Rectangle, 
+            list[OracleSTLeLib], 
+            int, 
+            int,
+            int,
+            float,
+            tuple[float]]) -> bool:
+    cell, oracles, num_samples, d, m, ps, g = args
+    counter = 0
+
+    fs = [ora.membership() for ora in oracles]
+
+    # Take num_samples uniformly between cell.min_corner and cell.max_corner
+    samples = cell.uniform_sampling(num_samples)
+    # Call the oracle with the current sample
+    res = any(all(f(sample) for f in fs) for sample in samples)
+
+    for s in samples:
+        if all([f(s) for f in fs]):
+            counter += 1
+    if counter == 0:
+        return [(cell, False)]
+    elif counter / num_samples >= ps or all(cell.diag_vector() <= g):
+        return [(cell, True)]
+    else:
+        colour_list = list()
+        n = pow(2,m//2)
+        rect_list = cell.cell_partition(n)
+        for rect in rect_list:
+            new_rect_list = rect.cell_partition(pow(2,int(np.ceil(m/2))),False)
+            p = Pool(cpu_count())
+            args = ((c, copy.deepcopy(oracles), num_samples, d, m, ps, g) for c in new_rect_list)
+            green_cells = p.map(process_dyn, args)
+            for cols in green_cells:
+                colour_list = colour_list + cols
+
+
+    return colour_list
+
 @cython.ccall
 @cython.returns(object)
 @cython.locals(xspace=object, oracles=list, num_samples=cython.uint, num_cells=cython.uint, g=tuple,
                 blocking=cython.bint, sleep=cython.double, logging=cython.bint, ps=cython.double, m=cython.uint, 
-                n=cython.uint, rect_list=list, new_rect_list=list, green=set, red=set, border=set, mems=list, step=cython.uint, counter=cython.uint,
-                tempdir=cython.basestring, cell=object, samples=list, rs=object, vol_green=cython.double, vol_red=cython.double, vol_border=cython.double)
+                args=tuple, cols_list=list, green=list, red=list, border=list, step=cython.uint, tempdir=cython.basestring)
 def multidim_search_BMNN22_opt_1(xspace: Rectangle,
                                  oracles: list[Oracle],
                                  num_samples: int,
@@ -2820,8 +2854,27 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
                                  m : int = 3) -> ParResultSet:
     # type: (Rectangle, list, int, int, tuple, bool, float, bool, float, int) -> ParResultSet
 
-    green = set()
-    red = set()
-    border = set()
+    green = list()
+    red = list()
+    border = list()
+    step = 0
+
+    # Create temporary directory for storing the result of each step
+    tempdir = tempfile.mkdtemp()
+
+    args = (xspace, oracles, num_samples, oracles[0].dim(), m, ps, g)
+    cols_list = process_dyn(args)
+
+    for col in cols_list:
+        if col[1]:
+            green.append(col[0])
+        else:
+            red.append(col[0])
+
+
+    if logging:
+        rs = ParResultSet(border, red, green, xspace)
+        name = os.path.join(tempdir, str(step))
+        rs.to_file(name)
             
     return ParResultSet(yup=list(green), ylow=list(red), border=list(border), xspace=xspace)
