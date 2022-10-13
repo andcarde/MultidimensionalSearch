@@ -222,7 +222,7 @@
          <item row="1" column="1" alignment="Qt::AlignRight">
           <widget class="QComboBox" name="mining_comboBox">
            <property name="currentText">
-            <string>BMNN22</string>
+            <string>BBMJ19</string>
            </property>
            <item>
             <property name="text">
@@ -283,7 +283,7 @@
           </widget>
          </item>
          <item row="4" column="1" rowspan="2">
-          <widget class="QComboBox" name="searc_type_comboBox">
+          <widget class="QComboBox" name="search_type_comboBox">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -319,7 +319,7 @@
           </widget>
          </item>
          <item row="7" column="0">
-          <widget class="QComboBox" name="comboBox">
+          <widget class="QComboBox" name="opt_level_comboBox">
            <item>
             <property name="text">
              <string>0 - Fixed size cells</string>

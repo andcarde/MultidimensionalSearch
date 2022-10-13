@@ -452,8 +452,8 @@ def Search_BMNN22(ora_list: list[Oracle],
                   intervals: list,
                   blocking=False,
                   sleep=0.0,
-                  opt_level=2,
-                  parallel=False,
+                  opt_level=int,
+                  parallel=bool,
                   logging=True,
                   simplify=True,
                   dyn_cell_creation=False):
@@ -609,13 +609,13 @@ def SearchND_2_BMNN22(ora_list,
                       num_cells=NUMCELLS,
                       blocking=False,
                       sleep=0.0,
-                      opt_level=0,
-                      parallel=False,
+                      opt_level=int,
+                      parallel=bool,
                       logging=True,
                       simplify=True):
     # type: (list[Oracle], list, float, float, int, bool, float, int, bool, bool, bool) -> ResultSet
-    assert (len(ora_list) > 0, "Oracle list can't be empty")
-    assert (all(orac.dim() == ora_list[0].dim() for orac in ora_list), "Every oracle in list must have the same diemension")
+    assert len(ora_list) > 0, "Oracle list can't be empty"
+    assert all(orac.dim() == ora_list[0].dim() for orac in ora_list), "Every oracle in list must have the same diemension"
 
     # - Complete function calls
 

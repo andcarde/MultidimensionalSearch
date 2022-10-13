@@ -238,7 +238,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         stl_param_file = self.param_filepath
 
         rs = None
+        f = lambda x : True if(x == 0) else False
         method = self.mining_comboBox.currentIndex()
+        self.parallel = f(self.search_type_comboBox.currentIndex())
+        self.opt_level = self.opt_level_comboBox.currentIndex()
+
         try:
             # Initialize the OracleSTLeLib
             RootGUI.logger.debug('Evaluating...')
@@ -263,8 +267,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                                 max_step=STEPS,
                                 blocking=False,
                                 sleep=0.0,
-                                opt_level=0,
-                                parallel=False,
+                                opt_level=self.opt_level,
+                                parallel=self.parallel,
                                 logging=False,
                                 simplify=False)
             elif method == 1:
@@ -296,11 +300,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 # self.oracle.from_file(stl_prop_file, human_readable=True)
                 # self.oracle.from_file(stl_prop_file_2, human_readable=True)
                 rs = SearchND_2_BMNN22(ora_list=self.oracles,
-                                   intervals=intervals,
+                                   list_intervals=intervals,
                                    blocking=False,
                                    sleep=0.0,
-                                   opt_level=0,
-                                   parallel=False,
+                                   opt_level=self.opt_level,
+                                   parallel=self.parallel,
                                    logging=False,
                                    simplify=False)
 
