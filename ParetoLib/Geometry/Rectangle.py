@@ -74,7 +74,6 @@ FORMATS 2020: 76-93
 """
 
 import math
-from typing_extensions import Self
 import numpy as np
 import matplotlib.patches as patches
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
@@ -92,7 +91,7 @@ from ParetoLib._py3k import red
 @cython.cclass
 class Rectangle(object):
     privilege = cython.declare(cython.double, visibility='public')
-    cython.declare(_min_corner=tuple, _max_corner=tuple, vol=cython.double, vertx=list) #, privilege=cython.double)
+    cython.declare(_min_corner=tuple, _max_corner=tuple, vol=cython.double, vertx=list)  # , privilege=cython.double)
 
     def __init__(self,
                  min_corner=(float('-inf'),) * 2,
@@ -1013,6 +1012,7 @@ class Rectangle(object):
     """
     Synonym of intersection(self, other).
     """
+
     @cython.locals(other=object, diff_set=set, inter=object, i=cython.ushort, ground=tuple, ceil=tuple,
                    inner_ground=tuple, inner_ceil=tuple, r1=object, r2=object)
     @cython.returns(list)
@@ -1376,11 +1376,12 @@ class Rectangle(object):
         faces.set_alpha(opacity)
         faces.set_facecolor(c)
         return faces
-    
+
+    @cython.ccall
     @cython.locals(n=cython.uint, verts=list, half=cython.uint, ver_dist=list, i=cython.uint)
     @cython.returns(list)
-    def static_cell_partition(self, n=50):
-        # type: (Rectangle, int) -> list
+    def cell_partition(self, n=50, vertical=True):
+        # type: (Rectangle, int, bool) -> list
         """
           Given a rectangle, it 'slices' it in n smaller rectangles of equal sizes
 
@@ -1393,9 +1394,13 @@ class Rectangle(object):
          """
         verts = self.vertices()
         half = len(verts) // 2
-        ver_dist = np.subtract(verts[half], verts[0]) # Not equivalent to diag_vector. This is the "side length" of the rectangle
-        rect_list = [Rectangle(np.add(verts[0], np.multiply(ver_dist, i / n)),
-                        np.add(verts[half - 1], np.multiply(ver_dist, (i + 1) / n))) for i in range(n)]
+        ver_dist = np.subtract(verts[half], verts[0])
+        if vertical:
+            rect_list = [Rectangle(np.add(verts[0], np.multiply(ver_dist, i / n)),
+                               np.add(verts[half - 1], np.multiply(ver_dist, (i + 1) / n))) for i in range(n)]
+        else:
+            rect_list = [Rectangle(np.add(verts[0], np.multiply(ver_dist, i / n)),
+                                np.add(verts[half], np.multiply(ver_dist, (i + 1) / n))) for i in range(n)]
 
         return rect_list
 
@@ -1550,25 +1555,11 @@ class Rectangle(object):
 
     @cython.ccall
     @cython.locals(num_samples=cython.integral)
-    @cython.returns(tuple)
+    @cython.returns(iter)
     def uniform_sampling(self, num_samples):
-        samples = np.random.uniform(self._min_corner, self.max_corner, size=(num_samples, self.dim()))
+        # type: (Rectangle, int) -> list
+        samples = np.random.uniform(self.min_corner, self.max_corner, size=(num_samples, self.dim()))
         return samples
-
-    @cython.ccall
-    @cython.locals(num_cells=cython.integral)
-    @cython.returns(list)
-    def cell_partition_fixed(self, num_cells):
-        verts = self.vertices()
-        half = len(verts) // 2
-        ver_dist = np.subtract(verts[half], verts[0])  
-        rect_list = [Rectangle(np.add(verts[0], np.multiply(ver_dist, i / num_cells)),
-                        np.add(verts[half - 1], np.multiply(ver_dist, (i + 1) / num_cells))) for i in range(num_cells)]
-
-        return rect_list
-
-        
-
 
 
 ##################
@@ -1585,6 +1576,7 @@ Numerical codification of (in)comparable segments:
 1 -> b
 * -> c
 '''
+
 
 @cython.ccall
 @cython.locals(d=cython.ushort, zero=tuple, one=tuple)
@@ -1611,6 +1603,7 @@ def incomp(d, opt=True):
     else:
         return incomp_expanded(d)
 
+
 #######################
 # Intersection subclass
 #######################
@@ -1626,7 +1619,7 @@ Numerical codification of (in)comparable segments:
 '''
 
 
-#@cython.ccall
+# @cython.ccall
 @cython.locals(d=cython.ushort)
 @cython.returns(list)
 def incomp_segment_neg_remove_down(d):
@@ -1650,7 +1643,7 @@ def incomp_segment_neg_remove_down_e(d):
         return elist
 
 
-#@cython.ccall
+# @cython.ccall
 @cython.locals(d=cython.ushort)
 @cython.returns(list)
 def incomp_segment_neg_remove_up(d):
@@ -1674,7 +1667,7 @@ def incomp_segment_neg_remove_up_e(d):
         return elist
 
 
-#@cython.ccall
+# @cython.ccall
 @cython.locals(d=cython.ushort)
 @cython.returns(list)
 def incomp_segmentpos(d):
@@ -1699,7 +1692,7 @@ def incomp_segmentpos_e(d):
         return elistDown + elistUp + elist1
 
 
-#@cython.ccall
+# @cython.ccall
 @cython.locals(d=cython.ushort)
 @cython.returns(list)
 def incomp_segment(d):
@@ -1747,6 +1740,7 @@ def incomp_segment_c(d):
         clist = ["2" + "5" * (d - 1)]
         clist += ["3" + i for i in incomp_segment_c(d - 1)]
         return clist
+
 
 ###########
 
@@ -1826,6 +1820,7 @@ def intercpoint(i, alphai, yspace, xspace):
     # result_xspace.max_corner = subt(i, xspace.max_corner, xspace.max_corner)
     return result_xspace
 
+
 @cython.ccall
 @cython.locals(i=cython.ushort, alphai=cython.ushort, ypoint=tuple, xspace=Rectangle)
 @cython.returns(object)
@@ -1900,6 +1895,7 @@ def interbrect(alpha, yrectangle, xspace):
     for i, alphai in enumerate(alpha):
         temp = intercrect(i, alphai, yrectangle, temp)
     return temp
+
 
 @cython.ccall
 @cython.locals(alpha=tuple, yrectangle=Rectangle, xspace=Rectangle, temp=Rectangle, i=cython.ushort,
@@ -2065,4 +2061,3 @@ def iuwc(y, z):
         # brect(alpha, yrectangle, xspace)
 
     return result
-

@@ -14,7 +14,7 @@ import ParetoLib.GUI as RootGUI
 from ParetoLib.GUI.Window import Ui_MainWindow
 from ParetoLib.Oracle.OracleSTLe import OracleSTLeLib
 from ParetoLib.Oracle.OracleEpsSTLe import OracleEpsSTLe
-from ParetoLib.Search.Search import SearchND_2, SearchIntersectionND_2, Search_BMNN22, EPS, DELTA, STEPS
+from ParetoLib.Search.Search import SearchND_2, SearchIntersectionND_2, SearchND_2_BMNN22, EPS, DELTA, STEPS
 from ParetoLib.Search.ResultSet import ResultSet
 
 matplotlib.use('Qt5Agg')
@@ -94,6 +94,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # - BDMJ20: requires 2 Oracles
         self.oracle = OracleSTLeLib()
         self.oracle_2 = OracleSTLeLib()
+        self.oracles = []
+        # Filepaths
+        self.spec_filepaths = []
+        self.signal_filepaths = []
+        self.param_filepath = None
         # Solution
         self.solution = None
 
@@ -106,11 +111,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def read_spec_filepath(self):
         # type: (_) -> None
-        fnames = QFileDialog.getOpenFileNames(self, 'Select a file', '../../Tests/Oracle/OracleSTLe', '(*.stl)')
-        fname = fnames[0]
+        self.spec_filepaths, _ = QFileDialog.getOpenFileNames(self, 'Select a file', '../../Tests/Oracle/OracleSTLe',
+                                                              '(*.stl)')
         # TODO: Show each spec file in fnames in a separated tab
         try:
-            self.spec_filepath_textbox.setPlainText(fname[0])
+            self.spec_filepath_textbox.setPlainText("\n".join(fname for fname in self.spec_filepaths))
             with open(self.spec_filepath_textbox.toPlainText()) as file:
                 lines = file.readlines()
             self.formula_textEdit.setPlainText(''.join(lines))
@@ -119,20 +124,22 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def read_signal_filepath(self):
         # type: (_) -> None
-        fname = QFileDialog.getOpenFileName(self, 'Select a file', '../../Tests/Oracle/OracleSTLe', '(*.csv)')
+        self.signal_filepaths, _ = QFileDialog.getOpenFileNames(self, 'Select a file', '../../Tests/Oracle/OracleSTLe',
+                                                                '(*.csv)')
         # TODO: Show each component of a single csv file in a separated tab
         try:
-            self.signal_filepath_textbox.setPlainText(fname[0])
+            self.signal_filepath_textbox.setPlainText("\n".join(fname for fname in self.signal_filepaths))
             self.plot_csv()
         except Exception as e:
             RootGUI.logger.debug(e)
 
     def read_param_filepath(self):
         # type: (_) -> None
-        fname = QFileDialog.getOpenFileName(self, 'Select a file', '../../Tests/Oracle/OracleSTLe', '(*.param)')
+        self.param_filepath, _ = QFileDialog.getOpenFileName(self, 'Select a file', '../../Tests/Oracle/OracleSTLe',
+                                                             '(*.param)')
         try:
-            self.param_filepath_textbox.setPlainText(fname[0])
-            self.load_parameters(fname[0])
+            self.param_filepath_textbox.setPlainText(self.param_filepath)
+            self.load_parameters(self.param_filepath)
         except Exception as e:
             RootGUI.logger.debug(e)
 
@@ -226,9 +233,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def run_parametric_stle(self):
         # type: (_) -> ResultSet
         # Running STLEval without parameters
-        stl_prop_file = self.spec_filepath_textbox.toPlainText()
-        csv_signal_file = self.signal_filepath_textbox.toPlainText()
-        stl_param_file = self.param_filepath_textbox.toPlainText()
+        stl_prop_file = self.spec_filepaths[0]
+        csv_signal_file = self.signal_filepaths[0]
+        stl_param_file = self.param_filepath
+
         rs = None
         method = self.mining_comboBox.currentIndex()
         try:
@@ -246,6 +254,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
             # Mining the STLe expression
             if method == 0:
+                RootGUI.logger.debug('Method 0...')
                 self.oracle = OracleSTLeLib(stl_prop_file, csv_signal_file, stl_param_file)
                 rs = SearchND_2(ora=self.oracle,
                                 list_intervals=intervals,
@@ -259,8 +268,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                                 logging=False,
                                 simplify=False)
             elif method == 1:
-                # TODO: correctly read the value of 'stl_prop_file_2'
-                stl_prop_file_2 = self.spec_filepath_textbox.toPlainText()
+                # TODO: Popup window for reading the parameters "bound_on_count" and "intvl_epsilon"
+                #  for Oracle1 and Oracle2
+
+                RootGUI.logger.debug('Method 1...')
+                stl_prop_file = self.spec_filepaths[0]
+                stl_prop_file_2 = self.spec_filepaths[1]
                 self.oracle = OracleEpsSTLe(bound_on_count=0, intvl_epsilon=10, stl_prop_file=stl_prop_file,
                                             csv_signal_file=csv_signal_file, stl_param_file=stl_param_file)
                 self.oracle_2 = OracleEpsSTLe(bound_on_count=0, intvl_epsilon=10, stl_prop_file=stl_prop_file_2,
@@ -278,23 +291,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                                             logging=False,
                                             simplify=False)
             elif method == 2:
-                # TODO: correctly read the value of 'stl_prop_file_2'
-                stl_prop_file_2 = self.spec_filepath_textbox.toPlainText()
-                """self.oracle = OracleSTLeLib(bound_on_count=0, intvl_epsilon=10, stl_prop_file=stl_prop_file,
-                                            csv_signal_file=csv_signal_file, stl_param_file=stl_param_file)"""
-                self.oracle = OracleSTLeLib(stl_prop_file, csv_signal_file, stl_param_file)                            
-                self.oracle_2 = OracleSTLeLib(stl_prop_file, csv_signal_file, stl_param_file)
-                self.oracles = [self.oracle, self.oracle_2]
-                #self.oracle.from_file(stl_prop_file, human_readable=True)
-                #self.oracle.from_file(stl_prop_file_2, human_readable=True)
-                rs = Search_BMNN22(ora_list=self.oracles,
-                                intervals=intervals,
-                                blocking=False,
-                                sleep=0.0,
-                                opt_level=0,
-                                parallel=False,
-                                logging=False,
-                                simplify=False)
+                # TODO: Use SearchND_2_BMNN22 rather than Search_BMNN22
+                self.oracles = [OracleSTLeLib(stl_prop_file, csv_signal_file, stl_param_file) for csv_signal_file in self.signal_filepaths]
+                # self.oracle.from_file(stl_prop_file, human_readable=True)
+                # self.oracle.from_file(stl_prop_file_2, human_readable=True)
+                rs = SearchND_2_BMNN22(ora_list=self.oracles,
+                                   intervals=intervals,
+                                   blocking=False,
+                                   sleep=0.0,
+                                   opt_level=0,
+                                   parallel=False,
+                                   logging=False,
+                                   simplify=False)
 
         except Exception as e:
             RootGUI.logger.debug(e)
