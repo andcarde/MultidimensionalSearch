@@ -254,6 +254,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             RootGUI.logger.debug('Intervals:')
             RootGUI.logger.debug(intervals)
             assert len(intervals) >= 2, 'Warning! Invalid number of dimensions. Returning empty ResultSet.'
+
             # Mining the STLe expression
             if method == 0:
                 RootGUI.logger.debug('Method 0...')
@@ -294,7 +295,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                                             simplify=False)
             elif method == 2:
                 # TODO: Use SearchND_2_BMNN22 rather than Search_BMNN22
-                RootGUI.logger.debug('Method 2...')
                 self.oracles = [OracleSTLeLib(stl_prop_file, csv_signal_file, stl_param_file) for csv_signal_file in self.signal_filepaths]
                 # self.oracle.from_file(stl_prop_file, human_readable=True)
                 # self.oracle.from_file(stl_prop_file_2, human_readable=True)
