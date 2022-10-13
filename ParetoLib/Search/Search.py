@@ -457,8 +457,8 @@ def Search_BMNN22(ora_list: list[Oracle],
                   logging=True,
                   simplify=True,
                   dyn_cell_creation=False):
-    assert len(ora_list) > 0, "Oracle list can't be empty"
-    assert all(orac.dim() == ora_list[0].dim() for orac in ora_list), "Every oracle in list must have the same diemension"
+    assert (len(ora_list) > 0, "Oracle list can't be empty")
+    assert (all(orac.dim() == ora_list[0].dim() for orac in ora_list), "Every oracle in list must have the same diemension")
 
     if ora_list[0].dim() == 2:
         rs = Search2D_BMNN22(ora_list, intervals[0][0], intervals[0][1],
@@ -493,8 +493,8 @@ def Search2D_BMNN22(ora_list,
                     logging=True,
                     simplify=True):
     # type: (list[Oracle], float, float, float, float, float, float, int, bool, float, int, bool, bool, bool) -> ResultSet
-    assert len(ora_list) > 0, "Oracle list can't be empty"
-    assert all(orac.dim() == 2 for orac in ora_list), "Oracles in list must have dimension 2"
+    assert (len(ora_list) > 0, "Oracle list can't be empty")
+    assert (all(orac.dim() == 2 for orac in ora_list), "Oracles in list must have dimension 2")
 
     xyspace = create_2D_space(min_cornerx, min_cornery, max_cornerx, max_cornery)
     num_samples = ceil(log(alpha, 1.0 - p0))
@@ -537,8 +537,8 @@ def Search3D_BMNN22(ora_list,
                     logging=True,
                     simplify=True):
     # type: (list[Oracle], float, float, float, float, float, float, float, float, int, bool, float, int, bool, bool, bool) -> ResultSet
-    assert len(ora_list) > 0, "Oracle list can't be empty"
-    assert all(orac.dim() == 3 for orac in ora_list), "Oracles in list must have dimension 3"
+    assert (len(ora_list) > 0, "Oracle list can't be empty")
+    assert (all(orac.dim() == 3 for orac in ora_list), "Oracles in list must have dimension 3")
 
     xyspace = create_3D_space(min_cornerx, min_cornery, min_cornerz, max_cornerx, max_cornery, max_cornerz)
     num_samples = ceil(log(alpha, 1.0 - p0))
@@ -575,8 +575,8 @@ def SearchND_BMNN22(ora_list,
                     logging=True,
                     simplify=True):
     # type: (list[Oracle], float, float, float, float, int, bool, float, int, bool, bool, bool) -> ResultSet
-    assert len(ora_list) > 0, "Oracle list can't be empty"
-    assert all(orac.dim() == ora_list[0].dim() for orac in ora_list), "Every oracle in list must have the same diemension"
+    assert (len(ora_list) > 0, "Oracle list can't be empty")
+    assert (all(orac.dim() == ora_list[0].dim() for orac in ora_list), "Every oracle in list must have the same diemension")
     d = ora_list[0].dim()
 
     minc = (min_corner,) * d
@@ -614,17 +614,19 @@ def SearchND_2_BMNN22(ora_list,
                       logging=True,
                       simplify=True):
     # type: (list[Oracle], list, float, float, int, bool, float, int, bool, bool, bool) -> ResultSet
-    assert len(ora_list) > 0, "Oracle list can't be empty"
-    assert all(orac.dim() == ora_list[0].dim() for orac in ora_list), "Every oracle in list must have the same diemension"
+    assert (len(ora_list) > 0, "Oracle list can't be empty")
+    assert (all(orac.dim() == ora_list[0].dim() for orac in ora_list), "Every oracle in list must have the same diemension")
 
     # - Complete function calls
 
     xyspace = create_ND_space(list_intervals)
     num_samples = ceil(log(alpha, 1.0 - p0))
+    print("Hello")
     if parallel:
         rs = ParSearch.multidim_search_BMNN22(xyspace, ora_list, num_samples, num_cells, num_cells, blocking, sleep, opt_level,
                                               logging)
     else:
+        print("Hello2")
         rs = SeqSearch.multidim_search_BMNN22(xyspace, ora_list, num_samples, num_cells, blocking, sleep, opt_level,
                                               logging)
 
