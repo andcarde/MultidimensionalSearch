@@ -509,7 +509,7 @@ def Search2D_BMNN22(ora_list,
         rs.simplify()
         rs.fusion()
 
-    rs.plot_2D_light(blocking=True, var_names=ora_list.get_var_names())
+    rs.plot_2D_light(blocking=True, var_names=ora_list[0].get_var_names())
     return rs
 
 
@@ -544,7 +544,8 @@ def Search3D_BMNN22(ora_list,
     num_samples = ceil(log(alpha, 1.0 - p0))
 
     if parallel:
-        rs = ParSearch.multidim_search_BMNN22(xyspace, ora_list, num_samples, num_cells, ...)
+        rs = ParSearch.multidim_search_BMNN22(xyspace, ora_list, num_samples, num_cells, num_cells, blocking, sleep, opt_level,
+                                              logging)
     else:
         rs = SeqSearch.multidim_search_BMNN22(xyspace, ora_list, num_samples, num_cells, blocking, sleep, opt_level,
                                               logging)
@@ -553,7 +554,7 @@ def Search3D_BMNN22(ora_list,
         rs.simplify()
         rs.fusion()
 
-    rs.plot_3D_light(blocking=True, var_names=ora.get_var_names())
+    rs.plot_3D_light(blocking=True, var_names=ora_list[0].get_var_names())
     return rs
 
 
@@ -585,9 +586,10 @@ def SearchND_BMNN22(ora_list,
 
     num_samples = ceil(log(alpha, 1.0 - p0))
 
-    # if parallel:
-    # rs = ParSearch.multidim_search_BMNN22(xyspace, ora_list, num_samples, num_cells, ...) # Not implemented at the moment
-    if not parallel:
+    if parallel:
+        rs = ParSearch.multidim_search_BMNN22(xyspace, ora_list, num_samples, num_cells, num_cells, blocking, sleep, opt_level,
+                                              logging)
+    else:
         rs = SeqSearch.multidim_search_BMNN22(xyspace, ora_list, num_samples, num_cells, blocking, sleep, opt_level,
                                               logging)
 
