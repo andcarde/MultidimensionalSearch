@@ -20,6 +20,7 @@ import time
 import tempfile
 import itertools
 import multiprocessing as mp
+import numpy as np
 import cython
 
 from math import ceil
@@ -42,7 +43,7 @@ from ParetoLib.Geometry.Rectangle import Rectangle, irect, idwc, iuwc, comp, inc
     incomp_segment_neg_remove_down, incomp_segment_neg_remove_up, interirect
 from ParetoLib.Geometry.ParRectangle import pvol
 from ParetoLib.Geometry.Lattice import Lattice
-from multidimensional_search.ParetoLib.Geometry.Point import less_equal
+from ParetoLib.Geometry.Point import less_equal
 
 
 @cython.locals(xrectangle=object, epsilon=cython.double, n=cython.ushort, error=tuple, y=object,
@@ -2702,18 +2703,30 @@ def multidim_search_BMNN22(xspace,
                            logging=True):
     # type: (Rectangle, list[Oracle], int, int, bool, float, int, bool) -> ResultSet
 
-    md_search = [multidim_search_BMNN22_opt_0,
-                 multidim_search_BMNN22_opt_1]
-
     RootSearch.logger.info('Starting multidimensional search (BMNN22)')
     start = time.time()
-    rs = md_search[opt_level](xspace,
-                              oracles,
-                              num_samples=num_samples,
-                              num_cells=num_cells,
-                              blocking=blocking,
-                              sleep=sleep,
-                              logging=logging)
+    if opt_level == 0:  # Fixed cell creation
+        rs = multidim_search_BMNN22_opt_0(xspace,
+                                          oracles,
+                                          num_samples=num_samples,
+                                          num_cells=num_cells,
+                                          blocking=blocking,
+                                          sleep=sleep,
+                                          logging=logging)
+    else:  # Dinamyc cell creation
+        ps = 0.95
+        m = 3
+        g = np.multiply(xspace.diag_vector(), 1 / 10)
+        rs = multidim_search_BMNN22_opt_1(xspace,
+                                          oracles,
+                                          num_samples=num_samples,
+                                          num_cells=num_cells,
+                                          blocking=blocking,
+                                          sleep=sleep,
+                                          logging=logging,
+                                          ps=ps,
+                                          m=m,
+                                          g=tuple(g))
     end = time.time()
     time0 = end - start
     RootSearch.logger.info('Time multidim search (Pareto front): ' + str(time0))
