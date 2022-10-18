@@ -45,7 +45,7 @@ from ParetoLib.Oracle.Oracle import Oracle
 from ParetoLib.Geometry.Rectangle import Rectangle, interirect, irect, idwc, iuwc, comp, incomp, incomp_segment, \
     incomp_segmentpos, incomp_segment_neg_remove_down, incomp_segment_neg_remove_up
 from ParetoLib.Geometry.Lattice import Lattice
-from multidimensional_search.ParetoLib.Geometry.Point import less_equal
+from ParetoLib.Geometry.Point import less_equal
 
 
 ########################################
@@ -1866,17 +1866,13 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
     border = set()
     mems = [ora.membership() for ora in oracles]
     samples = xspace.uniform_sampling(num_samples)
-    counter = 0
     step = 0
 
     # Create temporary directory for storing the result of each step
     tempdir = tempfile.mkdtemp()
 
-    # for s in samples:
-    #     if all([f(s) for f in mems]):
-    #         counter += 1
     all_fs_in_sample = (all(f(s) for f in mems) for s in samples)
-    count = sum(all_fs_in_sample)
+    counter = sum(all_fs_in_sample)
     if counter == 0:
         red.add(xspace)
     elif counter / num_samples >= ps or less_equal(xspace.diag_vector(), g): # TODO: xspace or cell?

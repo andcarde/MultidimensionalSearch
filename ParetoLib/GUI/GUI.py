@@ -298,10 +298,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self.oracles = [OracleSTLeLib(stl_prop_file, csv_signal_file, stl_param_file) for csv_signal_file in self.signal_filepaths]
                 # self.oracle.from_file(stl_prop_file, human_readable=True)
                 # self.oracle.from_file(stl_prop_file_2, human_readable=True)
+                RootGUI.logger.debug('Method 2...')
                 rs = SearchND_2_BMNN22(ora_list=self.oracles,
                                    list_intervals=intervals,
                                    blocking=False,
-                                   num_cells=4,
+                                   num_cells=25,
                                    sleep=0.0,
                                    opt_level=self.opt_level,
                                    parallel=self.parallel,
@@ -309,7 +310,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                                    simplify=False)
 
         except Exception as e:
-            RootGUI.logger.debug(e)
+            RootGUI.logger.info(e)
         finally:
             return rs
 
