@@ -112,7 +112,7 @@ def multidim_intersection_search(xspace, list_constraints,
                                  sleep=0.0,
                                  opt_level=0,
                                  logging=True):
-    # type: (Rectangle, list, Oracle, Oracle, float, float, int, bool, float, int, bool) -> ParResultSet
+    # type: (Rectangle, list, Oracle, Oracle, float, float, int, bool, float, int, bool) -> ResultSet
     md_search = [multidim_intersection_search_opt_0, multidim_intersection_search_opt_1,
                  multidim_intersection_search_opt_2]
     RootSearch.logger.info('Starting multidimensional search')
