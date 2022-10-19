@@ -203,8 +203,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def run_non_parametric_stle(self):
         # type: (_) -> (bool, dict)
         # Running STLEval without parameters
-        stl_prop_file = self.spec_filepath_textbox.toPlainText()
-        csv_signal_file = self.signal_filepath_textbox.toPlainText()
+        stl_prop_file = self.spec_filepaths[0]
+        csv_signal_file = self.signal_filepaths[0]
+
         satisfied, bool_signal = False, dict()
         try:
             # No parameters (i.e., using empty temporary file)
@@ -237,9 +238,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         stl_param_file = self.param_filepath
 
         rs = None
-        f = lambda x : True if(x == 0) else False
         method = self.mining_comboBox.currentIndex()
-        self.parallel = f(self.search_type_comboBox.currentIndex())
+        self.parallel = (self.search_type_comboBox.currentIndex() == 0)
         self.opt_level = self.opt_level_comboBox.currentIndex()
 
         try:
