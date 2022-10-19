@@ -5,7 +5,7 @@ import os
 import numpy as np
 import pytest
 
-from ParetoLib.Search.Search import Search2D, Search3D, SearchND
+from ParetoLib.Search.Search import Search2D, Search3D, SearchND, SearchND_BMNN22
 from ParetoLib.Search.ResultSet import ResultSet
 
 from ParetoLib.Oracle.OracleFunction import OracleFunction
@@ -44,6 +44,10 @@ class SearchTestCase(unittest.TestCase):
         self.EPS = 1e-5
         self.DELTA = 1e-5
         self.STEPS = 20
+        # TODO: Configure the remaining parameters
+        self.P0
+        self.ALPHA
+        self.NUMCELLS
 
     #  Membership testing function used in verify2D, verify3D and verifyND
     def closureMembershipTest(self, fora, rs, xpoint):
@@ -152,6 +156,62 @@ class SearchTestCase(unittest.TestCase):
                     print('Verifying {0}'.format(test))
                     self.verifyND(fora, rs, list_test_points)
 
+    def search_verify_ND_BMNN22(self, human_readable, list_test_files):
+        # type: (SearchTestCase, bool, list) -> None
+
+        for test in list_test_files:
+            self.assertTrue(os.path.isfile(test), test)
+            self.oracle.from_file(test, human_readable)
+            fora = self.oracle.membership()
+            d = self.oracle.dim()
+            for opt_level in range(2):
+                print('\nTesting {0}'.format(test))
+                print('Dimension {0}'.format(d))
+                print('Optimisation level {0}'.format(opt_level))
+                print('Parallel search {0}'.format(False))
+
+                rs = SearchND_BMNN22(ora_list=self.oracle,
+                                     min_corner=self.min_c,
+                                     max_corner=self.max_c,
+                                     p0=self.P0,
+                                     alpha=self.ALPHA,
+                                     num_cells=self.NUMCELLS,
+                                     blocking=False,
+                                     sleep=SLEEP_TIME,
+                                     opt_level=opt_level,
+                                     parallel=False,
+                                     logging=False,
+                                     simplify=False)
+
+                print('Parallel search {0}'.format(True))
+
+                rs_par = SearchND_BMNN22(ora_list=self.oracle,
+                                         min_corner=self.min_c,
+                                         max_corner=self.max_c,
+                                         p0=self.P0,
+                                         alpha=self.ALPHA,
+                                         num_cells=self.NUMCELLS,
+                                         blocking=False,
+                                         sleep=SLEEP_TIME,
+                                         opt_level=opt_level,
+                                         parallel=True,
+                                         logging=False,
+                                         simplify=False)
+
+                # TODO: Compare rs and rs_par. Assert that all the boxes in the green/red regions in rs are also in rs_par (i.e., ResultSets are equal)
+                # set(rs.yup) == set(rs_par.yup) ...
+                self.assertSetEqual(set(rs.yup), set(rs_par.yup))
+
+                # Create numpoints_verify vectors of dimension d
+                # Continuous uniform distribution over the stated interval.
+                # To sample Unif[a, b), b > a
+                # (b - a) * random_sample() + a
+                print('Dimension {0}'.format(d))
+                list_test_points = (self.max_c - self.min_c) * np.random.random_sample((self.numpoints_verify, d)) \
+                                   + self.min_c
+                print('Verifying {0}'.format(test))
+                self.verifyND(fora, rs, list_test_points)
+
 
 class SearchOracleFunctionTestCase(SearchTestCase):
 
@@ -202,6 +262,7 @@ try:
     from ParetoLib.Oracle.OracleMatlab import OracleMatlab
 except ImportError:
     MATLAB_INSTALLED = False
+
 
 @pytest.mark.skipif(
     not MATLAB_INSTALLED,
@@ -383,6 +444,16 @@ class SearchOracleSTLeLibTestCase(SearchTestCase):
         list_test_files = sorted(list_test_files)[:num_files_test]
         self.search_verify_ND(human_readable=True, list_test_files=list_test_files)
 
+    def test_1D_BMNN22(self):
+        # type: (SearchOracleSTLeLibTestCase) -> None
+
+        test_dir = os.path.join(self.this_dir, '1D')
+        files_path = os.listdir(test_dir)
+        list_test_files = [os.path.join(test_dir, x) for x in files_path if x.endswith('.txt')]
+        num_files_test = min(self.numfiles_test, len(list_test_files))
+        list_test_files = sorted(list_test_files)[:num_files_test]
+        self.search_verify_ND_BMNN22(human_readable=True, list_test_files=list_test_files)
+
     def test_2D(self):
         # type: (SearchOracleSTLeLibTestCase) -> None
 
@@ -392,6 +463,16 @@ class SearchOracleSTLeLibTestCase(SearchTestCase):
         num_files_test = min(self.numfiles_test, len(list_test_files))
         list_test_files = sorted(list_test_files)[:num_files_test]
         self.search_verify_ND(human_readable=True, list_test_files=list_test_files)
+
+    def test_2D_BMNN22(self):
+        # type: (SearchOracleSTLeLibTestCase) -> None
+
+        test_dir = os.path.join(self.this_dir, '2D')
+        files_path = os.listdir(test_dir)
+        list_test_files = [os.path.join(test_dir, x) for x in files_path if x.endswith('.txt')]
+        num_files_test = min(self.numfiles_test, len(list_test_files))
+        list_test_files = sorted(list_test_files)[:num_files_test]
+        self.search_verify_ND_BMNN22(human_readable=True, list_test_files=list_test_files)
 
 
 if __name__ == '__main__':
