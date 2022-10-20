@@ -13,6 +13,10 @@ from ParetoLib.Geometry.Rectangle import Rectangle
 from ParetoLib.Search.ResultSet import ResultSet
 from ParetoLib.Oracle.OracleSTLe import OracleSTLeLib
 
+def champions_selection(rs_list: List[ResultSet]):
+    class_i = SortedSet(rs_list[0].yup, key=Rectangle.max_corner)
+    other_classes = SortedSet((rs.yup for rs in rs_list[1:]), key=Rectangle.min_corner)
+
 def distance(class_i: SortedSet[Rectangle], other_classes: SortedSet[Rectangle]) -> Tuple[Tuple, Tuple]:
     # class_i is sorted by min distance of r.max_corner to origin
 
