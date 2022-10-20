@@ -1,16 +1,43 @@
 import copy
 import sys
 import time
+from sortedcontainers import SortedSet
 from multiprocessing import Pool, cpu_count
 from concurrent.futures import ThreadPoolExecutor
 
-from typing import List
+from typing import List, Tuple
 from math import log, ceil
 from itertools import product
 import numpy as np
 from ParetoLib.Geometry.Rectangle import Rectangle
 from ParetoLib.Search.ResultSet import ResultSet
 from ParetoLib.Oracle.OracleSTLe import OracleSTLeLib
+
+def distance(class_i: SortedSet[Rectangle], other_classes: SortedSet[Rectangle]) -> Tuple[Tuple, Tuple]:
+    # class_i is sorted by min distance of r.max_corner to origin
+
+    # Select rectangles from class_i that are closer to origin
+    class_i_min_dist = class_i[0].max_corner
+    index = class_i.bisect_left(class_i_min_dist)
+    class_i_subset = class_i[0:index]
+
+    # other_classes is sorted by min distance of r.min_corner to origin
+
+    # Select rectangles from other_class_i that are farther to origin
+    other_classes_max_dist = other_classes[-1].min_corner
+    index = other_classes.bisect_right(other_classes_max_dist)
+    other_classes_subset = other_classes[index:]
+
+    # Sort class_i_subset by min distance of r.min_corner to origin
+    class_i_sorted_by_minc = SortedSet(class_i_subset, key=Rectangle.min_corner)
+
+    # Sort other_classes_subset by max distance of r.max_corner to origin
+    other_classes_sorted_by_maxc = SortedSet(other_classes_subset, key=Rectangle.max_corner)
+
+    class_i_champion = class_i_sorted_by_minc[0].min_corner
+    other_classes_champion = other_classes_sorted_by_maxc[-1].max_corner
+
+    return class_i_champion, other_classes_champion
 
 
 def confidence(p0: float, alpha: float) -> int:
