@@ -165,17 +165,14 @@ def multidim_search_BMNN22(xspace: Rectangle,
                                           logging=logging)
     else:  # Dinamyc cell creation
         ps = 0.95
-        m = 3
-        g = np.multiply(xspace.diag_vector(),0.5)
+        g = np.multiply(xspace.diag_vector(),0.1)
         rs = multidim_search_BMNN22_opt_1(xspace,
                                           oracles,
                                           num_samples=num_samples,
-                                          num_cells=num_cells,
                                           blocking=blocking,
                                           sleep=sleep,
                                           logging=logging,
                                           ps=ps,
-                                          m=m,
                                           g=tuple(g))
     end = time.time()
     time0 = end - start
@@ -1850,14 +1847,12 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
 def multidim_search_BMNN22_opt_1(xspace: Rectangle,
                                  oracles: list[Oracle],
                                  num_samples: int,
-                                 num_cells: int,
                                  g: tuple[float],
                                  blocking: bool = False,
                                  sleep: float = 0.0,
                                  logging: bool = True,
-                                 ps: float = 0.95,
-                                 m: int = 3) -> ResultSet:
-    # type: (Rectangle, list, int, int, tuple, bool, float, bool, float, int) -> ResultSet
+                                 ps: float = 0.95) -> ResultSet:
+    # type: (Rectangle, list, int, tuple, bool, float, bool, float) -> ResultSet
 
     # TODO: m == xspace.dim() == oracles[0].dim()?
     # In that case, m can be removed from input arguments and take it from xspace or oracles.
@@ -1866,6 +1861,7 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
     green = set()
     red = set()
     border = set()
+    m = xspace.dim()
     mems = [ora.membership() for ora in oracles]
     samples = xspace.uniform_sampling(num_samples)
     step = 0
@@ -1886,8 +1882,8 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
         for rect in rect_list:
             new_rect_list = rect.cell_partition(pow(2, int(ceil(m / 2))), False)
             for r in new_rect_list:
-                temp_rs = multidim_search_BMNN22_opt_1(r, oracles, num_samples, num_cells, blocking, sleep, logging, g,
-                                                       ps, m)
+                temp_rs = multidim_search_BMNN22_opt_1(r, oracles, num_samples, g, blocking, sleep, logging,
+                                                       ps)
                 green = green.union(set(temp_rs.yup))
                 red = red.union(set(temp_rs.ylow))
                 border = border.union(set(temp_rs.border))

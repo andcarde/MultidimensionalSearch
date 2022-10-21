@@ -2713,17 +2713,14 @@ def multidim_search_BMNN22(xspace,
                                           logging=logging)
     else:  # Dinamyc cell creation
         ps = 0.95
-        m = 3
         g = np.multiply(xspace.diag_vector(), 1 / 10)
         rs = multidim_search_BMNN22_opt_1(xspace,
                                           oracles,
                                           num_samples=num_samples,
-                                          num_cells=num_cells,
                                           blocking=blocking,
                                           sleep=sleep,
                                           logging=logging,
                                           ps=ps,
-                                          m=m,
                                           g=tuple(g))
     end = time.time()
     time0 = end - start
@@ -2770,13 +2767,13 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
     border = list()
     green = list()
     red = list()
-
     d = xspace.dim()
+    step = 0
 
     p = Pool(cpu_count())
     args = ((cell, copy.deepcopy(oracles), num_samples, d) for cell in cells)
     green_cells = p.map(process_fix, args)
-    step = 0
+    step = step + 1
     vol_green, vol_red, vol_border = 0.0, 0.0, 0.0  # Area of all the regions for debugging purposess
     tempdir = tempfile.mkdtemp()
     RootSearch.logger.info('Report\nStep, Red, Green, Border, Total, nRed, nGreen, nBorder')
@@ -2816,36 +2813,21 @@ def process_dyn(args: tuple[Rectangle,
                             list[OracleSTLeLib],
                             int,
                             int,
-                            int,
                             float,
-                            tuple[float]]) -> list[tuple[Rectangle, bool]]:
-    cell, oracles, num_samples, d, m, ps, g = args
+                            tuple[float]]) -> bool:
+    cell, oracles, num_samples, d, ps, g = args
 
     fs = [ora.membership() for ora in oracles]
 
     # Take num_samples uniformly between cell.min_corner and cell.max_corner
     samples = cell.uniform_sampling(num_samples)
-
     all_fs_in_sample = (all(f(s) for f in fs) for s in samples)
     counter = sum(all_fs_in_sample)
-
     if counter == 0:
-        return [(cell, False)]
+        return False
     elif counter / num_samples >= ps or less_equal(cell.diag_vector(), g):
-        return [(cell, True)]
-    else:
-        colour_list = list()
-        n = pow(2, m // 2)
-        rect_list = cell.cell_partition(n)
-        for rect in rect_list:
-            new_rect_list = rect.cell_partition(pow(2, int(ceil(m / 2))), False)
-            p = Pool(cpu_count())
-            args = ((c, copy.deepcopy(oracles), num_samples, d, m, ps, g) for c in new_rect_list)
-            green_cells = p.map(process_dyn, args)
-            for cols in green_cells:
-                colour_list = colour_list + cols
-
-    return colour_list
+        return True
+    return None
 
 
 @cython.ccall
@@ -2857,35 +2839,47 @@ def process_dyn(args: tuple[Rectangle,
 def multidim_search_BMNN22_opt_1(xspace: Rectangle,
                                  oracles: list[Oracle],
                                  num_samples: int,
-                                 num_cells: int,
                                  g: tuple[float],
                                  blocking: bool = False,
                                  sleep: float = 0.0,
                                  logging: bool = True,
-                                 ps: float = 0.95,
-                                 m: int = 3) -> ParResultSet:
-    # type: (Rectangle, list, int, int, tuple, bool, float, bool, float, int) -> ParResultSet
+                                 ps: float = 0.95) -> ParResultSet:
+    # type: (Rectangle, list, int, tuple, bool, float, bool, float) -> ParResultSet
 
     green = list()
     red = list()
     border = list()
     step = 0
+    d = oracles[0].dim()
+    m = xspace.dim()
+    p = Pool(cpu_count())
 
     # Create temporary directory for storing the result of each step
     tempdir = tempfile.mkdtemp()
+    cell_list = [xspace]
 
-    args = (xspace, oracles, num_samples, oracles[0].dim(), m, ps, g)
-    cols_list = process_dyn(args)
+    while len(cell_list) > 0:
+        args = ((cell, copy.deepcopy(oracles), num_samples, d, ps, g) for cell in cell_list)
+        cols_list = p.map(process_dyn, args)
+        new_rect_list = list()
+        for i in range(len(cols_list)):
+            if cols_list[i] is None:
+                n = pow(2, m // 2)
+                rect_list = cell_list[i].cell_partition(n)
+                for rect in rect_list:
+                    new_rect_list = new_rect_list + rect.cell_partition(pow(2, int(ceil(m / 2))), False)
+            elif cols_list[i]:
+                green.append(cell_list[i])
+            else:
+                red.append(cell_list[i])
+        cell_list = new_rect_list
 
-    for (cell, is_green) in cols_list:
-        if is_green:
-            green.append(cell)
-        else:
-            red.append(cell)
 
     if logging:
         rs = ParResultSet(border, red, green, xspace)
         name = os.path.join(tempdir, str(step))
         rs.to_file(name)
-
+    
+    p.close()
+    p.join()
     return ParResultSet(yup=list(green), ylow=list(red), border=list(border), xspace=xspace)

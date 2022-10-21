@@ -201,7 +201,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         return intervals
 
     def run_non_parametric_stle(self):
-        # type: (_) -> (bool, dict)
+        # type: (_) -> tuple
         # Running STLEval without parameters
         stl_prop_file = self.spec_filepaths[0]
         csv_signal_file = self.signal_filepaths[0]
@@ -332,7 +332,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             # Visualization
             self.solution = StandardSolutionWindow()
             if rs is not None:
-                if self.oracles is not None: # For an oracle list
+                if len(self.oracles) > 0: # For an oracle list
                     param_list = list()
                     for ora in self.oracles:
                         param_list = param_list + ora.get_var_names()
