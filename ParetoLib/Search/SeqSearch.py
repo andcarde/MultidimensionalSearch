@@ -1854,10 +1854,6 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
                                  ps: float = 0.95) -> ResultSet:
     # type: (Rectangle, list, int, tuple, bool, float, bool, float) -> ResultSet
 
-    # TODO: m == xspace.dim() == oracles[0].dim()?
-    # In that case, m can be removed from input arguments and take it from xspace or oracles.
-    # num_cells is not used in the method. Discard it?
-
     green = set()
     red = set()
     border = set()
@@ -1876,7 +1872,6 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
     elif counter / num_samples >= ps or less_equal(xspace.diag_vector(), g):
         green.add(xspace)
     else:
-        # TODO: cells are splitted twice? Look at cell_partition in doc/examples/mining_method.py for inspiration.
         n = pow(2, m // 2)
         rect_list = xspace.cell_partition(n)
         for rect in rect_list:
