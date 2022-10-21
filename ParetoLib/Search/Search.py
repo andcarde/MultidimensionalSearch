@@ -619,8 +619,6 @@ def SearchND_2_BMNN22(ora_list,
     assert (len(ora_list) > 0, "Oracle list can't be empty")
     assert (all(orac.dim() == ora_list[0].dim() for orac in ora_list), "Every oracle in list must have the same diemension")
 
-    # - Complete function calls
-
     xyspace = create_ND_space(list_intervals)
     num_samples = ceil(log(alpha, 1.0 - p0))
     if parallel:
