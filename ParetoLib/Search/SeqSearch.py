@@ -166,7 +166,7 @@ def multidim_search_BMNN22(xspace: Rectangle,
     else:  # Dinamyc cell creation
         ps = 0.95
         m = 3
-        g = np.multiply(xspace.diag_vector(), 1 / 10)
+        g = np.multiply(xspace.diag_vector(),0.5)
         rs = multidim_search_BMNN22_opt_1(xspace,
                                           oracles,
                                           num_samples=num_samples,
@@ -1783,8 +1783,6 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
                                  sleep=0.0,
                                  logging=True) -> ResultSet:
     # type: (Rectangle, list, int, int, bool, float, bool) -> ResultSet
-    # TODO:
-    # - Revise and complete the type hints: @cython.locals, # type: ....
     # - Write asserts and logger info (useful for debugging and defensive programming)
 
     # Dimension
@@ -1895,7 +1893,7 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
                 border = border.union(set(temp_rs.border))
 
     if logging:
-        rs = ResultSet(border, red, green, xspace)
+        rs = ResultSet(border=list(border), ylow=list(red), yup=list(green), xspace=xspace)
         name = os.path.join(tempdir, str(step))
         rs.to_file(name)
 
