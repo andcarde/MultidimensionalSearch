@@ -1394,11 +1394,12 @@ class Rectangle(object):
          """
         verts = self.vertices()
         half = len(verts) // 2
-        ver_dist = np.subtract(verts[half], verts[0])
         if vertical:
+            ver_dist = np.subtract(verts[half], verts[0])
             rect_list = [Rectangle(np.add(verts[0], np.multiply(ver_dist, i / n)),
-                               np.add(verts[half - 1], np.multiply(ver_dist, (i + 1) / n))) for i in range(n)]
+                               np.add(verts[half-1], np.multiply(ver_dist, (i + 1) / n))) for i in range(n)]
         else:
+            ver_dist = np.subtract(verts[1], verts[0])
             rect_list = [Rectangle(np.add(verts[0], np.multiply(ver_dist, i / n)),
                                 np.add(verts[half], np.multiply(ver_dist, (i + 1) / n))) for i in range(n)]
 
