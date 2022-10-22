@@ -201,7 +201,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         return intervals
 
     def run_non_parametric_stle(self):
-        # type: (_) -> tuple
+        # type: (_) -> (bool, dict)
         # Running STLEval without parameters
         stl_prop_file = self.spec_filepaths[0]
         csv_signal_file = self.signal_filepaths[0]
