@@ -618,9 +618,11 @@ def SearchND_2_BMNN22(ora_list,
     # type: (list[Oracle], list, float, float, int, bool, float, int, bool, bool, bool) -> ResultSet
     assert (len(ora_list) > 0, "Oracle list can't be empty")
     assert (all(orac.dim() == ora_list[0].dim() for orac in ora_list), "Every oracle in list must have the same diemension")
-    assert (ora_list[0].dim() == xspace.dim(), "The oracles and the space must have the same dimension")
 
     xyspace = create_ND_space(list_intervals)
+
+    assert (ora_list[0].dim() == xyspace.dim(), "The oracles and the space must have the same dimension")
+
     num_samples = ceil(log(alpha, 1.0 - p0))
     if parallel:
         rs = ParSearch.multidim_search_BMNN22(xyspace, ora_list, num_samples, num_cells, blocking, sleep, opt_level,
