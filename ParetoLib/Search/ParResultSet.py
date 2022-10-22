@@ -41,13 +41,7 @@ class ParResultSet(ResultSet):
         # type: (ParResultSet, iter, iter, iter, Rectangle) -> None
         # super(ParResultSet, self).__init__(border, ylow, yup, xspace)
         ResultSet.__init__(self, border, ylow, yup, xspace)
-        self.p = Pool(cpu_count())
 
-    @cython.returns(cython.void)
-    def __del__(self):
-        # Stop multiprocessing
-        self.p.close()
-        self.p.join()
 
     # Vertex functions
     # @cython.ccall
@@ -55,10 +49,15 @@ class ParResultSet(ResultSet):
     @cython.returns(set)
     def vertices_yup(self):
         # type: (ParResultSet) -> set
+        p = Pool(cpu_count())
+
         # vertices_list = (rect.vertices() for rect in self.yup)
-        vertices_list = self.p.map(pvertices, self.yup)
+        vertices_list = p.map(pvertices, self.yup)
         vertices = set()
         vertices = vertices.union(*vertices_list)
+
+        p.close()
+        p.join()
         return vertices
 
     # @cython.ccall
@@ -66,10 +65,15 @@ class ParResultSet(ResultSet):
     @cython.returns(set)
     def vertices_ylow(self):
         # type: (ParResultSet) -> set
+        p = Pool(cpu_count())
+
         # vertices_list = (rect.vertices() for rect in self.ylow)
-        vertices_list = self.p.map(pvertices, self.ylow)
+        vertices_list = p.map(pvertices, self.ylow)
         vertices = set()
         vertices = vertices.union(*vertices_list)
+
+        p.close()
+        p.join()
         return vertices
 
     # @cython.ccall
@@ -77,21 +81,31 @@ class ParResultSet(ResultSet):
     @cython.returns(set)
     def vertices_border(self):
         # type: (ParResultSet) -> set
+        p = Pool(cpu_count())
+
         # vertices_list = (rect.vertices() for rect in self.border)
-        vertices_list = self.p.map(pvertices, self.border)
+        vertices_list = p.map(pvertices, self.border)
         vertices = set()
         vertices = vertices.union(*vertices_list)
+
+        p.close()
+        p.join()
         return vertices
 
     # Volume functions
     @cython.returns(cython.double)
     def _overlapping_volume(self, pairs_of_rect):
         # type: (ParResultSet, iter) -> float
+        p = Pool(cpu_count())
+
         # remove pairs (recti, recti) from previous list
         # pairs_of_rect_filt = (pair for pair in pairs_of_rect if pair[0] != pair[1])
         # overlapping_rect = (r1.intersection(r2) for (r1, r2) in pairs_of_rect_filt)
         overlapping_rect = (r1.intersection(r2) for (r1, r2) in pairs_of_rect if r1.overlaps(r2))
-        vol_overlapping_rect = self.p.imap_unordered(pvol, overlapping_rect)
+        vol_overlapping_rect = p.imap_unordered(pvol, overlapping_rect)
+
+        p.close()
+        p.join()
         return sum(vol_overlapping_rect)
 
     # @cython.ccall
@@ -144,8 +158,13 @@ class ParResultSet(ResultSet):
     @cython.locals(vol_list=list)
     def volume_yup(self):
         # type: (ParResultSet) -> float
-        vol_list = self.p.imap_unordered(pvol, self.yup)
+        p = Pool(cpu_count())
+
+        vol_list = p.imap_unordered(pvol, self.yup)
         # vol_list = (rect.volume() for rect in self.yup)
+
+        p.close()
+        p.join()
         return sum(vol_list)
 
     # @cython.ccall
@@ -153,8 +172,13 @@ class ParResultSet(ResultSet):
     @cython.locals(vol_list=list)
     def volume_ylow(self):
         # type: (ParResultSet) -> float
-        vol_list = self.p.imap_unordered(pvol, self.ylow)
+        p = Pool(cpu_count())
+
+        vol_list = p.imap_unordered(pvol, self.ylow)
         # vol_list = (rect.volume() for rect in self.ylow)
+
+        p.close()
+        p.join()
         return sum(vol_list)
 
     # @cython.ccall
@@ -162,8 +186,13 @@ class ParResultSet(ResultSet):
     @cython.locals(vol_list=list)
     def volume_border_2(self):
         # type: (ParResultSet) -> float
-        vol_list = self.p.imap_unordered(pvol, self.border)
+        p = Pool(cpu_count())
+
+        vol_list = p.imap_unordered(pvol, self.border)
         # vol_list = (rect.volume() for rect in self.border)
+
+        p.close()
+        p.join()
         return sum(vol_list) - self.overlapping_volume_total()
 
     # Membership functions
@@ -171,9 +200,14 @@ class ParResultSet(ResultSet):
     @cython.locals(isMember=list)
     def member_yup(self, xpoint):
         # type: (ParResultSet, tuple) -> bool
+        p = Pool(cpu_count())
+
         # isMember = (rect.inside(xpoint) for rect in self.yup)
         args_member = ((rect, xpoint) for rect in self.yup)
-        isMember = self.p.imap_unordered(pinside, args_member)
+        isMember = p.imap_unordered(pinside, args_member)
+
+        p.close()
+        p.join()
         return any(isMember)
         # return any(isMember) and not self.member_border(xpoint)
 
@@ -181,9 +215,14 @@ class ParResultSet(ResultSet):
     @cython.locals(isMember=list)
     def member_ylow(self, xpoint):
         # type: (ParResultSet, tuple) -> bool
+        p = Pool(cpu_count())
+
         # isMember = (rect.inside(xpoint) for rect in self.ylow)
         args_member = ((rect, xpoint) for rect in self.ylow)
-        isMember = self.p.imap_unordered(pinside, args_member)
+        isMember = p.imap_unordered(pinside, args_member)
+
+        p.close()
+        p.join()
         return any(isMember)
         # return any(isMember) and not self.member_border(xpoint)
 
@@ -194,6 +233,9 @@ class ParResultSet(ResultSet):
         # type: (ParResultSet, tuple) -> bool
         # isMember = (rect.inside(xpoint) for rect in self.border)
         # args_member = ((rect, xpoint) for rect in self.border)
-        # isMember = self.p.imap_unordered(pinside, args_member)
+        # p = Pool(cpu_count())
+        # isMember = p.imap_unordered(pinside, args_member)
+        # p.close()
+        # p.join()
         # return any(isMember)
         return self.member_space(xpoint) and not self.member_yup(xpoint) and not self.member_ylow(xpoint)
