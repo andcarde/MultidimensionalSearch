@@ -1390,7 +1390,7 @@ class Rectangle(object):
               n (int): Number of equal sized rectangles we want to have as a result
 
           Returns:
-              list_rect (list): the result of 'slicing' self into n smaller rectangles
+              rect_list (list): the result of 'slicing' self into n smaller rectangles
          """
         verts = self.vertices()
         half = len(verts) // 2
@@ -1403,6 +1403,32 @@ class Rectangle(object):
             rect_list = [Rectangle(np.add(verts[0], np.multiply(ver_dist, i / n)),
                                 np.add(verts[half], np.multiply(ver_dist, (i + 1) / n))) for i in range(n)]
 
+        return rect_list
+
+    def cell_partition_bin(self, n: int) -> list:
+        """
+          Given a rectangle, it divides it in n <= k^d smaller rectangles of equal sizes, with d the dimension of the
+          current rectangle and k the number of divisions per axe
+
+          Args:
+              self (Rectangle): The Rectangle.
+              n (int): Number of equal sized rectangles we want to have as a result
+
+          Returns:
+              rect_list (list): the result of 'slicing' self into n smaller rectangles
+         """
+        d = self.dim()
+
+        # num_cells = k^d
+        k = math.log(n, 10) / d
+        k = math.ceil(pow(10, k))
+
+        step = np.subtract(self.max_corner, self.min_corner)
+        step = np.divide(step, k)
+
+        indices_min_corners = product(range(k), repeat=d)
+        list_min_corners = (np.add(self.min_corner, np.multiply(index, step)) for index in indices_min_corners)
+        rect_list = [Rectangle(min_corner, np.add(min_corner, step)) for min_corner in list_min_corners]
         return rect_list
 
     #####################
