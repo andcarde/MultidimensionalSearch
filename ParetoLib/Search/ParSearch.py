@@ -23,7 +23,6 @@ import multiprocessing as mp
 import numpy as np
 import cython
 
-from math import ceil
 from multiprocessing import Manager, Pool, cpu_count
 from sortedcontainers import SortedSet, SortedListWithKey
 
@@ -2789,8 +2788,8 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
         else:
             red.append(cell)
             vol_red = vol_red + cell.volume()
-        RootSearch.logger.info(
-            '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(step, vol_red, vol_green, vol_border, xspace.volume(),
+            RootSearch.logger.info(
+                '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(step, vol_red, vol_green, vol_border, xspace.volume(),
                                                             len(red), len(green), len(border)))
         # Visualization
         if sleep > 0.0:
@@ -2816,7 +2815,7 @@ def process_dyn(args: tuple[Rectangle,
                             int,
                             int,
                             float,
-                            tuple[float]]) -> bool:
+                            tuple[float]]) -> tuple[Rectangle, bool | None]:
     cell, oracles, num_samples, d, ps, g = args
 
     fs = [ora.membership() for ora in oracles]
@@ -2826,10 +2825,10 @@ def process_dyn(args: tuple[Rectangle,
     all_fs_in_sample = (all(f(s) for f in fs) for s in samples)
     counter = sum(all_fs_in_sample)
     if counter == 0:
-        return False
+        return cell, False
     elif counter / num_samples >= ps or less_equal(cell.diag_vector(), g):
-        return True
-    return None
+        return cell, True
+    return cell, None
 
 
 @cython.ccall
@@ -2852,8 +2851,7 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
     red = list()
     border = list()
     step = 0
-    d = oracles[0].dim()
-    m = xspace.dim()
+    d = xspace.dim()
     p = Pool(cpu_count())
 
     # Create temporary directory for storing the result of each step
@@ -2863,19 +2861,15 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
     while len(cell_list) > 0:
         args = ((cell, copy.deepcopy(oracles), num_samples, d, ps, g) for cell in cell_list)
         cols_list = p.map(process_dyn, args)
-        new_rect_list = list()
-        for i in range(len(cols_list)):
-            if cols_list[i] is None:
-                n = pow(2, m // 2)
-                rect_list = cell_list[i].cell_partition(n)
-                for rect in rect_list:
-                    new_rect_list = new_rect_list + rect.cell_partition(pow(2, int(ceil(m / 2))), False)
-            elif cols_list[i]:
-                green.append(cell_list[i])
+        cell_list = list()
+        for (cell, is_green) in cols_list:
+            if is_green is None:
+                n = pow(2, d)
+                cell_list = cell_list + cell.cell_partition_bin(n)
+            elif is_green:
+                green.append(cell)
             else:
-                red.append(cell_list[i])
-        cell_list = new_rect_list
-
+                red.append(cell)
 
     if logging:
         rs = ParResultSet(border, red, green, xspace)
@@ -2884,4 +2878,4 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
     
     p.close()
     p.join()
-    return ParResultSet(yup=list(green), ylow=list(red), border=list(border), xspace=xspace)
+    return ParResultSet(border, red, green, xspace)
