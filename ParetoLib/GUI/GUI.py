@@ -19,6 +19,8 @@ from ParetoLib.Search.ResultSet import ResultSet
 
 matplotlib.use('Qt5Agg')
 
+pd.set_option('display.float_format', lambda x: '%.7f' % x) # For rounding purposes
+
 class StandardSolutionWindow(QWidget):
     """
     This "window" is a QWidget. If it has no parent, it
@@ -157,6 +159,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             # Read CSV file
             names = ['Time', 'Signal']
             df_signal = pd.read_csv(csvfile, names=names)
+            
+
 
             # Plot the responses for different events and regions
             # sns.set_theme(style='darkgrid')

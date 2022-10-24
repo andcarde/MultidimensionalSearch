@@ -2811,11 +2811,11 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
 
 # Dynamic size cell method
 def process_dyn(args: tuple[Rectangle,
-                            list[OracleSTLeLib],
+                            list,
                             int,
                             int,
                             float,
-                            tuple[float]]) -> tuple[Rectangle, bool | None]:
+                            tuple]) -> tuple[Rectangle, bool | None]:
     cell, oracles, num_samples, d, ps, g = args
 
     fs = [ora.membership() for ora in oracles]
@@ -2838,9 +2838,9 @@ def process_dyn(args: tuple[Rectangle,
                args=tuple, cols_list=list, green=list, red=list, border=list, step=cython.uint,
                tempdir=cython.basestring)
 def multidim_search_BMNN22_opt_1(xspace: Rectangle,
-                                 oracles: list[Oracle],
+                                 oracles: list,
                                  num_samples: int,
-                                 g: tuple[float],
+                                 g: tuple,
                                  blocking: bool = False,
                                  sleep: float = 0.0,
                                  logging: bool = True,
