@@ -46,6 +46,7 @@ of the space X in three subspaces: a lower closure, an upper closure and a borde
 """
 import time
 from math import ceil, log
+from typing import List, Tuple
 import cython
 
 from ParetoLib.Geometry.Rectangle import Rectangle
@@ -575,7 +576,7 @@ def SearchND_BMNN22(ora_list,
                     parallel=False,
                     logging=True,
                     simplify=True):
-    # type: (list[Oracle], float, float, float, float, int, bool, float, int, bool, bool, bool) -> ResultSet
+    # type: (list, float, float, float, float, int, bool, float, int, bool, bool, bool) -> ResultSet
     assert (len(ora_list) > 0, "Oracle list can't be empty")
     assert (all(orac.dim() == ora_list[0].dim() for orac in ora_list), "Every oracle in list must have the same diemension")
     d = ora_list[0].dim()
@@ -604,18 +605,18 @@ def SearchND_BMNN22(ora_list,
 @cython.locals(oralist=list, list_intervals=list, p0=cython.double, alpha=cython.double, num_cells=cython.int,
                blocking=cython.bint, sleep=cython.double, opt_level=cython.int, parallel=cython.bint,
                logging=cython.bint, simplify=cython.bint, rs=object)
-def SearchND_2_BMNN22(ora_list,
-                      list_intervals,
-                      p0=P0,
-                      alpha=ALPHA,
-                      num_cells=NUMCELLS,
-                      blocking=False,
-                      sleep=0.0,
-                      opt_level=int,
-                      parallel=bool,
-                      logging=True,
-                      simplify=True):
-    # type: (list[Oracle], list, float, float, int, bool, float, int, bool, bool, bool) -> ResultSet
+def SearchND_2_BMNN22(ora_list : List[Oracle],
+                      list_intervals : List[Tuple],
+                      opt_level : int,
+                      parallel : bool,
+                      p0 : float = P0,
+                      alpha : float = ALPHA,
+                      num_cells : int = NUMCELLS,
+                      blocking : bool = False,
+                      sleep : bool = 0.0,
+                      logging : bool = True,
+                      simplify : bool = True):
+    # type: (list, list, int, bool, float, float, int, bool, bool, bool, bool) -> ResultSet
     assert (len(ora_list) > 0, "Oracle list can't be empty")
     assert (all(orac.dim() == ora_list[0].dim() for orac in ora_list), "Every oracle in list must have the same diemension")
 

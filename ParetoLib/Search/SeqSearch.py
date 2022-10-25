@@ -29,6 +29,7 @@ import cython
 import numpy as np
 
 from math import ceil
+from typing import List, Tuple
 from sortedcontainers import SortedListWithKey, SortedSet
 from ParetoLib.Oracle.OracleSTLe import OracleSTLeLib
 
@@ -144,14 +145,14 @@ def multidim_intersection_search(xspace, list_constraints,
                sleep=cython.double, opt_level=cython.uint, logging=cython.bint, md_search=list, start=cython.double,
                end=cython.double, time0=cython.double, rs=object)
 def multidim_search_BMNN22(xspace: Rectangle,
-                           oracles: list[OracleSTLeLib],
+                           oracles: List[Oracle],
                            num_samples: int,
                            num_cells: int,
                            blocking: bool = False,
                            sleep: float = 0.0,
                            opt_level: int = 0,
-                           logging: bool = True):
-    # type: (Rectangle, list[Oracle], int, int, bool, float, int, bool) -> ResultSet
+                           logging: bool = True) -> ResultSet:
+    # type: (Rectangle, list, int, int, bool, float, int, bool) -> ResultSet
 
     RootSearch.logger.info('Starting multidimensional search (BMNN22)')
     start = time.time()
@@ -1773,12 +1774,12 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
                cell=object, samples=list, rs=object, vol_green=cython.double, vol_red=cython.double,
                vol_border=cython.double)
 def multidim_search_BMNN22_opt_0(xspace: Rectangle,
-                                 oracles: list[Oracle],
+                                 oracles: List[Oracle],
                                  num_samples: int,
                                  num_cells: int,
-                                 blocking=False,
-                                 sleep=0.0,
-                                 logging=True) -> ResultSet:
+                                 blocking : bool = False,
+                                 sleep : float = 0.0,
+                                 logging : bool = True) -> ResultSet:
     # type: (Rectangle, list, int, int, bool, float, bool) -> ResultSet
     # - Write asserts and logger info (useful for debugging and defensive programming)
 
@@ -1845,9 +1846,9 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
                counter=cython.uint,
                tempdir=cython.basestring, cell=object, samples=list, rs=object)
 def multidim_search_BMNN22_opt_1(xspace: Rectangle,
-                                 oracles: list[Oracle],
+                                 oracles: List[Oracle],
                                  num_samples: int,
-                                 g: tuple[float],
+                                 g: Tuple[float],
                                  blocking: bool = False,
                                  sleep: float = 0.0,
                                  logging: bool = True,

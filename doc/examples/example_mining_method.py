@@ -1,16 +1,16 @@
 # Look at numpy and ParetoLib.Geometry.Point libraries
 # import operator
 import numpy as np
+from typing import List, Tuple
 from ParetoLib.Geometry.Rectangle import Rectangle
 from ParetoLib.Search.ResultSet import ResultSet
 from ParetoLib.Oracle.OracleSTLe import OracleSTLe, OracleSTLeLib
 from ParetoLib.Oracle.OracleFunction import OracleFunction, Condition
 from ParetoLib.Oracle.Oracle import Oracle
 from multiprocessing import Pool
-import threading as thr
+from scipy.spatial.distance import directed_hausdorff
 import time
-
-
+        
 
 def mining_method_seq_dyn(cell: Rectangle, ps : float, m : int, g : tuple[float], alpha : float, p0 : float, oracles: list[Oracle]) -> ResultSet:
 
