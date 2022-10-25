@@ -22,7 +22,7 @@ import itertools
 import multiprocessing as mp
 import numpy as np
 import cython
-
+from typing import List, Tuple
 from multiprocessing import Manager, Pool, cpu_count
 from sortedcontainers import SortedSet, SortedListWithKey
 
@@ -2690,15 +2690,15 @@ def multidim_intersection_search_opt_2_partial(xspace, list_constraints,
 @cython.locals(xspace=object, oracles=list, num_samples=cython.int, num_cells=cython.int, blocking=cython.bint,
                sleep=cython.double, opt_level=cython.uint, logging=cython.bint, md_search=list, start=cython.double,
                end=cython.double, time0=cython.double, rs=object)
-def multidim_search_BMNN22(xspace,
-                           oracles,
-                           num_samples,
-                           num_cells,
-                           blocking=False,
-                           sleep=0.0,
-                           opt_level=0,
-                           logging=True):
-    # type: (Rectangle, list[Oracle], int, int, bool, float, int, bool) -> ResultSet
+def multidim_search_BMNN22(xspace : Rectangle,
+                           oracles : List[Oracle],
+                           num_samples : int,
+                           num_cells : int,
+                           blocking : bool = False,
+                           sleep : float = 0.0,
+                           opt_level : int = 0,
+                           logging : bool = True) -> ParResultSet:
+    # type: (Rectangle, list, int, int, bool, float, int, bool) -> ParResultSet
 
     RootSearch.logger.info('Starting multidimensional search (BMNN22)')
     start = time.time()
@@ -2732,7 +2732,7 @@ def multidim_search_BMNN22(xspace,
 
 # Fixed size cell method
 def process_fix(args: tuple[Rectangle,
-                            list[OracleSTLeLib],
+                            List[Oracle],
                             int,
                             int]) -> bool:
     cell, oracles, num_samples, d = args
@@ -2756,7 +2756,7 @@ def process_fix(args: tuple[Rectangle,
                tempdir=cython.basestring,
                rs=object)
 def multidim_search_BMNN22_opt_0(xspace: Rectangle,
-                                 oracles: list[Oracle],
+                                 oracles: List[Oracle],
                                  num_samples: int,
                                  num_cells: int,
                                  blocking: bool = False,
@@ -2809,11 +2809,11 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
 
 # Dynamic size cell method
 def process_dyn(args: tuple[Rectangle,
-                            list,
+                            List[Oracle],
                             int,
                             int,
                             float,
-                            tuple]) -> tuple[Rectangle, bool | None]:
+                            Tuple[float]]) -> tuple[Rectangle, bool | None]:
     cell, oracles, num_samples, d, ps, g = args
 
     fs = [ora.membership() for ora in oracles]
@@ -2836,9 +2836,9 @@ def process_dyn(args: tuple[Rectangle,
                args=tuple, cols_list=list, green=list, red=list, border=list, step=cython.uint,
                tempdir=cython.basestring)
 def multidim_search_BMNN22_opt_1(xspace: Rectangle,
-                                 oracles: list,
+                                 oracles: List[Oracle],
                                  num_samples: int,
-                                 g: tuple,
+                                 g: Tuple[float],
                                  blocking: bool = False,
                                  sleep: float = 0.0,
                                  logging: bool = True,
