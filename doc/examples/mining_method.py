@@ -25,6 +25,7 @@ def haussdorf_distance_yup(current_rs: ResultSet, rs_list: List[ResultSet]) -> T
 
     # Adapt data type to directed_hausdorff format. Besides, lists allow indexing.
     class_i_list = list(class_i)
+    # Removing class_i vertices from other_classes may raise errors when class_i is strictly included inside other_classes
     other_classes_list = list(other_classes - class_i)
 
     # (distance, index_i, index_other_classes) = directed_hausdorff(class_i, other_classes)
@@ -51,23 +52,7 @@ def par_champions_selection(rs_list: List[ResultSet]) -> List[Tuple]:
 
 
 def champions_selection(rs_list: List[ResultSet]) -> List[Tuple]:
-    champions = []
-
-    for current_rs in rs_list:
-        # Use sets in order to prevent duplicated vertices
-        class_i = current_rs.vertices_yup()
-        other_classes_generator = (rs.vertices_yup() for rs in rs_list if rs != current_rs)
-        other_classes = set()
-        other_classes = other_classes.union(*other_classes_generator)
-
-        # Adapt data type to directed_hausdorff format. Besides, lists allow indexing.
-        class_i_list = list(class_i)
-        other_classes_list = list(other_classes - class_i)
-
-        # (distance, index_i, index_other_classes) = directed_hausdorff(class_i, other_classes)
-        _, index_i, _ = directed_hausdorff(class_i_list, other_classes_list)
-        champions.append(class_i_list[index_i])
-
+    champions = [haussdorf_distance_yup(current_rs, rs_list) for current_rs in rs_list]
     return champions
 
 
