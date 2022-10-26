@@ -9,12 +9,45 @@ from math import log, ceil
 from itertools import product
 
 from scipy.spatial.distance import directed_hausdorff
-from sortedcontainers import SortedSet
 import numpy as np
 
 from ParetoLib.Geometry.Rectangle import Rectangle
 from ParetoLib.Search.ResultSet import ResultSet
 from ParetoLib.Oracle.OracleSTLe import OracleSTLeLib
+
+
+def haussdorf_distance_yup(current_rs: ResultSet, rs_list: List[ResultSet]) -> Tuple[float]:
+    # Use sets in order to prevent duplicated vertices
+    class_i = current_rs.vertices_yup()
+    other_classes_generator = (rs.vertices_yup() for rs in rs_list if rs != current_rs)
+    other_classes = set()
+    other_classes = other_classes.union(*other_classes_generator)
+
+    # Adapt data type to directed_hausdorff format. Besides, lists allow indexing.
+    class_i_list = list(class_i)
+    other_classes_list = list(other_classes - class_i)
+
+    # (distance, index_i, index_other_classes) = directed_hausdorff(class_i, other_classes)
+    _, index_i, _ = directed_hausdorff(class_i_list, other_classes_list)
+    return class_i_list[index_i]
+
+
+def par_haussdorf_distance_yup(args: Tuple[ResultSet, List[ResultSet]]) -> Tuple[float]:
+    current_rs, rs_list = args
+    return haussdorf_distance_yup(current_rs, rs_list)
+
+
+def par_champions_selection(rs_list: List[ResultSet]) -> List[Tuple]:
+
+    p = Pool(cpu_count())
+
+    args = ((current_rs, copy.deepcopy(rs_list)) for current_rs in rs_list)
+    champions = p.map(par_haussdorf_distance_yup, args)
+
+    p.close()
+    p.join()
+
+    return champions
 
 
 def champions_selection(rs_list: List[ResultSet]) -> List[Tuple]:
@@ -36,37 +69,6 @@ def champions_selection(rs_list: List[ResultSet]) -> List[Tuple]:
         champions.append(class_i_list[index_i])
 
     return champions
-
-
-def champions_selection2(rs_list: List[ResultSet]):
-    class_i = SortedSet(rs_list[0].yup, key=Rectangle.max_corner)
-    other_classes = SortedSet((rs.yup for rs in rs_list[1:]), key=Rectangle.min_corner)
-
-def distance(class_i: SortedSet[Rectangle], other_classes: SortedSet[Rectangle]) -> Tuple[Tuple, Tuple]:
-    # class_i is sorted by min distance of r.max_corner to origin
-
-    # Select rectangles from class_i that are closer to origin
-    class_i_min_dist = class_i[0].max_corner
-    index = class_i.bisect_left(class_i_min_dist)
-    class_i_subset = class_i[0:index]
-
-    # other_classes is sorted by min distance of r.min_corner to origin
-
-    # Select rectangles from other_class_i that are farther to origin
-    other_classes_max_dist = other_classes[-1].min_corner
-    index = other_classes.bisect_right(other_classes_max_dist)
-    other_classes_subset = other_classes[index:]
-
-    # Sort class_i_subset by min distance of r.min_corner to origin
-    class_i_sorted_by_minc = SortedSet(class_i_subset, key=Rectangle.min_corner)
-
-    # Sort other_classes_subset by max distance of r.max_corner to origin
-    other_classes_sorted_by_maxc = SortedSet(other_classes_subset, key=Rectangle.max_corner)
-
-    class_i_champion = class_i_sorted_by_minc[0].min_corner
-    other_classes_champion = other_classes_sorted_by_maxc[-1].max_corner
-
-    return class_i_champion, other_classes_champion
 
 
 def confidence(p0: float, alpha: float) -> int:
