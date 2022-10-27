@@ -37,12 +37,11 @@ from ParetoLib.Search.SeqSearch import pos_neg_box_gen, pos_overlap_box_gen, bou
 from ParetoLib.Search.ParResultSet import ParResultSet
 
 from ParetoLib.Oracle.Oracle import Oracle
-from ParetoLib.Oracle.OracleSTLe import OracleSTLeLib
 from ParetoLib.Geometry.Rectangle import Rectangle, irect, idwc, iuwc, comp, incomp, incomp_segment, incomp_segmentpos, \
     incomp_segment_neg_remove_down, incomp_segment_neg_remove_up, interirect
 from ParetoLib.Geometry.ParRectangle import pvol
 from ParetoLib.Geometry.Lattice import Lattice
-from ParetoLib.Geometry.Point import less_equal
+from ParetoLib.Geometry.Point import less_equal, mult
 
 
 @cython.locals(xrectangle=object, epsilon=cython.double, n=cython.ushort, error=tuple, y=object,
@@ -2712,7 +2711,7 @@ def multidim_search_BMNN22(xspace : Rectangle,
                                           logging=logging)
     else:  # Dinamyc cell creation
         ps = 0.95
-        g = np.multiply(xspace.diag_vector(), 1 / 10)
+        g = mult(xspace.diag_vector(), 1.0 / 10.0)
         rs = multidim_search_BMNN22_opt_1(xspace,
                                           oracles,
                                           num_samples=num_samples,
@@ -2720,7 +2719,7 @@ def multidim_search_BMNN22(xspace : Rectangle,
                                           sleep=sleep,
                                           logging=logging,
                                           ps=ps,
-                                          g=tuple(g))
+                                          g=g)
     end = time.time()
     time0 = end - start
     RootSearch.logger.info('Time multidim search (Pareto front): ' + str(time0))
@@ -2809,7 +2808,7 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
 
 
 # Dynamic size cell method
-def process_dyn(args: tuple[Rectangle,
+def process_dyn(args: Tuple[Rectangle,
                             List[Oracle],
                             int,
                             int,
