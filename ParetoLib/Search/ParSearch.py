@@ -22,7 +22,7 @@ import itertools
 import multiprocessing as mp
 import numpy as np
 import cython
-from typing import List, Tuple
+from typing import List, Tuple, Union
 from multiprocessing import Manager, Pool, cpu_count
 from sortedcontainers import SortedSet, SortedListWithKey
 
@@ -2731,7 +2731,7 @@ def multidim_search_BMNN22(xspace : Rectangle,
 ########################################################################################################################
 
 # Fixed size cell method
-def process_fix(args: tuple[Rectangle,
+def process_fix(args: Tuple[Rectangle,
                             List[Oracle],
                             int,
                             int]) -> bool:
@@ -2761,7 +2761,8 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
                                  num_cells: int,
                                  blocking: bool = False,
                                  sleep: float = 0.0,
-                                 logging: bool = True) -> ParResultSet:
+                                 logging: bool = True) -> ParResultSet:ç
+    # type: (Rectangle, list[Oracle], int, int, bool, float, bool) -> ParResultSet
     cells = xspace.cell_partition(num_cells)
     border = list()
     green = list()
@@ -2813,7 +2814,7 @@ def process_dyn(args: tuple[Rectangle,
                             int,
                             int,
                             float,
-                            Tuple[float]]) -> tuple[Rectangle, bool | None]:
+                            Tuple[float]]) -> Union[Tuple[Rectangle, bool], None]:
     cell, oracles, num_samples, d, ps, g = args
 
     fs = [ora.membership() for ora in oracles]
@@ -2843,7 +2844,7 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
                                  sleep: float = 0.0,
                                  logging: bool = True,
                                  ps: float = 0.95) -> ParResultSet:
-    # type: (Rectangle, list, int, tuple, bool, float, bool, float) -> ParResultSet
+    # type: (Rectangle, list[Oracle], int, tuple[float], bool, float, bool, float) -> ParResultSet
 
     green = list()
     red = list()
