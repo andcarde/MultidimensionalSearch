@@ -445,20 +445,19 @@
     <property name="title">
      <string>Create</string>
     </property>
-    <addaction name="actionNew_project"/>
+    <addaction name="new_project_button"/>
    </widget>
    <widget class="QMenu" name="menuOpen">
     <property name="title">
      <string>Open</string>
     </property>
-    <addaction name="actionProject"/>
+    <addaction name="load_project_button"/>
    </widget>
    <widget class="QMenu" name="menuSave_project">
     <property name="title">
      <string>Save project</string>
     </property>
-    <addaction name="actionSave"/>
-    <addaction name="actionSave_as"/>
+    <addaction name="save_project_button"/>
    </widget>
    <widget class="QMenu" name="menuClassification">
     <property name="title">
@@ -472,22 +471,22 @@
    <addaction name="menuClassification"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="actionNew_project">
+  <action name="new_project_button">
    <property name="text">
     <string>New project</string>
    </property>
   </action>
-  <action name="actionProject">
+  <action name="load_project_button">
    <property name="text">
     <string>Load project</string>
    </property>
   </action>
-  <action name="actionSave">
+  <action name="save_project_button">
    <property name="text">
     <string>Save</string>
    </property>
   </action>
-  <action name="actionSave_as">
+  <action name="save_as_button">
    <property name="text">
     <string>Save as...</string>
    </property>
