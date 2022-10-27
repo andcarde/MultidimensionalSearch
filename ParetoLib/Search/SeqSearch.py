@@ -152,7 +152,7 @@ def multidim_search_BMNN22(xspace: Rectangle,
                            sleep: float = 0.0,
                            opt_level: int = 0,
                            logging: bool = True) -> ResultSet:
-    # type: (Rectangle, list, int, int, bool, float, int, bool) -> ResultSet
+    # type: (Rectangle, list[Oracle], int, int, bool, float, int, bool) -> ResultSet
 
     RootSearch.logger.info('Starting multidimensional search (BMNN22)')
     start = time.time()
@@ -1780,7 +1780,7 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
                                  blocking : bool = False,
                                  sleep : float = 0.0,
                                  logging : bool = True) -> ResultSet:
-    # type: (Rectangle, list, int, int, bool, float, bool) -> ResultSet
+    # type: (Rectangle, list[Oracle], int, int, bool, float, bool) -> ResultSet
     # - Write asserts and logger info (useful for debugging and defensive programming)
 
     # Dimension
@@ -1853,7 +1853,7 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
                                  sleep: float = 0.0,
                                  logging: bool = True,
                                  ps: float = 0.95) -> ResultSet:
-    # type: (Rectangle, list, int, tuple, bool, float, bool, float) -> ResultSet
+    # type: (Rectangle, list[Oracle], int, tuple, bool, float, bool, float) -> ResultSet
 
     green = set()
     red = set()
