@@ -26,12 +26,9 @@ import time
 import tempfile
 import itertools
 import cython
-import numpy as np
 
-from math import ceil
 from typing import List, Tuple
 from sortedcontainers import SortedListWithKey, SortedSet
-from ParetoLib.Oracle.OracleSTLe import OracleSTLeLib
 
 # import ParetoLib.Search as RootSearch
 import ParetoLib.Search
@@ -46,7 +43,7 @@ from ParetoLib.Oracle.Oracle import Oracle
 from ParetoLib.Geometry.Rectangle import Rectangle, interirect, irect, idwc, iuwc, comp, incomp, incomp_segment, \
     incomp_segmentpos, incomp_segment_neg_remove_down, incomp_segment_neg_remove_up
 from ParetoLib.Geometry.Lattice import Lattice
-from ParetoLib.Geometry.Point import less_equal
+from ParetoLib.Geometry.Point import less_equal, mult
 
 
 ########################################
@@ -166,7 +163,7 @@ def multidim_search_BMNN22(xspace: Rectangle,
                                           logging=logging)
     else:  # Dinamyc cell creation
         ps = 0.95
-        g = np.multiply(xspace.diag_vector(),0.1)
+        g = mult(xspace.diag_vector(), 1.0 / 10.0)
         rs = multidim_search_BMNN22_opt_1(xspace,
                                           oracles,
                                           num_samples=num_samples,
@@ -174,7 +171,7 @@ def multidim_search_BMNN22(xspace: Rectangle,
                                           sleep=sleep,
                                           logging=logging,
                                           ps=ps,
-                                          g=tuple(g))
+                                          g=g)
     end = time.time()
     time0 = end - start
     RootSearch.logger.info('Time multidim search (Pareto front): ' + str(time0))
