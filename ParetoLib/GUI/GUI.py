@@ -19,8 +19,6 @@ from ParetoLib.Search.ResultSet import ResultSet
 
 matplotlib.use('Qt5Agg')
 
-pd.set_option('display.float_format', lambda x: '%.7f' % x) # For rounding purposes
-
 class StandardSolutionWindow(QWidget):
     """
     This "window" is a QWidget. If it has no parent, it
