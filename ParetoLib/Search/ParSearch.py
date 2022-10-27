@@ -20,7 +20,6 @@ import time
 import tempfile
 import itertools
 import multiprocessing as mp
-import numpy as np
 import cython
 from typing import List, Tuple, Union
 from multiprocessing import Manager, Pool, cpu_count
