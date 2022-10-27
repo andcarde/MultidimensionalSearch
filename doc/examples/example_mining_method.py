@@ -2,7 +2,7 @@
 # import operator
 import numpy as np
 from math import ceil, log
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, NoReturn
 from ParetoLib.Geometry.Rectangle import Rectangle
 from ParetoLib.Search.ResultSet import ResultSet
 from ParetoLib.Search.ParResultSet import ParResultSet
@@ -17,26 +17,42 @@ import copy
 
 def champions_election_seq(rslist : List[ResultSet]) -> List[Tuple[float, Tuple[float]]]:
     dists_matr = np.empty(shape=(len(rslist),len(rslist)),dtype=tuple)
-    champ_list = list()
     for i in range(len(rslist)):
         yup_verts_class_i = list(rslist[i].vertices_yup()) # We want to manipulate lists but we don't want duplicates
-        dists_matr[i,i] = (0,tuple(),tuple())
-        for j in range(i+1, len(rslist)):
+        for j in range(i, len(rslist)):
             yup_verts_other = list(rslist[j].vertices_yup())
-            op1 = dhf(yup_verts_class_i,yup_verts_other)
-            op2 = dhf(yup_verts_other, yup_verts_class_i)
-            if op1 >= op2:
-                max_pair = (op1(0), yup_verts_class_i[op1[1]], yup_verts_other[op1[2]])
-                dists_matr[i,j] = max_pair
-                max_pair = (op1(0), yup_verts_other[op1[2]], yup_verts_class_i[op1[1]])
-                dists_matr[j,i] = max_pair
+            dist_tup = (dhf(yup_verts_class_i,yup_verts_other), dhf(yup_verts_other, yup_verts_class_i))
+            if dist_tup[0] >= dist_tup[1]:
+                max_pair = [dist_tup[0][0], yup_verts_class_i[dist_tup[0][1]], yup_verts_other[dist_tup[0][2]]]
+                dists_matr[i,j] = tuple(max_pair)
+                max_pair[1], max_pair[2] = max_pair[2], max_pair[1]
+                dists_matr[j,i] = tuple(max_pair)
             else:
-                max_pair = (op2[0], yup_verts_class_i[op2[2]], yup_verts_other[op2[1]])
-                dists_matr[i,j] = max_pair
-                max_pair = (op2[0], yup_verts_other[op2[1]], yup_verts_class_i[op2[2]])
-                dists_matr[j,i] = max_pair
-        champ_list.append(max(dists_matr[i][:2]))
-    return champ_list
+                max_pair = [dist_tup[1][0], yup_verts_class_i[dist_tup[1][2]], yup_verts_other[dist_tup[1][1]]]
+                dists_matr[i,j] = tuple(max_pair)
+                max_pair[1], max_pair[2] = max_pair[2], max_pair[1]
+                dists_matr[j,i] = tuple(max_pair)
+    return [max(dists_matr[i])[:2] for i in range(len(dists_matr))]
+
+
+def process_champions(args: Tuple[ResultSet,
+                            ResultSet]) -> Tuple[float, Tuple[float], Tuple[float]]:
+    r1, r2 = args
+    vert_list1, vert_list2 = list(r1.vertices_yup()), list(r2.vertices_yup()) 
+    dist_tup = (dhf(vert_list1,vert_list2), dhf(vert_list2, vert_list1))
+
+    if dist_tup[0] >= dist_tup[1]:
+        return (dist_tup[0][0], vert_list1[dist_tup[0][1]], vert_list2[dist_tup[0][2]])
+    return (dist_tup[1][0], vert_list1[dist_tup[1][2]], vert_list2[dist_tup[1][1]])
+
+def champions_election_par(rslist : List[ResultSet]) -> List[Tuple[float, Tuple[float]]]:
+    rs_len = len(rslist)
+    args = ((rslist[i],rslist[j]) for i in range(rs_len) for j in range(rs_len))
+    p = Pool(cpu_count())
+    dist_list = list(p.map(process_champions, args))
+    p.close()
+    p.join()
+    return [max(dist_list[i*rs_len:(i+1)*rs_len])[:2] for i in range(rs_len)]
 
 
 def mining_method_seq_fix(xspace: Rectangle,
@@ -89,7 +105,7 @@ def mining_method_seq_dyn(xspace: Rectangle,
         n = pow(2, d)
         rect_list = xspace.cell_partition_bin(n)
         for r in rect_list:
-            temp_rs = mining_method_seq_dyn(r, oracles, num_samples, g, blocking, sleep, logging, ps)
+            temp_rs = mining_method_seq_dyn(r, oracles, num_samples, g, ps)
             green = green.union(set(temp_rs.yup))
             red = red.union(set(temp_rs.ylow))
             border = border.union(set(temp_rs.border))
@@ -148,7 +164,7 @@ def process_dyn(args: Tuple[Rectangle,
                             int,
                             int,
                             float,
-                            Tuple[float]]) -> Union[Tuple[Rectangle, bool], None]:
+                            Tuple[float]]) -> Tuple[Rectangle, Union[bool,None]]:
     cell, oracles, num_samples, d, ps, g = args
 
     fs = [ora.membership() for ora in oracles]
@@ -175,7 +191,6 @@ def mining_method_par_dyn(xspace: Rectangle,
     green = list()
     red = list()
     border = list()
-    step = 0
     d = xspace.dim()
     p = Pool(cpu_count())
 
@@ -244,9 +259,10 @@ def plot_prueba_champions(min_cor, max_cor, n, alpha, p0, filenames):
         ora.from_file(f,True)  
         oracle_list.append(ora)
     resultset_list = list()
-    resultset_list.append(mining_method_par_fix(space,oracle_list,ceil(log(alpha, 1.0 - p0)),n))
-    resultset_list.append(mining_method_par_dyn(space,oracle_list,ceil(log(alpha, 1.0 - p0)),g))
+    resultset_list.append(mining_method_seq_fix(space,oracle_list,ceil(log(alpha, 1.0 - p0)),n))
+    resultset_list.append(mining_method_seq_dyn(space,oracle_list,ceil(log(alpha, 1.0 - p0)),g))
     print(champions_election_seq(resultset_list))
+    print(champions_election_par(resultset_list))
 
 
 
