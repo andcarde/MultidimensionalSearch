@@ -2814,7 +2814,7 @@ def process_dyn(args: Tuple[Rectangle,
                             int,
                             int,
                             float,
-                            Tuple[float]]) -> Union[Tuple[Rectangle, bool], None]:
+                            Tuple[float]]) -> Tuple[Rectangle, Union[bool,None]]:
     cell, oracles, num_samples, d, ps, g = args
 
     fs = [ora.membership() for ora in oracles]
