@@ -2761,9 +2761,9 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
                                  num_cells: int,
                                  blocking: bool = False,
                                  sleep: float = 0.0,
-                                 logging: bool = True) -> ParResultSet:ç
+                                 logging: bool = True) -> ParResultSet:
     # type: (Rectangle, list[Oracle], int, int, bool, float, bool) -> ParResultSet
-    cells = xspace.cell_partition(num_cells)
+    cells = xspace.cell_partition_bin(num_cells)
     border = list()
     green = list()
     red = list()

@@ -1786,7 +1786,7 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
     # Dimension
     n = xspace.dim()
 
-    rect_list = xspace.cell_partition(num_cells)
+    rect_list = xspace.cell_partition_bin(num_cells)
     green = list()
     red = list()
     border = list()
