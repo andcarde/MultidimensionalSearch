@@ -105,6 +105,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.search_type_comboBox.activated.connect(self.not_saved)
         self.opt_level_comboBox.activated.connect(self.not_saved)
         self.interpolation_comboBox.activated.connect(self.not_saved)
+        self.param_tableWidget.cellChanged.connect(self.not_saved)
 
         # Initialize empty Oracles:
         # - BBMJ19: requires 1 Oracle
@@ -181,34 +182,36 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         saved_file.close()
 
     def save_data(self):
-        name_project = f'"name_project":"{self.project_path[0]}"'
-        name_project_json = "{" + name_project + "}"
+        try:
+            name_project = f'"name_project":"{self.project_path[0]}"'
+            name_project_json = "{" + name_project + "}"
 
-        #Create the JSON object to store all the necessary data
-        self.datos = json.loads(name_project_json)
-        self.datos["stl_specification"] = self.spec_filepaths
-        self.datos["signal_specification"] = self.signal_filepaths
-        self.datos["param_specification"] = self.param_filepath
+            #Create the JSON object to store all the necessary data
+            self.datos = json.loads(name_project_json)
+            self.datos["stl_specification"] = self.spec_filepaths
+            self.datos["signal_specification"] = self.signal_filepaths
+            self.datos["param_specification"] = self.param_filepath
 
-        self.datos["parameters"] = self.read_parameters_intervals()
+            self.datos["parameters"] = self.read_parameters_intervals()
 
-        opciones = json.loads('{}')
+            opciones = json.loads('{}')
 
-        #Ver si cambiar por currentIndex
-        opciones["interpolation"] = self.interpolation_comboBox.currentText()
-        opciones["mining_method"] = self.mining_comboBox.currentText()
-        opciones["type_search"] = self.search_type_comboBox.currentText()
-        opciones["option_level"] = self.opt_level_comboBox.currentText()
-        opciones["parametric"] = self.param_stl_selection_comboBox.currentText()
+            #Ver si cambiar por currentIndex
+            opciones["interpolation"] = self.interpolation_comboBox.currentText()
+            opciones["mining_method"] = self.mining_comboBox.currentText()
+            opciones["type_search"] = self.search_type_comboBox.currentText()
+            opciones["option_level"] = self.opt_level_comboBox.currentText()
+            opciones["parametric"] = self.param_stl_selection_comboBox.currentText()
 
-        self.datos["opciones"] = opciones
+            self.datos["opciones"] = opciones
 
-        saved_file = open(''.join(self.project_path), 'w')
-        saved_file.write(json.dumps(self.datos, indent=2))
-        saved_file.close()
+            saved_file = open(''.join(self.project_path), 'w')
+            saved_file.write(json.dumps(self.datos, indent=2))
+            saved_file.close()
+        except:
+            QMessageBox.about(self, "File not exist", "There is no current file loaded or created")
 
     def load_project(self):
-        self.has_been_saved = True
         #Open the project file that we want to load and store in a variable
         self.project_path = QFileDialog.getOpenFileName(self, "Open project", "./Projects", "(*.json)")
 
@@ -219,6 +222,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         data = json.load(load_path)
 
         self.load_data(data)
+        self.has_been_saved = True
 
     def load_data(self, data):
         self.spec_filepaths = data["stl_specification"]
