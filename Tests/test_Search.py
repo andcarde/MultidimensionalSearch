@@ -45,9 +45,9 @@ class SearchTestCase(unittest.TestCase):
         self.DELTA = 1e-5
         self.STEPS = 20
         # TODO: Configure the remaining parameters
-        self.P0
-        self.ALPHA
-        self.NUMCELLS
+        self.P0 = 0.01
+        self.ALPHA = 0.05
+        self.NUMCELLS = 25
 
     #  Membership testing function used in verify2D, verify3D and verifyND
     def closureMembershipTest(self, fora, rs, xpoint):
