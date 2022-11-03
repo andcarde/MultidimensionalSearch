@@ -171,38 +171,38 @@ class SearchTestCase(unittest.TestCase):
                 print('Parallel search {0}'.format(False))
 
                 rs = SearchND_2_BMNN22(ora_list=self.oracle,
-                                     min_corner=self.min_c,
-                                     max_corner=self.max_c,
-                                     p0=self.P0,
-                                     alpha=self.ALPHA,
-                                     num_cells=self.NUMCELLS,
-                                     blocking=False,
-                                     sleep=SLEEP_TIME,
-                                     opt_level=opt_level,
-                                     parallel=False,
-                                     logging=False,
-                                     simplify=False)
+                                       min_corner=self.min_c,
+                                       max_corner=self.max_c,
+                                       p0=self.P0,
+                                       alpha=self.ALPHA,
+                                       num_cells=self.NUMCELLS,
+                                       blocking=False,
+                                       sleep=SLEEP_TIME,
+                                       opt_level=opt_level,
+                                       parallel=False,
+                                       logging=False,
+                                       simplify=False)
 
                 print('Parallel search {0}'.format(True))
 
                 rs_par = SearchND_2_BMNN22(ora_list=self.oracle,
-                                         min_corner=self.min_c,
-                                         max_corner=self.max_c,
-                                         p0=self.P0,
-                                         alpha=self.ALPHA,
-                                         num_cells=self.NUMCELLS,
-                                         blocking=False,
-                                         sleep=SLEEP_TIME,
-                                         opt_level=opt_level,
-                                         parallel=True,
-                                         logging=False,
-                                         simplify=False)
+                                           min_corner=self.min_c,
+                                           max_corner=self.max_c,
+                                           p0=self.P0,
+                                           alpha=self.ALPHA,
+                                           num_cells=self.NUMCELLS,
+                                           blocking=False,
+                                           sleep=SLEEP_TIME,
+                                           opt_level=opt_level,
+                                           parallel=True,
+                                           logging=False,
+                                           simplify=False)
 
                 # TODO: Compare rs and rs_par. Assert that all the boxes in the green/red regions in rs are also in rs_par (i.e., ResultSets are equal)
                 # set(rs.yup) == set(rs_par.yup) ...
                 self.assertSetEqual(set(rs.yup), set(rs_par.yup))
                 self.assertSetEqual(set(rs.ylow), set(rs_par.ylow))
-                self.assertSetEqual(set(rs.border),set(rs_par.border))
+                self.assertSetEqual(set(rs.border), set(rs_par.border))
 
                 # Create numpoints_verify vectors of dimension d
                 # Continuous uniform distribution over the stated interval.
