@@ -69,6 +69,7 @@ class StandardSolutionWindow(QWidget):
         canvas.set_axis()
         canvas.axes.step(x, y, where='post')  # where='pre'
         canvas.figure.tight_layout(pad=0)
+        print('x: {0}, y: {1}'.format(x, y))
         self.layout().addWidget(canvas)
 
 
@@ -326,9 +327,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
             # Read CSV file
             names = ['Time', 'Signal']
-            df_signal = pd.read_csv(csvfile, names=names)
-            
-
+            # dtypes = [int, float]
+            # df_signal = pd.read_csv(csvfile, sep=',', names=names, dtypes=dtypes)
+            df_signal = pd.read_csv(csvfile, sep=',', names=names)
 
             # Plot the responses for different events and regions
             # sns.set_theme(style='darkgrid')
