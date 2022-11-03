@@ -69,7 +69,6 @@ class StandardSolutionWindow(QWidget):
         canvas.set_axis()
         canvas.axes.step(x, y, where='post')  # where='pre'
         canvas.figure.tight_layout(pad=0)
-        print('x: {0}, y: {1}'.format(x, y))
         self.layout().addWidget(canvas)
 
 
