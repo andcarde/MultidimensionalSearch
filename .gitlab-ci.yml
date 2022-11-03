@@ -70,7 +70,12 @@ test:
     - pip3 install *.whl --user
     - cd ../Tests
     - ./coverage_all.sh
+  coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
   artifacts:
     when: on_success
     paths:
       - Tests/coverage/
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: index.html

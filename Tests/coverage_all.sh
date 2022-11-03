@@ -36,4 +36,5 @@ else
   coverage report --omit=*ParetoLib/_py3k*,*ParetoLib/Oracle/OracleMatlab*
   coverage html --omit=*ParetoLib/_py3k*,*ParetoLib/Oracle/OracleMatlab* -d coverage/
 fi
+#coverage xml
 coverage erase
