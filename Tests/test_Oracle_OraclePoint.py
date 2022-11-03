@@ -96,13 +96,14 @@ class OraclePointTestCase(unittest.TestCase):
 
     def test_files_NDTree(self):
         # type: (OraclePointTestCase) -> None
-        self.read_write_ndtree_files(human_readable=False)
-        self.read_write_ndtree_files(human_readable=True)
+        self.read_write_ndtree_files(read_human_readable=True, write_human_readable=True)
+        self.read_write_ndtree_files(read_human_readable=False, write_human_readable=False)
 
     def read_write_ndtree_files(self,
                                 min_corner=0.0,
                                 max_corner=1.0,
-                                human_readable=False):
+                                read_human_readable=False,
+                                write_human_readable=False):
         # type: (OraclePointTestCase, float, float, bool) -> None
 
         def f1(x):
@@ -122,11 +123,11 @@ class OraclePointTestCase(unittest.TestCase):
             ND1.update_point(point)
 
         # Read/Write NDTree from file
-        print('Reading from {0}'.format(nfile))
-        print('Writing to {0}'.format(nfile))
+        print('Reading from {0}, human_readable: {1}'.format(nfile, read_human_readable))
+        print('Writing to {0}, human_readable: {1}'.format(nfile, write_human_readable))
 
-        ND1.to_file(nfile, append=False, human_readable=human_readable)
-        ND2.from_file(nfile, human_readable=human_readable)
+        ND1.to_file(nfile, append=False, human_readable=write_human_readable)
+        ND2.from_file(nfile, human_readable=read_human_readable)
 
         print('NDTree 1: {0}'.format(ND1))
         print('NDTree 2: {0}'.format(ND2))
@@ -144,13 +145,13 @@ class OraclePointTestCase(unittest.TestCase):
     # Test OraclePoint
     def test_files_OraclePoint(self):
         # type: (OraclePointTestCase) -> None
-        self.read_write_oracle_files(human_readable=False)
-        self.read_write_oracle_files(human_readable=True)
+        self.read_write_oracle_files(read_human_readable=True, write_human_readable=True)
+        self.read_write_oracle_files(read_human_readable=False, write_human_readable=False)
 
-    def read_write_oracle_files(self,
-                         min_corner=0.0,
-                         max_corner=1.0,
-                         human_readable=False):
+    def read_write_oracle_files(self, min_corner=0.0,
+                                max_corner=1.0,
+                                read_human_readable=False,
+                                write_human_readable=False):
         # type: (OraclePointTestCase, float, float, bool) -> None
         tmpfile = tf.NamedTemporaryFile(delete=False)
         nfile = tmpfile.name
@@ -207,12 +208,12 @@ class OraclePointTestCase(unittest.TestCase):
             self.assertFalse(p in ora1)
 
         # Read/Write Oracle from file
-        print('Reading from {0}'.format(nfile))
-        print('Writing to {0}'.format(nfile))
+        print('Reading from {0}, human_readable: {1}'.format(nfile, read_human_readable))
+        print('Writing to {0}, human_readable: {1}'.format(nfile, write_human_readable))
 
-        ora1.to_file(nfile, append=False, human_readable=human_readable)
+        ora1.to_file(nfile, append=False, human_readable=write_human_readable)
         ora2 = OraclePoint()
-        ora2.from_file(nfile, human_readable=human_readable)
+        ora2.from_file(nfile, human_readable=read_human_readable)
 
         print('Oracle 1: {0}'.format(ora1))
         print('Oracle 2: {0}'.format(ora2))
