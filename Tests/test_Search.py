@@ -298,39 +298,39 @@ class SearchOraclePointTestCase(SearchTestCase):
 
         test_dir = os.path.join(self.this_dir, '2D')
         files_path = os.listdir(test_dir)
-        list_test_files = [os.path.join(test_dir, x) for x in files_path if x.endswith('.bin')]
+        list_test_files = [os.path.join(test_dir, x) for x in files_path if x.endswith('.txt')]
         num_files_test = min(self.numfiles_test, len(list_test_files))
         list_test_files = sorted(list_test_files)[:num_files_test]
         # test-2d-12points provides the maximum interval: [-1024, 1024]
         self.min_c = -1024.0
         self.max_c = 1024.0
-        self.search_verify_ND(human_readable=False, list_test_files=list_test_files)
+        self.search_verify_ND(human_readable=True, list_test_files=list_test_files)
 
     def test_3D(self):
         # type: (SearchOraclePointTestCase) -> None
 
         test_dir = os.path.join(self.this_dir, '3D')
         files_path = os.listdir(test_dir)
-        list_test_files = [os.path.join(test_dir, x) for x in files_path if x.endswith('.bin')]
+        list_test_files = [os.path.join(test_dir, x) for x in files_path if x.endswith('.txt')]
         num_files_test = min(self.numfiles_test, len(list_test_files))
         list_test_files = sorted(list_test_files)[:num_files_test]
         # test-3d-[1000|2000] are LIDAR points between 0.0 and 600.0 approx.
         self.min_c = 0.0
         self.max_c = 600.0
-        self.search_verify_ND(human_readable=False, list_test_files=list_test_files)
+        self.search_verify_ND(human_readable=True, list_test_files=list_test_files)
 
     def test_ND(self):
         # type: (SearchOraclePointTestCase) -> None
 
         test_dir = os.path.join(self.this_dir, 'ND')
         files_path = os.listdir(test_dir)
-        list_test_files = [os.path.join(test_dir, x) for x in files_path if x.endswith('.bin')]
+        list_test_files = [os.path.join(test_dir, x) for x in files_path if x.endswith('.txt')]
         num_files_test = min(self.numfiles_test, len(list_test_files))
         list_test_files = sorted(list_test_files)[:num_files_test]
         # test-4d and test-5d are random points in the interval [1.0, 2.0]
         self.min_c = 1.0
         self.max_c = 2.0
-        self.search_verify_ND(human_readable=False, list_test_files=list_test_files)
+        self.search_verify_ND(human_readable=True, list_test_files=list_test_files)
 
 
 class SearchOracleSTLTestCase(SearchTestCase):
