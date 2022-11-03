@@ -304,7 +304,7 @@ class SearchOraclePointTestCase(SearchTestCase):
         # test-2d-12points provides the maximum interval: [-1024, 1024]
         self.min_c = -1024.0
         self.max_c = 1024.0
-        # self.search_verify_ND(human_readable=False, list_test_files=list_test_files)
+        self.search_verify_ND(human_readable=False, list_test_files=list_test_files)
 
     def test_3D(self):
         # type: (SearchOraclePointTestCase) -> None
@@ -317,7 +317,7 @@ class SearchOraclePointTestCase(SearchTestCase):
         # test-3d-[1000|2000] are LIDAR points between 0.0 and 600.0 approx.
         self.min_c = 0.0
         self.max_c = 600.0
-        # self.search_verify_ND(human_readable=False, list_test_files=list_test_files)
+        self.search_verify_ND(human_readable=False, list_test_files=list_test_files)
 
     def test_ND(self):
         # type: (SearchOraclePointTestCase) -> None
@@ -330,7 +330,7 @@ class SearchOraclePointTestCase(SearchTestCase):
         # test-4d and test-5d are random points in the interval [1.0, 2.0]
         self.min_c = 1.0
         self.max_c = 2.0
-        # self.search_verify_ND(human_readable=False, list_test_files=list_test_files)
+        self.search_verify_ND(human_readable=False, list_test_files=list_test_files)
 
 
 class SearchOracleSTLTestCase(SearchTestCase):
