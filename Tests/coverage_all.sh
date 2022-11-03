@@ -20,7 +20,7 @@ coverage run -m --parallel-mode --concurrency=multiprocessing pytest test_Search
 coverage run -m --parallel-mode --concurrency=multiprocessing pytest test_Search.py::SearchOracleSTLTestCase::test_1D
 #coverage run -m --parallel-mode --concurrency=multiprocessing pytest test_Search.py::SearchOracleSTLTestCase::test_2D
 #coverage run -m --parallel-mode --concurrency=multiprocessing pytest test_Search.py
-if [ $MATLAB_INSTALLED ]
+if [ ! $MATLAB_INSTALLED ]
 then
   coverage run -m --parallel-mode --concurrency=multiprocessing pytest test_Search.py::SearchOracleMatlabTestCase::test_2D
   coverage run -m --parallel-mode --concurrency=multiprocessing pytest test_Search.py::SearchOracleMatlabTestCase::test_3D
@@ -28,7 +28,7 @@ then
   coverage run -m --parallel-mode pytest test_Oracle_OracleMatlab.py
 fi
 coverage combine
-if [ $MATLAB_INSTALLED ]
+if [ ! $MATLAB_INSTALLED ]
 then
   coverage report --omit=*ParetoLib/_py3k*
   coverage html --omit=*ParetoLib/_py3k* -d coverage/
