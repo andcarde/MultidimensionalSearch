@@ -78,4 +78,4 @@ test:
     reports:
       coverage_report:
         coverage_format: cobertura
-        path: index.html
+        path: coverage/index.html
