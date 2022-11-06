@@ -4,13 +4,56 @@ import time
 from multiprocessing import Pool, cpu_count
 from concurrent.futures import ThreadPoolExecutor
 
-from typing import List
+from typing import List, Tuple
 from math import log, ceil
 from itertools import product
+
+from scipy.spatial.distance import directed_hausdorff
 import numpy as np
+
 from ParetoLib.Geometry.Rectangle import Rectangle
 from ParetoLib.Search.ResultSet import ResultSet
 from ParetoLib.Oracle.OracleSTLe import OracleSTLeLib
+
+
+def haussdorf_distance_yup(current_rs: ResultSet, rs_list: List[ResultSet]) -> Tuple[float]:
+    # Use sets in order to prevent duplicated vertices
+    class_i = current_rs.vertices_yup()
+    other_classes_generator = (rs.vertices_yup() for rs in rs_list if rs != current_rs)
+    other_classes = set()
+    other_classes = other_classes.union(*other_classes_generator)
+
+    # Adapt data type to directed_hausdorff format. Besides, lists allow indexing.
+    class_i_list = list(class_i)
+    # Removing class_i vertices from other_classes may raise errors when class_i is strictly included inside other_classes
+    other_classes_list = list(other_classes - class_i)
+
+    # (distance, index_i, index_other_classes) = directed_hausdorff(class_i, other_classes)
+    _, index_i, _ = directed_hausdorff(class_i_list, other_classes_list)
+    return class_i_list[index_i]
+
+
+def par_haussdorf_distance_yup(args: Tuple[ResultSet, List[ResultSet]]) -> Tuple[float]:
+    current_rs, rs_list = args
+    return haussdorf_distance_yup(current_rs, rs_list)
+
+
+def par_champions_selection(rs_list: List[ResultSet]) -> List[Tuple]:
+
+    p = Pool(cpu_count())
+
+    args = ((current_rs, copy.deepcopy(rs_list)) for current_rs in rs_list)
+    champions = p.map(par_haussdorf_distance_yup, args)
+
+    p.close()
+    p.join()
+
+    return champions
+
+
+def champions_selection(rs_list: List[ResultSet]) -> List[Tuple]:
+    champions = [haussdorf_distance_yup(current_rs, rs_list) for current_rs in rs_list]
+    return champions
 
 
 def confidence(p0: float, alpha: float) -> int:
@@ -116,7 +159,7 @@ if __name__ == "__main__":
     p0 = float(sys.argv[2])
     alpha = float(sys.argv[3])
 
-    nfile = '../../Tests/Oracle/OracleSTLe/2D/stabilization/derivative/stabilization.txt'
+    nfile = 'Tests/Oracle/OracleSTLe/2D/stabilization/derivative/stabilization.txt'
     oracle = OracleSTLeLib()
     oracle.from_file(nfile, human_readable=True)
     oracles = [copy.deepcopy(oracle)] * 1
@@ -126,3 +169,20 @@ if __name__ == "__main__":
     min_x, min_y = (80.0, 0.0)
     max_x, max_y = (120.0, 0.005)
     pspace = Rectangle((min_x, min_y), (max_x, max_y))
+
+    start_time = time.time()
+    r1 = par_mining_method(pspace, num_cells, num_samples, oracles)
+    end_time = time.time()
+    print("Execution time of parallel method: {0}".format(end_time - start_time))
+    r1.plot_2D()
+
+    start_time = time.time()
+    r2 = mining_method(pspace, num_cells, num_samples, oracles)
+    end_time = time.time()
+    print("Execution time of normal method: {0}".format(end_time - start_time))
+    r2.plot_2D()
+
+    rs = [r1, r2]
+    champs = champions_selection(rs)
+    for i in range(len(rs)):
+        print("Reference point for class {0}: {1}".format(i, champs[i]))

@@ -141,7 +141,7 @@ else:  # sys.version_info[0] < 3
 
 # Required for limiting the recursion in NDTree.
 # "resource" library is only available on linux/unix
-if platform.system() == 'Linux':
+if platform.system() == 'Linux' or platform.system() == 'Darwin':
     from resource import setrlimit, RLIMIT_STACK, RLIM_INFINITY
 
     def set_limit(max_rec):

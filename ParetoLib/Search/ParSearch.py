@@ -21,7 +21,7 @@ import tempfile
 import itertools
 import multiprocessing as mp
 import cython
-
+from typing import List, Tuple, Union
 from multiprocessing import Manager, Pool, cpu_count
 from sortedcontainers import SortedSet, SortedListWithKey
 
@@ -40,6 +40,7 @@ from ParetoLib.Geometry.Rectangle import Rectangle, irect, idwc, iuwc, comp, inc
     incomp_segment_neg_remove_down, incomp_segment_neg_remove_up, interirect
 from ParetoLib.Geometry.ParRectangle import pvol
 from ParetoLib.Geometry.Lattice import Lattice
+from ParetoLib.Geometry.Point import less_equal, mult
 
 
 @cython.locals(xrectangle=object, epsilon=cython.double, n=cython.ushort, error=tuple, y=object,
@@ -1298,7 +1299,7 @@ def multidim_search_deep_first_opt_0(xspace,
 ################################
 ######## EPSILON METHOD ########
 ################################
-#@cython.ccall
+# @cython.ccall
 @cython.returns(object)
 @cython.locals(dict_man=object, epsilon=cython.double, n=cython.ushort, list_constraints=list,
                incomparable=list, incomparable_segment=list, ora1=object, ora2=object, error=tuple,
@@ -1380,7 +1381,7 @@ def pintersection_search_opt_0(args):
     return local_vol_xrest, local_border, intersect_box, intersect_region
 
 
-#@cython.ccall
+# @cython.ccall
 @cython.returns(object)
 @cython.locals(xrectangle=object, dict_man=object, epsilon=cython.double, n=cython.ushort, incomparable=list,
                incomparable_segment=list, ora1=object, ora2=object, error=tuple, local_vol_xrest=cython.double,
@@ -1463,7 +1464,7 @@ def pintersection_search_opt_1(args):
     return local_vol_xrest, local_vol_boxes, local_border, intersect_box, intersect_region
 
 
-#@cython.ccall
+# @cython.ccall
 @cython.returns(object)
 @cython.locals(xrectangle=object, dict_man=object, epsilon=cython.double, n=cython.ushort, incomparable=list,
                incomparable_segment=list, ora1=object, ora2=object, error=tuple, local_vol_xrest=cython.double,
@@ -1970,7 +1971,7 @@ def multidim_intersection_search_opt_0_partial(xspace, list_constraints,
     return ParResultSet(border, intersect_region, intersect_box, xspace)
 
 
-#@cython.ccall
+# @cython.ccall
 @cython.returns(object)
 @cython.locals(xspace=object, list_constraints=list, oracle1=object, oracle2=object, epsilon=cython.double,
                delta=cython.double, max_step=cython.ulonglong, blocking=cython.bint, sleep=cython.double,
@@ -2127,7 +2128,7 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
     return ParResultSet(border, intersect_region, intersect_box, xspace)
 
 
-#@cython.ccall
+# @cython.ccall
 @cython.returns(object)
 @cython.locals(xspace=object, list_constraints=list, oracle1=object, oracle2=object, epsilon=cython.double,
                delta=cython.double, max_step=cython.ulonglong, blocking=cython.bint, sleep=cython.double,
@@ -2322,7 +2323,7 @@ def multidim_intersection_search_opt_1_partial(xspace, list_constraints,
     return ParResultSet(border, intersect_region, intersect_box, xspace)
 
 
-#@cython.ccall
+# @cython.ccall
 @cython.returns(object)
 @cython.locals(xspace=object, list_constraints=list, oracle1=object, oracle2=object, epsilon=cython.double,
                delta=cython.double, max_step=cython.ulonglong, blocking=cython.bint, sleep=cython.double,
@@ -2471,7 +2472,7 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
     return ParResultSet(border, intersect_region, intersect_box, xspace)
 
 
-#@cython.ccall
+# @cython.ccall
 @cython.returns(object)
 @cython.locals(xspace=object, list_constraints=list, oracle1=object, oracle2=object, epsilon=cython.double,
                delta=cython.double, max_step=cython.ulonglong, blocking=cython.bint, sleep=cython.double,
@@ -2673,3 +2674,207 @@ def multidim_intersection_search_opt_2_partial(xspace, list_constraints,
     p.join()
 
     return ParResultSet(border, intersect_region, intersect_box, xspace)
+
+
+########################################
+######## ADVANCED METHOD: BMNN22 #######
+########################################
+
+##############################
+# opt_1 = Dynamic size cell method
+# opt_0 = Fixed size cell method
+##############################
+
+@cython.ccall
+@cython.returns(object)
+@cython.locals(xspace=object, oracles=list, num_samples=cython.int, num_cells=cython.int, blocking=cython.bint,
+               sleep=cython.double, opt_level=cython.uint, logging=cython.bint, md_search=list, start=cython.double,
+               end=cython.double, time0=cython.double, rs=object)
+def multidim_search_BMNN22(xspace : Rectangle,
+                           oracles : List[Oracle],
+                           num_samples : int,
+                           num_cells : int,
+                           blocking : bool = False,
+                           sleep : float = 0.0,
+                           opt_level : int = 0,
+                           logging : bool = True) -> ParResultSet:
+    # type: (Rectangle, list, int, int, bool, float, int, bool) -> ParResultSet
+
+    RootSearch.logger.info('Starting multidimensional search (BMNN22)')
+    start = time.time()
+    if opt_level == 0:  # Fixed cell creation
+        rs = multidim_search_BMNN22_opt_0(xspace,
+                                          oracles,
+                                          num_samples=num_samples,
+                                          num_cells=num_cells,
+                                          blocking=blocking,
+                                          sleep=sleep,
+                                          logging=logging)
+    else:  # Dinamyc cell creation
+        ps = 0.95
+        g = mult(xspace.diag_vector(), 1.0 / 10.0)
+        rs = multidim_search_BMNN22_opt_1(xspace,
+                                          oracles,
+                                          num_samples=num_samples,
+                                          blocking=blocking,
+                                          sleep=sleep,
+                                          logging=logging,
+                                          ps=ps,
+                                          g=g)
+    end = time.time()
+    time0 = end - start
+    RootSearch.logger.info('Time multidim search (Pareto front): ' + str(time0))
+
+    return rs
+
+
+########################################################################################################################
+
+# Fixed size cell method
+def process_fix(args: Tuple[Rectangle,
+                            List[Oracle],
+                            int,
+                            int]) -> bool:
+    cell, oracles, num_samples, d = args
+
+    fs = [ora.membership() for ora in oracles]
+
+    # Take num_samples uniformly between cell.min_corner and cell.max_corner
+    samples = cell.uniform_sampling(num_samples)
+    # Call the oracle with the current sample
+    res = any(all(f(sample) for f in fs) for sample in samples)
+
+    return res
+
+
+@cython.ccall
+@cython.returns(object)
+@cython.locals(xspace=object, oracles=list, num_samples=cython.uint, num_cells=cython.uint,
+               blocking=cython.bint, sleep=cython.double, logging=cython.bint, cells=list,
+               border=list, green=list, red=list, d=cython.uint, p=object, args=tuple, green_cells=list,
+               step=cython.uint, vol_green=cython.uint, vol_red=cython.uint, vol_border=cython.uint,
+               tempdir=cython.basestring,
+               rs=object)
+def multidim_search_BMNN22_opt_0(xspace: Rectangle,
+                                 oracles: List[Oracle],
+                                 num_samples: int,
+                                 num_cells: int,
+                                 blocking: bool = False,
+                                 sleep: float = 0.0,
+                                 logging: bool = True) -> ParResultSet:
+    # type: (Rectangle, list[Oracle], int, int, bool, float, bool) -> ParResultSet
+    cells = xspace.cell_partition_bin(num_cells)
+    border = list()
+    green = list()
+    red = list()
+    d = xspace.dim()
+    step = 0
+
+    p = Pool(cpu_count())
+    args = ((cell, copy.deepcopy(oracles), num_samples, d) for cell in cells)
+    green_cells = p.map(process_fix, args)
+    step = step + 1
+    vol_green, vol_red, vol_border = 0.0, 0.0, 0.0  # Area of all the regions for debugging purposess
+    tempdir = tempfile.mkdtemp()
+    RootSearch.logger.info('Report\nStep, Red, Green, Border, Total, nRed, nGreen, nBorder')
+    RootSearch.logger.info(
+        '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(step, vol_red, vol_green, vol_border, xspace.volume(), len(red),
+                                                        len(green), len(border)))  # 0th step
+    for i, cell in enumerate(cells):
+        if green_cells[i]:
+            green.append(cell)
+            vol_green = vol_green + cell.volume()
+        else:
+            red.append(cell)
+            vol_red = vol_red + cell.volume()
+            RootSearch.logger.info(
+                '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(step, vol_red, vol_green, vol_border, xspace.volume(),
+                                                            len(red), len(green), len(border)))
+        # Visualization
+        if sleep > 0.0:
+            rs = ParResultSet(border, red, green, xspace)
+            if d == 2:
+                rs.plot_2D_light(blocking=blocking, sec=sleep, opacity=0.7)
+            elif d == 3:
+                rs.plot_3D_light(blocking=blocking, sec=sleep, opacity=0.7)
+
+        if logging:
+            rs = ParResultSet(border, red, green, xspace)
+            name = os.path.join(tempdir, str(step))
+            rs.to_file(name)
+
+    p.close()
+    p.join()
+    return ParResultSet(border=border, ylow=red, yup=green, xspace=xspace)
+
+
+# Dynamic size cell method
+def process_dyn(args: Tuple[Rectangle,
+                            List[Oracle],
+                            int,
+                            int,
+                            float,
+                            Tuple[float]]) -> Tuple[Rectangle, Union[bool,None]]:
+    cell, oracles, num_samples, d, ps, g = args
+
+    fs = [ora.membership() for ora in oracles]
+
+    # Take num_samples uniformly between cell.min_corner and cell.max_corner
+    samples = cell.uniform_sampling(num_samples)
+    all_fs_in_sample = (all(f(s) for f in fs) for s in samples)
+    counter = sum(all_fs_in_sample)
+    if counter == 0:
+        return cell, False
+    elif counter / num_samples >= ps or less_equal(cell.diag_vector(), g):
+        return cell, True
+    return cell, None
+
+
+@cython.ccall
+@cython.returns(object)
+@cython.locals(xspace=object, oracles=list, num_samples=cython.uint, num_cells=cython.uint, g=tuple,
+               blocking=cython.bint, sleep=cython.double, logging=cython.bint, ps=cython.double, m=cython.uint,
+               args=tuple, cols_list=list, green=list, red=list, border=list, step=cython.uint,
+               tempdir=cython.basestring)
+def multidim_search_BMNN22_opt_1(xspace: Rectangle,
+                                 oracles: List[Oracle],
+                                 num_samples: int,
+                                 g: Tuple[float],
+                                 blocking: bool = False,
+                                 sleep: float = 0.0,
+                                 logging: bool = True,
+                                 ps: float = 0.95) -> ParResultSet:
+    # type: (Rectangle, list[Oracle], int, tuple[float], bool, float, bool, float) -> ParResultSet
+
+    green = list()
+    red = list()
+    border = list()
+    step = 0
+    d = xspace.dim()
+    p = Pool(cpu_count())
+
+    # Create temporary directory for storing the result of each step
+    tempdir = tempfile.mkdtemp()
+    cell_list = [xspace]
+
+    while len(cell_list) > 0:
+        args = ((cell, copy.deepcopy(oracles), num_samples, d, ps, g) for cell in cell_list)
+        cols_list = p.map(process_dyn, args)
+        cell_list = list()
+        for (cell, is_green) in cols_list:
+            if is_green is None:
+                n = pow(2, d)
+                cell_list = cell_list + cell.cell_partition_bin(n)
+            elif is_green:
+                green.append(cell)
+            else:
+                red.append(cell)
+
+    if logging:
+        rs = ParResultSet(border, red, green, xspace)
+        name = os.path.join(tempdir, str(step))
+        rs.to_file(name)
+    
+    p.close()
+    p.join()
+    return ParResultSet(border, red, green, xspace)
