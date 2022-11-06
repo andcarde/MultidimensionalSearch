@@ -472,7 +472,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 # self.oracle.from_file(stl_prop_file_2, human_readable=True)
                 RootGUI.logger.debug('Method 2...')
                 rs = SearchND_2_BMNN22(ora_list=self.oracles,
-                                   intervals=intervals,
+                                   list_intervals=intervals,
                                    blocking=False,
                                    num_cells=25,
                                    sleep=0.0,

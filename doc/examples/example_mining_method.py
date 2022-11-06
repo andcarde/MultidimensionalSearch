@@ -226,6 +226,7 @@ def plot_prueba_mining_method(min_cor, max_cor, n, alpha, p0, filenames):
         ora = OracleSTLeLib()
         ora.from_file(f,True)  
         oracle_list.append(ora)
+    start = time.time()
     rs = mining_method_seq_fix(space, n, alpha, p0, oracle_list)
     end = time.time()
     print(end-start)
