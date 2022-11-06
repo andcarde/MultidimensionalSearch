@@ -140,6 +140,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.has_been_saved = False
 
     def closeEvent(self, event):
+        def is_non_zero_file(fpath):
+            return os.path.isfile(fpath) and os.path.getsize(fpath) > 0
+
         try:
             if self.project_path is not None and not self.has_been_saved:
                 title = "Close Project?"
@@ -152,13 +155,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     event.accept()
                 elif reply == QMessageBox.No:
                     # Check if the file is empty, if it is we delete the file, otherwise we leave it as it is
-                    if len(open(''.join(self.project_path), 'r').readlines()) == 0:
-                        os.remove(''.join(self.project_path))
+                    project_filename = ''.join(self.project_path)
+                    if is_non_zero_file(project_filename):
+                        os.remove(project_filename)
                     event.accept()
                 else:
                     event.ignore()
-        except Exception as ex:
-            print(ex.message())
+        except Exception as e:
+            RootGUI.logger.debug(e.message())
             event.accept()
 
     def save_project(self):
@@ -182,7 +186,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # Open the folder where we are going to save the project
         self.project_path = QFileDialog.getSaveFileName(self, "Create project", "./Projects", ".json")
         # Create the JSON file where we are going to save the configuration options
-        saved_file = open(''.join(self.project_path), 'w')
+        project_filename = ''.join(self.project_path)
+        saved_file = open(project_filename, 'w')
 
         saved_file.close()
 
@@ -210,7 +215,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
             self.data["options"] = options
 
-            saved_file = open(''.join(self.project_path), 'w')
+            project_filename = ''.join(self.project_path)
+            saved_file = open(project_filename, 'w')
             saved_file.write(json.dumps(self.data, indent=2))
             saved_file.close()
         except:
@@ -221,8 +227,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.project_path = QFileDialog.getOpenFileName(self, "Open project", "./Projects", "(*.json)")
 
         # Open the file with option read
-        self.project_path = self.project_path[0]
-        load_path = open(''.join(self.project_path), 'r')
+        project_filename = ''.join(self.project_path[0])
+        load_path = open(project_filename, 'r')
 
         data = json.load(load_path)
 
