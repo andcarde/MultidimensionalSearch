@@ -421,7 +421,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             RootGUI.logger.debug(csv_signal_file)
             RootGUI.logger.debug(stl_param_file)
 
-            # Read parameter intervals
+            # Read parameter intervals --> Guarda los parámetros
             intervals = self.read_parameters_intervals()
             RootGUI.logger.debug('Intervals:')
             RootGUI.logger.debug(intervals)
