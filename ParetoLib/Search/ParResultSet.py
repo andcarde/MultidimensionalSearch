@@ -27,6 +27,7 @@ import cython
 
 from ParetoLib.Geometry.Rectangle import Rectangle
 from ParetoLib.Geometry.ParRectangle import pvertices, pinside, pvol
+from scipy.spatial.distance import directed_hausdorff as dhf
 
 from ParetoLib.Search.ResultSet import ResultSet
 
@@ -239,3 +240,28 @@ class ParResultSet(ResultSet):
         # p.join()
         # return any(isMember)
         return self.member_space(xpoint) and not self.member_yup(xpoint) and not self.member_ylow(xpoint)
+    
+    @cython.locals(rs_list=list, yup_verts=set, yup_other=set)
+    @cython.returns(tuple)
+    def select_champion(self, rs_list):
+        # type: (ParResultSet, list[ParResultSet]) -> tuple
+        yup_verts = self.vertices_yup()
+        yup_other = set()
+        for rs in rs_list:
+            yup_other = yup_other.union(rs.vertices_yup())
+        dist_tup = (dhf(list(yup_verts),list(yup_other)), dhf(list(yup_other), list(yup_verts)))
+        if dist_tup[0] >= dist_tup[1]:
+            return (dist_tup[0][0], yup_verts[dist_tup[0][1]], yup_other[dist_tup[0][2]])
+        else:
+            return (dist_tup[1][0], yup_verts[dist_tup[1][2]], yup_other[dist_tup[1][1]])
+
+@cython.locals(rs_list=list, args=tuple, p=object, dist_list=list)
+@cython.returns(list)
+def champions_selection(rs_list):
+    # type: (list[ParResultSet]) -> list(tuple)
+    args = ((rs,rs_list) for rs in rs_list)
+    p = Pool(cpu_count())
+    dist_list = list(p.map(lambda rs, rslist : rs.select_champion(rslist), args))
+    p.close()
+    p.join()
+    return dist_list
