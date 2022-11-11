@@ -29,6 +29,7 @@ import tempfile
 import cython
 # import shutil
 
+from scipy.spatial.distance import directed_hausdorff as dhf
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.figure import Figure
@@ -842,7 +843,8 @@ class ResultSet(object):
     # @cython.ccall
     @cython.locals(filename=str, xaxe=cython.ushort, yaxe=cython.ushort, var_names=list, blocking=cython.bint,
                    sec=cython.double, opacity=cython.double, fig_title=str, fig1=object, embedded_fig=cython.bint,
-                   ax1_list=list, ax1=object, pathpatch_yup=list, pathpatch_ylow=list, pathpatch_border=list, pathpatch=list)
+                   ax1_list=list, ax1=object, pathpatch_yup=list, pathpatch_ylow=list, pathpatch_border=list,
+                   pathpatch=list)
     @cython.returns(object)
     def plot_2D_light(self,
                       filename='',
@@ -1510,3 +1512,33 @@ class ResultSet(object):
             os.rmdir(tempdir)
         except OSError:
             RootSearch.logger.error('Unexpected error when removing folder {0}: {1}'.format(tempdir, sys.exc_info()[0]))
+
+    @cython.locals(rs_list=list, yup_verts=set, yup_other=set)
+    @cython.returns(tuple)
+    def select_champion(self, rs_list):
+        # type: (ResultSet, list[ResultSet]) -> tuple
+        current_class = self.vertices_yup()
+        other_classes = set()
+        other_classes_generator = (rs.vertices_yup() for rs in rs_list if rs != self)
+        other_classes = other_classes.union(*other_classes_generator)
+
+        # Adapt data type to directed_hausdorff format. Besides, lists allow indexing.
+        current_class_list = list(current_class)
+        # Removing current_class vertices from other_classes may raise errors when current_class
+        # is strictly included inside other_classes
+        other_classes_list = list(other_classes - current_class)
+
+        # dist_current_to_others, current_index, index_other_classes = dhf(current_class_list, other_classes_list)
+        # dist_others_to_current, index_other_classes, current_index = dhf(other_classes_list, current_class_list)
+
+        # TODO: Check that dist_others_to_current is not necessary according to the paper
+        distance, current_index, index_other_classes = dhf(current_class_list, other_classes_list)
+
+        return distance, current_index, index_other_classes
+
+
+@cython.locals(rs_list=list)
+@cython.returns(list)
+def champions_selection(rs_list):
+    # type: (list[ResultSet]) -> list(tuple)
+    return [rs.select_champion(rs_list) for rs in rs_list]
