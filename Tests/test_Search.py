@@ -5,7 +5,7 @@ import os
 import numpy as np
 import pytest
 
-from ParetoLib.Search.Search import Search2D, Search3D, SearchND, SearchND_2_BMNN22
+from ParetoLib.Search.Search import Search2D, Search3D, SearchND, SearchND_BMNN22
 from ParetoLib.Search.ResultSet import ResultSet
 
 from ParetoLib.Oracle.OracleFunction import OracleFunction
@@ -170,33 +170,33 @@ class SearchTestCase(unittest.TestCase):
                 print('Optimisation level {0}'.format(opt_level))
                 print('Parallel search {0}'.format(False))
 
-                rs = SearchND_2_BMNN22(ora_list=self.oracle,
-                                       min_corner=self.min_c,
-                                       max_corner=self.max_c,
-                                       p0=self.P0,
-                                       alpha=self.ALPHA,
-                                       num_cells=self.NUMCELLS,
-                                       blocking=False,
-                                       sleep=SLEEP_TIME,
-                                       opt_level=opt_level,
-                                       parallel=False,
-                                       logging=False,
-                                       simplify=False)
+                rs = SearchND_BMNN22(ora_list=[self.oracle],
+                                     min_corner=self.min_c,
+                                     max_corner=self.max_c,
+                                     p0=self.P0,
+                                     alpha=self.ALPHA,
+                                     num_cells=self.NUMCELLS,
+                                     blocking=False,
+                                     sleep=SLEEP_TIME,
+                                     opt_level=opt_level,
+                                     parallel=False,
+                                     logging=False,
+                                     simplify=False)
 
                 print('Parallel search {0}'.format(True))
 
-                rs_par = SearchND_2_BMNN22(ora_list=self.oracle,
-                                           min_corner=self.min_c,
-                                           max_corner=self.max_c,
-                                           p0=self.P0,
-                                           alpha=self.ALPHA,
-                                           num_cells=self.NUMCELLS,
-                                           blocking=False,
-                                           sleep=SLEEP_TIME,
-                                           opt_level=opt_level,
-                                           parallel=True,
-                                           logging=False,
-                                           simplify=False)
+                rs_par = SearchND_BMNN22(ora_list=[self.oracle],
+                                         min_corner=self.min_c,
+                                         max_corner=self.max_c,
+                                         p0=self.P0,
+                                         alpha=self.ALPHA,
+                                         num_cells=self.NUMCELLS,
+                                         blocking=False,
+                                         sleep=SLEEP_TIME,
+                                         opt_level=opt_level,
+                                         parallel=True,
+                                         logging=False,
+                                         simplify=False)
 
                 # TODO: Compare rs and rs_par. Assert that all the boxes in the green/red regions in rs are also in rs_par (i.e., ResultSets are equal)
                 # set(rs.yup) == set(rs_par.yup) ...
@@ -474,6 +474,7 @@ class SearchOracleSTLeLibTestCase(SearchTestCase):
         list_test_files = [os.path.join(test_dir, x) for x in files_path if x.endswith('.txt')]
         num_files_test = min(self.numfiles_test, len(list_test_files))
         list_test_files = sorted(list_test_files)[:num_files_test]
+        print("Files: {0}".format(list_test_files))
         self.search_verify_ND_BMNN22(human_readable=True, list_test_files=list_test_files)
 
 
