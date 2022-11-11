@@ -27,9 +27,9 @@ from itertools import chain, combinations  # combinations_with_replacement
 import zipfile
 import tempfile
 import cython
-from scipy.spatial.distance import directed_hausdorff as dhf
 # import shutil
 
+from scipy.spatial.distance import directed_hausdorff as dhf
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.figure import Figure
@@ -843,7 +843,8 @@ class ResultSet(object):
     # @cython.ccall
     @cython.locals(filename=str, xaxe=cython.ushort, yaxe=cython.ushort, var_names=list, blocking=cython.bint,
                    sec=cython.double, opacity=cython.double, fig_title=str, fig1=object, embedded_fig=cython.bint,
-                   ax1_list=list, ax1=object, pathpatch_yup=list, pathpatch_ylow=list, pathpatch_border=list, pathpatch=list)
+                   ax1_list=list, ax1=object, pathpatch_yup=list, pathpatch_ylow=list, pathpatch_border=list,
+                   pathpatch=list)
     @cython.returns(object)
     def plot_2D_light(self,
                       filename='',
@@ -1511,7 +1512,6 @@ class ResultSet(object):
             os.rmdir(tempdir)
         except OSError:
             RootSearch.logger.error('Unexpected error when removing folder {0}: {1}'.format(tempdir, sys.exc_info()[0]))
-    
 
     @cython.locals(rs_list=list, yup_verts=set, yup_other=set)
     @cython.returns(tuple)
@@ -1521,15 +1521,15 @@ class ResultSet(object):
         yup_other = set()
         for rs in rs_list:
             yup_other = yup_other.union(rs.vertices_yup())
-        dist_tup = (dhf(list(yup_verts),list(yup_other)), dhf(list(yup_other), list(yup_verts)))
+        dist_tup = (dhf(list(yup_verts), list(yup_other)), dhf(list(yup_other), list(yup_verts)))
         if dist_tup[0] >= dist_tup[1]:
-            return (dist_tup[0][0], yup_verts[dist_tup[0][1]], yup_other[dist_tup[0][2]])
+            return dist_tup[0][0], yup_verts[dist_tup[0][1]], yup_other[dist_tup[0][2]]
         else:
-            return (dist_tup[1][0], yup_verts[dist_tup[1][2]], yup_other[dist_tup[1][1]])
+            return dist_tup[1][0], yup_verts[dist_tup[1][2]], yup_other[dist_tup[1][1]]
+
 
 @cython.locals(rs_list=list)
 @cython.returns(list)
 def champions_selection(rs_list):
     # type: (list[ResultSet]) -> list(tuple)
     return [rs.select_champion(rs_list) for rs in rs_list]
-
