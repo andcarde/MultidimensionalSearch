@@ -104,10 +104,14 @@ if __name__ == '__main__':
             'pandas>=1.3.0',
             'PyQt5>=5.15.6',
             'pytest>=2.0',
+            'scipy>=1.9.3',
             'seaborn>=0.11.2',
+            'setuptools>=63.2.0',
             'sortedcontainers>=1.5.10',
+            'typing >= 3.7.4.3',
+            'typing_extensions>=4.4.0',
             'sympy>=1.1.1',
-            'wheel'
+            'wheel>=0.38.4'
         ],
         ext_modules=cythonize(module_list=extension_list, exclude=exclude_list, nthreads=cpu_count()),
         # packages_dir={'': 'ParetoLib'},

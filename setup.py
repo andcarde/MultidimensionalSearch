@@ -28,12 +28,14 @@ if __name__ == '__main__':
             'pandas>=1.3.0',
             'PyQt5>=5.15.6',
             'pytest>=2.0',
-            'scipy >= 1.9.3',
+            'scipy>=1.9.3',
             'seaborn>=0.11.2',
+            'setuptools>=63.2.0',
             'sortedcontainers>=1.5.10',
-            'sympy>=1.1.1',
             'typing >= 3.7.4.3',
-            'typing_extensions >= 4.4.0'
+            'typing_extensions>=4.4.0',
+            'sympy>=1.1.1',
+            'wheel>=0.38.4'
         ],
         #packages_dir={'': 'ParetoLib'},
         #packages=find_packages(exclude=['ParetoLib._py3k', 'Tests']),

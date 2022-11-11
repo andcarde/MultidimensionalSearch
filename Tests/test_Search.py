@@ -44,7 +44,7 @@ class SearchTestCase(unittest.TestCase):
         self.EPS = 1e-5
         self.DELTA = 1e-5
         self.STEPS = 20
-        # TODO: Configure the remaining parameters
+        # Required for BMNN22
         self.P0 = 1e-2
         self.ALPHA = 5e-2
         self.NUMCELLS = 25
@@ -198,21 +198,10 @@ class SearchTestCase(unittest.TestCase):
                                          logging=False,
                                          simplify=False)
 
-                # TODO: Compare rs and rs_par. Assert that all the boxes in the green/red regions in rs are also in rs_par (i.e., ResultSets are equal)
                 # set(rs.yup) == set(rs_par.yup) ...
                 self.assertSetEqual(set(rs.yup), set(rs_par.yup))
                 self.assertSetEqual(set(rs.ylow), set(rs_par.ylow))
                 self.assertSetEqual(set(rs.border), set(rs_par.border))
-
-                # Create numpoints_verify vectors of dimension d
-                # Continuous uniform distribution over the stated interval.
-                # To sample Unif[a, b), b > a
-                # (b - a) * random_sample() + a
-                print('Dimension {0}'.format(d))
-                list_test_points = (self.max_c - self.min_c) * np.random.random_sample((self.numpoints_verify, d)) \
-                                   + self.min_c
-                print('Verifying {0}'.format(test))
-                self.verifyND(fora, rs, list_test_points)
 
 
 class SearchOracleFunctionTestCase(SearchTestCase):
@@ -474,7 +463,6 @@ class SearchOracleSTLeLibTestCase(SearchTestCase):
         list_test_files = [os.path.join(test_dir, x) for x in files_path if x.endswith('.txt')]
         num_files_test = min(self.numfiles_test, len(list_test_files))
         list_test_files = sorted(list_test_files)[:num_files_test]
-        print("Files: {0}".format(list_test_files))
         self.search_verify_ND_BMNN22(human_readable=True, list_test_files=list_test_files)
 
 
