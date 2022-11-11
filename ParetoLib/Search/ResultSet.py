@@ -1517,15 +1517,24 @@ class ResultSet(object):
     @cython.returns(tuple)
     def select_champion(self, rs_list):
         # type: (ResultSet, list[ResultSet]) -> tuple
-        yup_verts = self.vertices_yup()
-        yup_other = set()
-        for rs in rs_list:
-            yup_other = yup_other.union(rs.vertices_yup())
-        dist_tup = (dhf(list(yup_verts), list(yup_other)), dhf(list(yup_other), list(yup_verts)))
-        if dist_tup[0] >= dist_tup[1]:
-            return dist_tup[0][0], yup_verts[dist_tup[0][1]], yup_other[dist_tup[0][2]]
-        else:
-            return dist_tup[1][0], yup_verts[dist_tup[1][2]], yup_other[dist_tup[1][1]]
+        current_class = self.vertices_yup()
+        other_classes = set()
+        other_classes_generator = (rs.vertices_yup() for rs in rs_list if rs != self)
+        other_classes = other_classes.union(*other_classes_generator)
+
+        # Adapt data type to directed_hausdorff format. Besides, lists allow indexing.
+        current_class_list = list(current_class)
+        # Removing current_class vertices from other_classes may raise errors when current_class
+        # is strictly included inside other_classes
+        other_classes_list = list(other_classes - current_class)
+
+        # dist_current_to_others, current_index, index_other_classes = dhf(current_class_list, other_classes_list)
+        # dist_others_to_current, index_other_classes, current_index = dhf(other_classes_list, current_class_list)
+
+        # TODO: Check that dist_others_to_current is not necessary according to the paper
+        distance, current_index, index_other_classes = dhf(current_class_list, other_classes_list)
+
+        return distance, current_index, index_other_classes
 
 
 @cython.locals(rs_list=list)
