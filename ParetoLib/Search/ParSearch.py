@@ -2072,7 +2072,8 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
 
         # Remove elements of the slice_border from the original border
         # border = list(set(border).difference(set(slice_border)))
-        border -= slice_border
+        # border -= slice_border
+        del border[-chunk:]
 
         step += chunk
         remaining_steps = max_step - step
