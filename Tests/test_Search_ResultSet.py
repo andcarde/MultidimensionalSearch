@@ -8,7 +8,11 @@ from ParetoLib.Geometry.Rectangle import Rectangle
 
 from ParetoLib.Search.ParResultSet import ParResultSet
 from ParetoLib.Search.ResultSet import ResultSet
-from ParetoLib.Search.Search import create_2D_space, create_3D_space
+from ParetoLib.Search.Search import create_2D_space, create_3D_space, SearchND_BMNN22
+
+from ParetoLib.Search.CommonSearch import ALPHA, P0, NUMCELLS
+from ParetoLib.Oracle.OracleFunction import OracleFunction, Condition
+
 
 
 class ResultSetTestCase(unittest.TestCase):
@@ -546,6 +550,48 @@ class ResultSetTestCase(unittest.TestCase):
         # Remove tempfile
         # os.unlink(nfile)
         self.add_file_to_clean(nfile)
+
+    def test_champions_2D(self):
+        # type: (ResultSetTestCase) -> None
+        oracle_1 = OracleFunction()
+        oracle_2 = OracleFunction()
+
+        cond_1 = Condition("x**2 + y**2", "<", "1")
+        cond_2 = Condition("(x-1)**2 + (y-1)**2", "<", "1")
+        oracle_1.add(cond_1)
+        oracle_2.add(cond_2)
+
+        # By default, use min_corner in 0.0 and max_corner in 1.0
+        min_c = 0.0
+        max_c = 2.0
+
+        rs_1 = SearchND_BMNN22(ora_list=[oracle_1],
+                             min_corner=min_c,
+                             max_corner=max_c,
+                             p0=P0,
+                             alpha=ALPHA,
+                             num_cells=NUMCELLS,
+                             blocking=False,
+                             sleep=0,
+                             opt_level=0,
+                             parallel=False,
+                             logging=False,
+                             simplify=False)
+
+        rs_2 = SearchND_BMNN22(ora_list=[oracle_2],
+                               min_corner=min_c,
+                               max_corner=max_c,
+                               p0=P0,
+                               alpha=ALPHA,
+                               num_cells=NUMCELLS,
+                               blocking=False,
+                               sleep=0,
+                               opt_level=0,
+                               parallel=False,
+                               logging=False,
+                               simplify=False)
+
+        #TODO: Call champion selection
 
 
 ################

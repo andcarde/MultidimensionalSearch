@@ -36,7 +36,7 @@ class SearchIntersectionTestCase(unittest.TestCase):
         self.oracle_1.add(cond_1)
         self.oracle_2.add(cond_2)
 
-        # By default, use min_corner in 0.0 and max_corner in 1.0
+        # By default, use min_corner in 0.0 and max_corner in 2.0
         self.min_c = 0.0
         self.max_c = 2.0
         # Use N sample points for verifying that the result of the Pareto search is correct.
