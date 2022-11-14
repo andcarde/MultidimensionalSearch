@@ -20,7 +20,7 @@ coverage run -m --parallel-mode --concurrency=multiprocessing pytest test_Search
 #coverage run -m --parallel-mode --concurrency=multiprocessing pytest test_Search.py::SearchOracleSTLeLibTestCase::test_2D
 coverage run -m --parallel-mode --concurrency=multiprocessing pytest test_Search.py::SearchOracleSTLTestCase::test_1D
 #coverage run -m --parallel-mode --concurrency=multiprocessing pytest test_Search.py::SearchOracleSTLTestCase::test_2D
- coverage run -m --parallel-mode --concurrency=multiprocessing pytest pytest test_Search.py::SearchIntersectionTestCase::test_ND
+coverage run -m --parallel-mode --concurrency=multiprocessing pytest test_Search.py::SearchIntersectionTestCase::test_ND
 
 #coverage run -m --parallel-mode --concurrency=multiprocessing pytest test_Search.py
 if [ ! $MATLAB_INSTALLED ]
