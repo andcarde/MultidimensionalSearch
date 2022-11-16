@@ -5,7 +5,7 @@ from ParetoLib.Search.Search import Search2D, EPS, DELTA, STEPS
 # nfile = '../../../Tests/Oracle/OracleSTLe/2D/triangular/derivative/triangular_int.txt'
 # nfile = '../../../Tests/Oracle/OracleSTLe/2D/triangular/derivative/triangular_float.txt'
 # nfile = '../../../Tests/Oracle/OracleSTLe/2D/stabilization/derivative/stabilization.txt'
-nfile = '/Tests/Oracle/OracleSTLe/2D/stabilization/derivative/stabilization.txt'
+nfile = 'Tests/Oracle/OracleSTLe/2D/stabilization/derivative/stabilization.txt'
 human_readable = True
 
 # Definition of the n-dimensional space

@@ -146,7 +146,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         try:
             if self.project_path is not None and not self.has_been_saved:
                 title = "Close Project?"
-                message = "WARNING \n\nDo you want to save the changes you made to " + ''.join(self.project_path) + "?"
+                message = "WARNING \n\nDo you want to save the changes you made to " + self.project_path + "?"
                 reply = QMessageBox.question(self, title, message,
                                              QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
 
@@ -155,9 +155,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     event.accept()
                 elif reply == QMessageBox.No:
                     # Check if the file is empty, if it is we delete the file, otherwise we leave it as it is
-                    project_filename = ''.join(self.project_path)
-                    if is_non_zero_file(project_filename):
-                        os.remove(project_filename)
+                    #project_filename = ''.join(self.project_path)
+                    if is_non_zero_file(self.project_path):
+                        os.remove(self.project_path)
                     event.accept()
                 else:
                     event.ignore()
@@ -186,14 +186,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # Open the folder where we are going to save the project
         self.project_path = QFileDialog.getSaveFileName(self, "Create project", "./Projects", ".json")
         # Create the JSON file where we are going to save the configuration options
-        project_filename = ''.join(self.project_path)
-        saved_file = open(project_filename, 'w')
+        self.project_path = ''.join(self.project_path)
+        saved_file = open(self.project_path, 'w')
 
         saved_file.close()
 
     def save_data(self):
         try:
-            name_project = f'"name_project":"{self.project_path[0]}"'
+            name_project = f'"name_project":"{self.project_path}"'
             name_project_json = "{" + name_project + "}"
 
             # Create the JSON object to store all the necessary data
@@ -215,8 +215,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
             self.data["options"] = options
 
-            project_filename = ''.join(self.project_path)
-            saved_file = open(project_filename, 'w')
+            #project_filename = ''.join(self.project_path)
+            saved_file = open(self.project_path, 'w')
             saved_file.write(json.dumps(self.data, indent=2))
             saved_file.close()
         except:
@@ -227,8 +227,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.project_path = QFileDialog.getOpenFileName(self, "Open project", "./Projects", "(*.json)")
 
         # Open the file with option read
-        project_filename = ''.join(self.project_path[0])
-        load_path = open(project_filename, 'r')
+        self.project_path = ''.join(self.project_path[0])
+        load_path = open(self.project_path, 'r')
 
         data = json.load(load_path)
 
@@ -237,15 +237,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def load_data(self, data):
         self.spec_filepaths = data["stl_specification"]
-        if len(self.spec_filepaths) > 0:
+        if self.spec_filepaths and len(self.spec_filepaths) > 0:
             self.set_spec_filepath()
 
         self.signal_filepaths = data["signal_specification"]
-        if len(self.signal_filepaths) > 0:
+        if self.signal_filepaths and len(self.signal_filepaths) > 0:
             self.set_signal_filepath()
 
         self.param_filepath = data["param_specification"]
-        if len(self.param_filepath) > 0:
+        if self.param_filepath and len(self.param_filepath) > 0:
             self.set_param_filepath()
 
         num_params = len(data["parameters"])
