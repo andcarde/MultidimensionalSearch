@@ -1,33 +1,8 @@
 image: python:3.8
 
 stages:
-  - build_test
   - build
   - test
-
-build_test:
-  stage: build_test
-  variables:
-    QT_QPA_PLATFORM: "offscreen"
-  script:
-    - apt-get update
-    ## Configuring graphical interface
-    # - apt-get install -yqq xvfb
-    # - Xvfb :99 -screen 0 1280x720x24 -ac &
-    # - export DISPLAY=:99
-    ## Downloading requirements
-    - apt-get -y install openjdk-17-jre
-    - apt-get -y install python3-pip
-    - apt-get -y install python3-tk
-    - apt-get -y install python3-pytest
-    - apt-get -y install python3-pyqt5
-    - pip3 install pytest
-    ## Installing
-    - ./install.sh
-    ## Testing
-    - pytest --ignore=Tests/test_Search.py --ignore=Tests/test_Oracle_OracleMatlab.py
-    - cd Tests
-    - pytest test_Search.py::SearchOracleFunctionTestCase
 
 build:
   stage: build
@@ -36,8 +11,8 @@ build:
     ## Downloading requirements
     - apt-get -y install python3-pip
     ## Building
-    - python3 setup2.py bdist_wheel --universal
-    - python3 setup2.py bdist_egg
+    - python3 setup.py bdist_wheel --universal
+    - python3 setup.py bdist_egg
   artifacts:
     when: on_success
     paths:
@@ -66,9 +41,13 @@ test:
     - pip3 install coverage
     - pip3 install pytest
     - pip3 install pytest-timeout
+    ## Installing
     - cd dist/
     - pip3 install *.whl --user
+    ## Testing and Coverage
+    # - pytest --ignore=Tests/test_Search.py --ignore=Tests/test_Oracle_OracleMatlab.py
     - cd ../Tests
+    # - pytest test_Search.py::SearchOracleFunctionTestCase
     - ./coverage_all.sh
   coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
   artifacts:
@@ -78,4 +57,4 @@ test:
     reports:
       coverage_report:
         coverage_format: cobertura
-        path: coverage/index.html
+        path: Tests/coverage/index.html

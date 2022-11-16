@@ -588,7 +588,7 @@ def SearchND_BMNN22(ora_list,
     num_samples = ceil(log(alpha, 1.0 - p0))
 
     if parallel:
-        rs = ParSearch.multidim_search_BMNN22(xyspace, ora_list, num_samples, num_cells, num_cells, blocking, sleep, opt_level,
+        rs = ParSearch.multidim_search_BMNN22(xyspace, ora_list, num_samples, num_cells, blocking, sleep, opt_level,
                                               logging)
     else:
         rs = SeqSearch.multidim_search_BMNN22(xyspace, ora_list, num_samples, num_cells, blocking, sleep, opt_level,

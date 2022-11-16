@@ -1,0 +1,3 @@
+./stabilization/min_max/stabilization.stl
+./stabilization/stabilization.csv
+./stabilization/stabilization.param

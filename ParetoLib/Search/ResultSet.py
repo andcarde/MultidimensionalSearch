@@ -1523,18 +1523,23 @@ class ResultSet(object):
         other_classes = other_classes.union(*other_classes_generator)
 
         # Adapt data type to directed_hausdorff format. Besides, lists allow indexing.
-        current_class_list = list(current_class)
+        # current_class_list = list(current_class)
+        # other_classes_list = list(other_classes - current_class)
+        # Remove points in other classes that also belong to current class
+        other_classes_list = [point for point in other_classes if not self.member_yup(point)]
+        # Remove points in current class that also belong to other classes
+        current_class_list = [point for point in current_class for other_class in rs_list if
+                              not other_class.member_yup(point)]
+
         # Removing current_class vertices from other_classes may raise errors when current_class
         # is strictly included inside other_classes
-        other_classes_list = list(other_classes - current_class)
+        if len(current_class_list) == 0 or len(other_classes_list) == 0:
+            return 0, None, None
 
-        # dist_current_to_others, current_index, index_other_classes = dhf(current_class_list, other_classes_list)
-        # dist_others_to_current, index_other_classes, current_index = dhf(other_classes_list, current_class_list)
-
-        # TODO: Check that dist_others_to_current is not necessary according to the paper
+        # Checked: directed_haussdorf(self, rs_list)
         distance, current_index, index_other_classes = dhf(current_class_list, other_classes_list)
 
-        return distance, current_index, index_other_classes
+        return distance, current_class_list[current_index], other_classes_list[index_other_classes]
 
 
 @cython.locals(rs_list=list)
