@@ -17,7 +17,7 @@ from ParetoLib.Oracle.Oracle import Oracle
 if 'DISPLAY' not in os.environ:
     SLEEP_TIME = 0.0
 else:
-    SLEEP_TIME = 5.1
+    SLEEP_TIME = 0.1
 
 
 class SearchIntersectionTestCase(unittest.TestCase):
@@ -31,14 +31,14 @@ class SearchIntersectionTestCase(unittest.TestCase):
         self.oracle_1 = OracleFunction()
         self.oracle_2 = OracleFunction()
 
-        cond_1 = Condition("x**2 + y**2", "<", "1")
-        cond_2 = Condition("(x-1)**2 + (y-1)**2", "<", "1")
+        cond_1 = Condition("(x-1)**2 + (y-1)**2", "<", "0.75")
+        cond_2 = Condition("x**2 + y**2", "<", "0.75")
         self.oracle_1.add(cond_1)
         self.oracle_2.add(cond_2)
 
-        # By default, use min_corner in 0.0 and max_corner in 2.0
+        # By default, use min_corner in 0.0 and max_corner in 1.0
         self.min_c = 0.0
-        self.max_c = 2.0
+        self.max_c = 1.0
         # Use N sample points for verifying that the result of the Pareto search is correct.
         # We compare the membership of a point to a ResultSet closure and the answer of the Oracle.
         self.numpoints_verify = 30
@@ -53,7 +53,8 @@ class SearchIntersectionTestCase(unittest.TestCase):
         # type: (SearchIntersectionTestCase, callable, callable, ResultSet, tuple) -> bool
 
         test1 = fora_1(xpoint) and fora_2(xpoint) and (rs.member_yup(xpoint) or rs.member_border(xpoint))
-        test2 = (not fora_1(xpoint) or not fora_2(xpoint)) and (rs.member_ylow(xpoint) or rs.member_border(xpoint))
+        test2 = not fora_1(xpoint) and not fora_2(xpoint) and (not rs.member_yup(xpoint) or rs.member_border(xpoint))
+        test3 = not test1 and not test2 and (rs.member_ylow(xpoint) or rs.member_border(xpoint))
 
         print_string = 'Warning!\n'
         print_string += 'Testing {0}\n'.format(str(xpoint))
@@ -62,12 +63,12 @@ class SearchIntersectionTestCase(unittest.TestCase):
                                                                                             rs.member_border(xpoint),
                                                                                             rs.member_space(xpoint))
         print_string += 'Expecting\n'
-        print_string += '(inYup, inYlow): ({0}, {1})\n'.format(fora_1(xpoint), not fora_1(xpoint))
-        print_string += '(test1, test2): ({0}, {1})\n'.format(test1, test2)
+        print_string += '(inYup, inYlow): ({0}, {1})\n'.format(rs.member_yup(xpoint), not rs.member_yup(xpoint))
+        print_string += '(test1, test2, test3): ({0}, {1}, {2})\n'.format(test1, test2, test3)
 
-        self.assertTrue(test1 or test2, print_string)
+        self.assertTrue(test1 or test2 or test3, print_string)
 
-        return test1 or test2
+        return test1 or test2 or test3
 
     # Auxiliar function for reporting ND results
     def verifyND(self,
@@ -121,7 +122,7 @@ class SearchIntersectionTestCase(unittest.TestCase):
 
         for bool_val in (True, False):
             fora_1 = self.oracle_1.membership()
-            fora_2 = self.oracle_1.membership()
+            fora_2 = self.oracle_2.membership()
             d1 = self.oracle_1.dim()
             d2 = self.oracle_2.dim()
             self.assertEqual(d1, d2)

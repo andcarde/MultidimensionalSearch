@@ -147,7 +147,7 @@ def intersection_expansion_search(x,
     if member1(y.low) and member2(y.high):
         # All the cube belongs to B1
         intersect_indicator = INTERFULL
-    elif (not member1(y.high)) or (not member2(y.low)):
+    elif (not member1(y.high)) and (not member2(y.low)):
         # All the cube belongs to B0
         y.low = x.high
         y.high = x.high

@@ -1890,11 +1890,9 @@ def multidim_intersection_search_opt_0_partial(xspace, list_constraints,
                 end_max = tuple(i + (j - i) * max_bound for i, j in zip(xrectangle.min_corner, xrectangle.max_corner))
                 mod_rectangle = Rectangle(end_min, end_max)
                 rect_diag = mod_rectangle.diag()
-                y_in, y_cover, intersect_indicator, steps_binsearch = intersection_expansion_search(rect_diag, f1, f2,
-                                                                                                    error, False)
-            else:
-                y_in, y_cover, intersect_indicator, steps_binsearch = intersection_expansion_search(rect_diag, f1, f2,
-                                                                                                    error, False)
+
+            y_in, y_cover, intersect_indicator, steps_binsearch = intersection_expansion_search(rect_diag, f1, f2,
+                                                                                                error, False)
             RootSearch.logger.debug('y_in: {0}'.format(y_in))
             RootSearch.logger.debug('y_cover: {0}'.format(y_cover))
 
