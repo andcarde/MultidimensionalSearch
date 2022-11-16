@@ -122,7 +122,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # Store the relative path where we're gonna store the projects in a variable
         # This path is created having the PYTHONPATH variable set to the directory multidimensional_search, if your
         # variable points to another direction you can change it
-        self.path_project = "./Projects"
+        self.path_project = os.path.abspath('multidimensional_search/Projects')
+        #self.path_project = "./Projects"
         self.project_path = None
         self.has_been_saved = False
         self.parallel = False
@@ -292,6 +293,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             with open(self.spec_filepath_textbox.toPlainText()) as file:
                 lines = file.readlines()
             self.formula_textEdit.setPlainText(''.join(lines))
+            self.not_saved()
         except Exception as e:
             RootGUI.logger.debug(e)
 
@@ -306,6 +308,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         try:
             self.signal_filepath_textbox.setPlainText("\n".join(fname for fname in self.signal_filepaths))
             self.plot_csv()
+            self.not_saved()
         except Exception as e:
             RootGUI.logger.debug(e)
 
@@ -320,6 +323,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         try:
             self.param_filepath_textbox.setPlainText(self.param_filepath)
             self.load_parameters(self.param_filepath)
+            self.not_saved()
         except Exception as e:
             RootGUI.logger.debug(e)
 
@@ -477,6 +481,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                                             simplify=False)
             elif method == 2:
                 # TODO: Use SearchND_2_BMNN22 rather than Search_BMNN22
+                #self.signal_filepaths = [self.signal_filepaths[0], self.signal_filepaths[0], self.signal_filepaths[0]]
                 self.oracles = [OracleSTLeLib(stl_prop_file, csv_signal_file, stl_param_file) for csv_signal_file in
                                 self.signal_filepaths]
                 # self.oracle.from_file(stl_prop_file, human_readable=True)
