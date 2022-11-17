@@ -1339,14 +1339,14 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
         RootSearch.logger.info(
             '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_total, len(border), steps_binsearch))
         if sleep > 0.0:
-            rs = ResultSet(border, [], intersect_region, xspace)
+            rs = ResultSet(border, intersect_region, intersect_box, xspace)
             if n == 2:
                 rs.plot_2D_light(blocking=blocking, sec=sleep, opacity=0.7)
             elif n == 3:
                 rs.plot_3D_light(blocking=blocking, sec=sleep, opacity=0.7)
 
         if logging:
-            rs = ResultSet(border, [], intersect_region, xspace)
+            rs = ResultSet(border, intersect_region, intersect_box, xspace)
             name = os.path.join(tempdir, str(step))
             rs.to_file(name)
 
@@ -1355,6 +1355,8 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
     RootSearch.logger.info('total volume: {0}'.format(vol_total))
     RootSearch.logger.info('percentage unexplored: {0}'.format((100.0 * vol_border) / vol_total))
 
+    # intersect_box = green region for both oracles
+    # intersect_region = rectangle containing intersect_box
     return ResultSet(border, intersect_region, intersect_box, xspace)
 
 
@@ -1562,14 +1564,14 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
         RootSearch.logger.info(
             '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_xrest + vol_boxes, len(border), steps_binsearch))
         if sleep > 0.0:
-            rs = ResultSet(border, [], intersect_region, xspace)
+            rs = ResultSet(border, intersect_region, intersect_box, xspace)
             if n == 2:
                 rs.plot_2D_light(blocking=blocking, sec=sleep, opacity=0.7)
             elif n == 3:
                 rs.plot_3D_light(blocking=blocking, sec=sleep, opacity=0.7)
 
         if logging:
-            rs = ResultSet(border, [], intersect_region, xspace)
+            rs = ResultSet(border, intersect_region, intersect_box, xspace)
             name = os.path.join(tempdir, str(step))
             rs.to_file(name)
 
@@ -1578,6 +1580,8 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
     RootSearch.logger.info('total volume: {0}'.format(vol_total))
     RootSearch.logger.info('percentage unexplored: {0}'.format((100.0 * vol_border) / vol_total))
 
+    # intersect_box = green region for both oracles
+    # intersect_region = rectangle containing intersect_box
     return ResultSet(border, intersect_region, intersect_box, xspace)
 
 
@@ -1730,14 +1734,14 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
         RootSearch.logger.info(
             '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_xrest + vol_boxes, len(border), steps_binsearch))
         if sleep > 0.0:
-            rs = ResultSet(border, [], intersect_region, xspace)
+            rs = ResultSet(border, intersect_region, intersect_box, xspace)
             if n == 2:
                 rs.plot_2D_light(blocking=blocking, sec=sleep, opacity=0.7)
             elif n == 3:
                 rs.plot_3D_light(blocking=blocking, sec=sleep, opacity=0.7)
 
         if logging:
-            rs = ResultSet(border, [], intersect_region, xspace)
+            rs = ResultSet(border, intersect_region, intersect_box, xspace)
             name = os.path.join(tempdir, str(step))
             rs.to_file(name)
 
@@ -1746,6 +1750,8 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
     RootSearch.logger.info('total volume: {0}'.format(vol_total))
     RootSearch.logger.info('percentage unexplored: {0}'.format((100.0 * vol_border) / vol_total))
 
+    # intersect_box = green region for both oracles
+    # intersect_region = rectangle containing intersect_box
     return ResultSet(border, intersect_region, intersect_box, xspace)
 
 
