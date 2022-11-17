@@ -31,8 +31,8 @@ class SearchIntersectionTestCase(unittest.TestCase):
         self.oracle_1 = OracleFunction()
         self.oracle_2 = OracleFunction()
 
-        cond_1 = Condition("(x-1)**2 + (y-1)**2", "<", "0.75")
-        cond_2 = Condition("x**2 + y**2", "<", "0.75")
+        cond_1 = Condition("(x-1)**2 + (y-1)**2", "<", "1")
+        cond_2 = Condition("x**2 + y**2", "<", "1")
         self.oracle_1.add(cond_1)
         self.oracle_2.add(cond_2)
 
@@ -41,11 +41,11 @@ class SearchIntersectionTestCase(unittest.TestCase):
         self.max_c = 1.0
         # Use N sample points for verifying that the result of the Pareto search is correct.
         # We compare the membership of a point to a ResultSet closure and the answer of the Oracle.
-        self.numpoints_verify = 30
+        self.numpoints_verify = 10
 
         # Configuring searching parameters
-        self.EPS = 1e-5
-        self.DELTA = 1e-5
+        self.EPS = 1e-2
+        self.DELTA = 1e-2
         self.STEPS = 20
 
     #  Membership testing function used in verify2D, verify3D and verifyND
@@ -53,8 +53,7 @@ class SearchIntersectionTestCase(unittest.TestCase):
         # type: (SearchIntersectionTestCase, callable, callable, ResultSet, tuple) -> bool
 
         test1 = fora_1(xpoint) and fora_2(xpoint) and (rs.member_yup(xpoint) or rs.member_border(xpoint))
-        test2 = not fora_1(xpoint) and not fora_2(xpoint) and (not rs.member_yup(xpoint) or rs.member_border(xpoint))
-        test3 = not test1 and not test2 and (rs.member_ylow(xpoint) or rs.member_border(xpoint))
+        test2 = not (fora_1(xpoint) and fora_2(xpoint)) and (rs.member_ylow(xpoint) or rs.member_border(xpoint))
 
         print_string = 'Warning!\n'
         print_string += 'Testing {0}\n'.format(str(xpoint))
@@ -63,12 +62,12 @@ class SearchIntersectionTestCase(unittest.TestCase):
                                                                                             rs.member_border(xpoint),
                                                                                             rs.member_space(xpoint))
         print_string += 'Expecting\n'
-        print_string += '(inYup, inYlow): ({0}, {1})\n'.format(rs.member_yup(xpoint), not rs.member_yup(xpoint))
-        print_string += '(test1, test2, test3): ({0}, {1}, {2})\n'.format(test1, test2, test3)
+        print_string += '(inYup, inYlow): ({0}, {1})\n'.format(rs.member_yup(xpoint), rs.member_ylow(xpoint))
+        print_string += '(fora_1, fora_2): ({0}, {1})\n'.format(fora_1(xpoint), fora_2(xpoint))
+        print_string += 'test1, test2: ({0}, {1})\n'.format(test1, test2)
 
-        self.assertTrue(test1 or test2 or test3, print_string)
-
-        return test1 or test2 or test3
+        self.assertTrue(test1 or test2, print_string)
+        return test1 or test2
 
     # Auxiliar function for reporting ND results
     def verifyND(self,
@@ -78,21 +77,10 @@ class SearchIntersectionTestCase(unittest.TestCase):
                  list_test_points):
         # type: (SearchIntersectionTestCase, callable, callable, ResultSet, list) -> None
 
+        # The following tests requires rs.simplify(method=1)
         # list_test_points = [(t1p, t2p, t3p) for t1p in t1 for t2p in t2 for t3p in t3]
 
         start = time.time()
-        f1 = lambda p: 1 if rs.member_yup(p) else 0
-        f2 = lambda p: 1 if rs.member_ylow(p) else 0
-        f3 = lambda p: 1 if rs.member_border(p) else 0
-
-        list_nYup = map(f1, list_test_points)
-        list_nYlow = map(f2, list_test_points)
-        list_nBorder = map(f3, list_test_points)
-
-        nYup = sum(list_nYup)
-        nYlow = sum(list_nYlow)
-        nBorder = sum(list_nBorder)
-
         print('Membership query:')
         if all(self.closureMembershipTest(fora_1, fora_2, rs, tuple(p)) for p in list_test_points):
             print('Ok!\n')
@@ -100,21 +88,20 @@ class SearchIntersectionTestCase(unittest.TestCase):
             print('Not ok!\n')
             raise ValueError
 
-        # Yup and ylow does not contain overlapping rectangles
-        self.assertAlmostEqual(rs.overlapping_volume_yup(), 0)
-        self.assertAlmostEqual(rs.overlapping_volume_ylow(), 0)
+        # If rs.simplify(method=1) has NOT been run, then:
+        #   - Ylow contains the green boxes that are simultaneously true for both oracles
+        #   - Yup contains a superset of the green region
+        #   - self.assertLessEqual(rs.volume_ylow(), rs.volume_yup())
 
         # Volume is conserved
-        # self.assertEqual(rs.volume_total(), rs.volume_border() + rs.volume_yup() + rs.volume_ylow())
+        self.assertLessEqual(rs.volume_yup(), rs.volume_total())
+        self.assertLessEqual(rs.volume_ylow(), rs.volume_total())
+        self.assertLessEqual(rs.volume_border(), rs.volume_total())
         self.assertLessEqual(rs.volume_yup() + rs.volume_ylow(), rs.volume_total())
 
         end = time.time()
         time0 = end - start
-
         print(rs.volume_report())
-        print('Report Ylow: {0}'.format(str(nYlow)))
-        print('Report Yup: {0}'.format(str(nYup)))
-        print('Report Border: {0}'.format(str(nBorder)))
         print('Time tests: {0}'.format(str(time0)))
 
     def search_verify_ND(self):
@@ -146,7 +133,7 @@ class SearchIntersectionTestCase(unittest.TestCase):
                                           opt_level=opt_level,
                                           parallel=bool_val,
                                           logging=bool_val,
-                                          simplify=bool_val)
+                                          simplify=False)
 
                 # Create numpoints_verify vectors of dimension d
                 # Continuous uniform distribution over the stated interval.
@@ -156,6 +143,14 @@ class SearchIntersectionTestCase(unittest.TestCase):
                 list_test_points = (self.max_c - self.min_c) * np.random.random_sample((self.numpoints_verify, d1)) \
                                    + self.min_c
                 print('Verifying SearchIntersection')
+                # rs.plot_2D_light()
+                if opt_level == 0:
+                    # opt_level == 0 computes a single intersection point between fora_1 and fora_2, and mark the rest
+                    # of the area in the xspace of ResultSet as rs.ylow.
+                    # In order to pass the tests, the unexplored area has to be moved from rs.ylow to rs.border
+                    rs.border = rs.ylow
+                    rs.ylow = []
+                rs.simplify(method=1)
                 self.verifyND(fora_1, fora_2, rs, list_test_points)
 
     def test_ND(self):

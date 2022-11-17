@@ -199,8 +199,8 @@ class ResultSet(object):
     # @cython.ccall
     @cython.locals(extended_ylow=list, extended_yup=list)
     @cython.returns(cython.void)
-    def simplify(self):
-        # type: (ResultSet) -> None
+    def simplify(self, method=0):
+        # type: (ResultSet, int) -> None
         # Remove single points from the yup and ylow closures, i.e., rectangles rect with:
         # rect.min_corner == rect.max_corner
         # These kind of rectangles appear when the dicothomic search cannot find an intersection of the diagonal
@@ -210,9 +210,19 @@ class ResultSet(object):
         # Single points may appear in the boundary, so we don't remove them
         # self.border = [li for li in self.border if li.norm() != 0]
 
-        # Get the highest (upper right) values of self.ylow; i.e., those points that are closer to self.yup
-        extended_ylow = [Rectangle(self.xspace.min_corner, r.max_corner) for r in self.ylow]
-        extended_yup = [Rectangle(r.min_corner, self.xspace.max_corner) for r in self.yup]
+        if method == 0:
+            # ResultSet has been computed using method BBMJ19
+            # Get the highest (upper right) values of self.ylow; i.e., those points that are closer to self.yup
+            extended_ylow = [Rectangle(self.xspace.min_corner, r.max_corner) for r in self.ylow]
+            extended_yup = [Rectangle(r.min_corner, self.xspace.max_corner) for r in self.yup]
+        else:
+            # ResultSet has been computed using method BDMJ20
+            # The area between the hightest (upper right) corner of self.yup and the xspace.max_corner
+            # belongs to self.ylow. Similarly for the lowest (lower left) corners of self.yup and the xspace.min_corner
+            extended_yup = self.yup
+            extended_ylow = Rectangle.difference_rectangles(self.xspace, self.border + self.yup)
+            # extended_ylow = [Rectangle(self.xspace.min_corner, r.min_corner) for r in self.yup] + \
+            #                 [Rectangle(r.max_corner, self.xspace.max_corner) for r in self.yup]
 
         # Get the lowest (lower left) values of self.yup; i.e., those points that are closer to self.ylow
         # extended_ylow = [Rectangle(self.xspace.min_corner, ylow_point) for ylow_point in self.get_points_pareto_ylow()]

@@ -320,7 +320,7 @@ def SearchIntersection2D(ora1, ora2,
         intersection_result = SeqSearch.multidim_intersection_search(xyspace, [], ora1, ora2, epsilon, delta, max_step,
                                                                      blocking, sleep, opt_level, logging)
     if simplify:
-        intersection_result.simplify()
+        intersection_result.simplify(method=1)
         intersection_result.fusion()
     return intersection_result
 
@@ -360,7 +360,7 @@ def SearchIntersection3D(ora1, ora2,
         intersection_result = SeqSearch.multidim_intersection_search(xyspace, [], ora1, ora2, epsilon, delta, max_step,
                                                                      blocking, sleep, opt_level, logging)
     if simplify:
-        intersection_result.simplify()
+        intersection_result.simplify(method=1)
         intersection_result.fusion()
     return intersection_result
 
@@ -399,7 +399,7 @@ def SearchIntersectionND(ora1, ora2,
         intersection_result = SeqSearch.multidim_intersection_search(xyspace, [], ora1, ora2, epsilon, delta, max_step,
                                                                      blocking, sleep, opt_level, logging)
     if simplify:
-        intersection_result.simplify()
+        intersection_result.simplify(method=1)
         intersection_result.fusion()
     return intersection_result
 
@@ -437,7 +437,7 @@ def SearchIntersectionND_2(ora1, ora2,
                                                                      delta, max_step, blocking, sleep, opt_level,
                                                                      logging)
     if simplify:
-        intersection_result.simplify()
+        intersection_result.simplify(method=1)
         intersection_result.fusion()
     return intersection_result
 
