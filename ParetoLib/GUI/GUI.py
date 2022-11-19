@@ -69,6 +69,10 @@ class StandardSolutionWindow(QWidget):
         canvas.set_axis()
         canvas.axes.step(x, y, where='post')  # where='pre'
         canvas.figure.tight_layout(pad=0)
+
+        # Create toolbar, passing canvas as first parament, parent (self, the MainWindow) as second.
+        toolbar = NavigationToolbar2QT(canvas, self)
+        self.layout().addWidget(toolbar)
         self.layout().addWidget(canvas)
 
 
@@ -122,8 +126,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # Store the relative path where we're gonna store the projects in a variable
         # This path is created having the PYTHONPATH variable set to the directory multidimensional_search, if your
         # variable points to another direction you can change it
-        self.path_project = os.path.abspath('multidimensional_search/Projects')
-        #self.path_project = "./Projects"
+        # self.path_project = os.path.abspath('multidimensional_search/Projects')
+        self.path_project = "./Projects"
         self.project_path = None
         self.has_been_saved = False
         self.parallel = False
