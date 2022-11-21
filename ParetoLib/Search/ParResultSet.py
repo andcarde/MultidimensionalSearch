@@ -243,10 +243,10 @@ class ParResultSet(ResultSet):
 @cython.locals(rs_list=list, args=tuple, p=object, dist_list=list)
 @cython.returns(list)
 def champions_selection(rs_list):
-    # type: (list[ParResultSet]) -> list(tuple)
+    # type: (list[ParResultSet]) -> list[tuple]
     args = ((rs, rs_list) for rs in rs_list)
     p = Pool(cpu_count())
-    dist_list = list(p.map(lambda rs, rslist: rs.select_champion(rslist), args))
+    dist_list = list(p.map(lambda rs, rs_list: rs.select_champion(rs_list), args))
     p.close()
     p.join()
     return dist_list
