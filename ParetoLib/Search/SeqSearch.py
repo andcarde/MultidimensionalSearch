@@ -1882,6 +1882,14 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
             red = red.union(set(temp_rs.ylow))
             border = border.union(set(temp_rs.border))
 
+    # Visualization
+    if sleep > 0.0:
+        rs = ResultSet(border, red, green, xspace)
+        if d == 2:
+            rs.plot_2D_light(blocking=blocking, sec=sleep, opacity=0.7)
+        elif d == 3:
+            rs.plot_3D_light(blocking=blocking, sec=sleep, opacity=0.7)
+
     if logging:
         rs = ResultSet(border=list(border), ylow=list(red), yup=list(green), xspace=xspace)
         name = os.path.join(tempdir, str(step))

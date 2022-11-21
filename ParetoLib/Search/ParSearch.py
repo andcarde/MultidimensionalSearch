@@ -2877,10 +2877,18 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
             else:
                 red.append(cell)
 
-    if logging:
-        rs = ParResultSet(border, red, green, xspace)
-        name = os.path.join(tempdir, str(step))
-        rs.to_file(name)
+        # Visualization
+        if sleep > 0.0:
+            rs = ParResultSet(border, red, green, xspace)
+            if d == 2:
+                rs.plot_2D_light(blocking=blocking, sec=sleep, opacity=0.7)
+            elif d == 3:
+                rs.plot_3D_light(blocking=blocking, sec=sleep, opacity=0.7)
+
+        if logging:
+            rs = ParResultSet(border, red, green, xspace)
+            name = os.path.join(tempdir, str(step))
+            rs.to_file(name)
     
     p.close()
     p.join()
