@@ -1337,11 +1337,9 @@ def pintersection_search_opt_0(args):
             end_max = tuple(i + (j - i) * max_bound for i, j in zip(xrectangle.min_corner, xrectangle.max_corner))
             mod_rectangle = Rectangle(end_min, end_max)
             rect_diag = mod_rectangle.diag()
-            y_in, y_cover, intersect_indicator, steps_binsearch = intersection_expansion_search(rect_diag, f1, f2,
-                                                                                                error, False)
-        else:
-            y_in, y_cover, intersect_indicator, steps_binsearch = intersection_expansion_search(rect_diag, f1, f2,
-                                                                                                error, False)
+
+        y_in, y_cover, intersect_indicator, steps_binsearch = intersection_expansion_search(rect_diag, f1, f2,
+                                                                                            error, False)
         RootSearch.logger.debug('y_in: {0}'.format(y_in))
         RootSearch.logger.debug('y_cover: {0}'.format(y_cover))
 
@@ -1715,8 +1713,8 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
     tempdir = tempfile.mkdtemp()
 
     RootSearch.logger.info('Report\nStep, Ylow, Yup, Border, Total, nYlow, nYup, nBorder')
-    while (vol_border >= vol_total * delta) and (step <= max_step) and (len(border) > 0) and (len(intersect_box) == 0) \
-            and (len(intersect_region) == 0):
+    while (vol_border >= vol_total * delta) and (remaining_steps > 0) and (len(border) > 0) and \
+            (len(intersect_box) == 0) and (len(intersect_region) == 0):
         # Divide the list of incomparable rectangles in chunks of 'num_proc' elements.
         # We get the 'num_proc' elements with highest volume.
 
@@ -1946,14 +1944,14 @@ def multidim_intersection_search_opt_0_partial(xspace, list_constraints,
                                              len(border),
                                              steps_binsearch))
         if sleep > 0.0:
-            rs = ParResultSet(border, [], intersect_region, xspace)
+            rs = ParResultSet(border, intersect_region, intersect_box, xspace)
             if n == 2:
                 rs.plot_2D_light(blocking=blocking, sec=sleep, opacity=0.7)
             elif n == 3:
                 rs.plot_3D_light(blocking=blocking, sec=sleep, opacity=0.7)
 
         if logging:
-            rs = ParResultSet(border, [], intersect_region, xspace)
+            rs = ParResultSet(border, intersect_region, intersect_box, xspace)
             name = os.path.join(tempdir, str(step))
             rs.to_file(name)
 
@@ -1966,6 +1964,8 @@ def multidim_intersection_search_opt_0_partial(xspace, list_constraints,
     p.close()
     p.join()
 
+    # intersect_box = green region for both oracles
+    # intersect_region = rectangle containing intersect_box
     return ParResultSet(border, intersect_region, intersect_box, xspace)
 
 
@@ -2058,7 +2058,7 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
     tempdir = tempfile.mkdtemp()
 
     RootSearch.logger.info('Report\nStep, Border, Total, nBorder, BinSearch')
-    while (vol_border >= vol_total * delta) and (step <= max_step) and (len(border) > 0):
+    while (vol_border >= vol_total * delta) and (remaining_steps > 0) and (len(border) > 0):
         # Divide the list of incomparable rectangles in chunks of 'num_proc' elements.
         # We get the 'num_proc' elements with highest volume.
 
@@ -2104,14 +2104,14 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
         RootSearch.logger.info(
             '{0}, {1}, {2}, {3}'.format(step, vol_border, vol_boxes + vol_xrest, len(border)))
         if sleep > 0.0:
-            rs = ParResultSet(border, [], intersect_region, xspace)
+            rs = ParResultSet(border, intersect_region, intersect_box, xspace)
             if n == 2:
                 rs.plot_2D_light(blocking=blocking, sec=sleep, opacity=0.7)
             elif n == 3:
                 rs.plot_3D_light(blocking=blocking, sec=sleep, opacity=0.7)
 
         if logging:
-            rs = ParResultSet(border, [], intersect_region, xspace)
+            rs = ParResultSet(border, intersect_region, intersect_box, xspace)
             name = os.path.join(tempdir, str(step))
             rs.to_file(name)
 
@@ -2124,6 +2124,8 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
     p.close()
     p.join()
 
+    # intersect_box = green region for both oracles
+    # intersect_region = rectangle containing intersect_box
     return ParResultSet(border, intersect_region, intersect_box, xspace)
 
 
@@ -2299,14 +2301,14 @@ def multidim_intersection_search_opt_1_partial(xspace, list_constraints,
         RootSearch.logger.info(
             '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_boxes + vol_xrest, len(border), steps_binsearch))
         if sleep > 0.0:
-            rs = ParResultSet(border, [], intersect_region, xspace)
+            rs = ParResultSet(border, intersect_region, intersect_box, xspace)
             if n == 2:
                 rs.plot_2D_light(blocking=blocking, sec=sleep, opacity=0.7)
             elif n == 3:
                 rs.plot_3D_light(blocking=blocking, sec=sleep, opacity=0.7)
 
         if logging:
-            rs = ParResultSet(border, [], intersect_region, xspace)
+            rs = ParResultSet(border, intersect_region, intersect_box, xspace)
             name = os.path.join(tempdir, str(step))
             rs.to_file(name)
 
@@ -2319,6 +2321,8 @@ def multidim_intersection_search_opt_1_partial(xspace, list_constraints,
     p.close()
     p.join()
 
+    # intersect_box = green region for both oracles
+    # intersect_region = rectangle containing intersect_box
     return ParResultSet(border, intersect_region, intersect_box, xspace)
 
 
@@ -2405,7 +2409,7 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
     tempdir = tempfile.mkdtemp()
 
     RootSearch.logger.info('Report\nStep, Border, Total, nBorder')
-    while (vol_border >= vol_total * delta) and (step <= max_step) and (len(border) > 0):
+    while (vol_border >= vol_total * delta) and (remaining_steps > 0) and (len(border) > 0):
         # Divide the list of incomparable rectangles in chunks of 'num_proc' elements.
         # We get the 'num_proc' elements with highest volume.
 
@@ -2448,14 +2452,14 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
 
         RootSearch.logger.info('{0}, {1}, {2}, {3}'.format(step, vol_border, vol_xrest + vol_boxes, len(border)))
         if sleep > 0.0:
-            rs = ParResultSet(border, [], intersect_region, xspace)
+            rs = ParResultSet(border, intersect_region, intersect_box, xspace)
             if n == 2:
                 rs.plot_2D_light(blocking=blocking, sec=sleep, opacity=0.7)
             elif n == 3:
                 rs.plot_3D_light(blocking=blocking, sec=sleep, opacity=0.7)
 
         if logging:
-            rs = ParResultSet(border, [], intersect_region, xspace)
+            rs = ParResultSet(border, intersect_region, intersect_box, xspace)
             name = os.path.join(tempdir, str(step))
             rs.to_file(name)
 
@@ -2468,6 +2472,8 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
     p.close()
     p.join()
 
+    # intersect_box = green region for both oracles
+    # intersect_region = rectangle containing intersect_box
     return ParResultSet(border, intersect_region, intersect_box, xspace)
 
 
@@ -2652,14 +2658,14 @@ def multidim_intersection_search_opt_2_partial(xspace, list_constraints,
                                              len(border),
                                              steps_binsearch))
         if sleep > 0.0:
-            rs = ParResultSet(border, [], intersect_region, xspace)
+            rs = ParResultSet(border, intersect_region, intersect_box, xspace)
             if n == 2:
                 rs.plot_2D_light(blocking=blocking, sec=sleep, opacity=0.7)
             elif n == 3:
                 rs.plot_3D_light(blocking=blocking, sec=sleep, opacity=0.7)
 
         if logging:
-            rs = ParResultSet(border, [], intersect_region, xspace)
+            rs = ParResultSet(border, intersect_region, intersect_box, xspace)
             name = os.path.join(tempdir, str(step))
             rs.to_file(name)
 
@@ -2672,6 +2678,8 @@ def multidim_intersection_search_opt_2_partial(xspace, list_constraints,
     p.close()
     p.join()
 
+    # intersect_box = green region for both oracles
+    # intersect_region = rectangle containing intersect_box
     return ParResultSet(border, intersect_region, intersect_box, xspace)
 
 
@@ -2869,10 +2877,18 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
             else:
                 red.append(cell)
 
-    if logging:
-        rs = ParResultSet(border, red, green, xspace)
-        name = os.path.join(tempdir, str(step))
-        rs.to_file(name)
+        # Visualization
+        if sleep > 0.0:
+            rs = ParResultSet(border, red, green, xspace)
+            if d == 2:
+                rs.plot_2D_light(blocking=blocking, sec=sleep, opacity=0.7)
+            elif d == 3:
+                rs.plot_3D_light(blocking=blocking, sec=sleep, opacity=0.7)
+
+        if logging:
+            rs = ParResultSet(border, red, green, xspace)
+            name = os.path.join(tempdir, str(step))
+            rs.to_file(name)
     
     p.close()
     p.join()

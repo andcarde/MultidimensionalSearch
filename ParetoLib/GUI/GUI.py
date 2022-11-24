@@ -51,9 +51,7 @@ class StandardSolutionWindow(QWidget):
         canvas = MplCanvas(parent=self)
         # Do not create axis because rs.plot_XD will adjust them to 2D/3D
 
-        # Create toolbar, passing canvas as first parament, parent (self, the MainWindow) as second.
-        toolbar = NavigationToolbar2QT(canvas, self)
-        self.layout().addWidget(toolbar)
+        self.set_toolbar(canvas)
         self.layout().addWidget(canvas)
 
         if rs.xspace.dim() == 2:
@@ -61,7 +59,12 @@ class StandardSolutionWindow(QWidget):
         elif rs.xspace.dim() == 3:
             rs.plot_3D_light(var_names=var_names, fig1=canvas.figure)
 
-    def set_bool_signal(self, bool_signal):
+    def set_toolbar(self, canvas):
+        # Create toolbar, passing canvas as first parament, parent (self, the MainWindow) as second.
+        toolbar = NavigationToolbar2QT(canvas, self)
+        self.layout().addWidget(toolbar)
+
+    def set_output_signal(self, bool_signal):
         # type: (_, dict) -> None
         x = bool_signal.keys()
         y = bool_signal.values()
@@ -69,6 +72,8 @@ class StandardSolutionWindow(QWidget):
         canvas.set_axis()
         canvas.axes.step(x, y, where='post')  # where='pre'
         canvas.figure.tight_layout(pad=0)
+
+        self.set_toolbar(canvas)
         self.layout().addWidget(canvas)
 
 
@@ -122,8 +127,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # Store the relative path where we're gonna store the projects in a variable
         # This path is created having the PYTHONPATH variable set to the directory multidimensional_search, if your
         # variable points to another direction you can change it
-        self.path_project = os.path.abspath('multidimensional_search/Projects')
-        #self.path_project = "./Projects"
+        # self.path_project = os.path.abspath('multidimensional_search/Projects')
+        self.path_project = "./Projects"
         self.project_path = None
         self.has_been_saved = False
         self.parallel = False
@@ -513,7 +518,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             satisfied, bool_signal = self.run_non_parametric_stle()
             # Visualization
             self.solution = StandardSolutionWindow()
-            self.solution.set_bool_signal(bool_signal)
+            self.solution.set_output_signal(bool_signal)
             self.solution.set_message(satisfied)
         else:
             # Parametric
