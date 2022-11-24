@@ -142,6 +142,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def closeEvent(self, event):
         def is_non_zero_file(fpath):
+            size_file = os.path.getsize(fpath)
             return os.path.isfile(fpath) and os.path.getsize(fpath) > 0
 
         try:
@@ -157,7 +158,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 elif reply == QMessageBox.No:
                     # Check if the file is empty, if it is we delete the file, otherwise we leave it as it is
                     #project_filename = ''.join(self.project_path)
-                    if is_non_zero_file(self.project_path):
+                    if not is_non_zero_file(self.project_path):
                         os.remove(self.project_path)
                     event.accept()
                 else:
