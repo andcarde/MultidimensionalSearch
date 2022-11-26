@@ -1527,9 +1527,20 @@ class ResultSet(object):
     @cython.returns(tuple)
     def select_champion(self, rs_list):
         # type: (ResultSet, list[ResultSet]) -> tuple
+        # Remove green cells [min_corner, max_corner] that are exactly the same in self and for all rs in rs_list
+        current_class_green_cells = set(self.yup)
+        other_classes_green_cells = set()
+        other_classes_green_cells_generator = (set(rs.yup) for rs in rs_list)
+        other_classes_green_cells = other_classes_green_cells.union(*other_classes_green_cells_generator)
+        other_classes_green_cells = other_classes_green_cells - current_class_green_cells
+        # intersection_green_cells = other_classes_green_cells.intersection(current_class_green_cells)
+        # other_classes_green_cells = other_classes_green_cells - intersection_green_cells
+
+        # Exclude the remaining vertices
         current_class = self.vertices_yup()
         other_classes = set()
-        other_classes_generator = (rs.vertices_yup() for rs in rs_list if rs != self)
+        other_classes_generator = (yup.vertices() for yup in other_classes_green_cells)
+        # other_classes_generator = (rs.vertices_yup() for rs in rs_list if rs != self)
         other_classes = other_classes.union(*other_classes_generator)
 
         # Adapt data type to directed_hausdorff format. Besides, lists allow indexing.
@@ -1555,5 +1566,5 @@ class ResultSet(object):
 @cython.locals(rs_list=list)
 @cython.returns(list)
 def champions_selection(rs_list):
-    # type: (list[ResultSet]) -> list(tuple)
+    # type: (list[ResultSet]) -> list[tuple]
     return [rs.select_champion(rs_list) for rs in rs_list]
