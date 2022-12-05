@@ -26,6 +26,7 @@ if __name__ == '__main__':
             'matplotlib>=2.0.2',
             'numpy>=1.15',
             'pandas>=1.3.0',
+            'ply>=3.11',
             'PyQt5>=5.15.6',
             'pytest>=2.0',
             'scipy>=1.9.3',
