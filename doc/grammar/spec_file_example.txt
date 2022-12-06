@@ -1,0 +1,11 @@
+let param p1, p2, ..., pn;
+let signal s1, s2, ..., sn;
+let probabilistic signal s1, s2, ..., sn;
+
+prop1 := F[0,t1] ....;
+prop2 := F[0,t1] ....;
+prop3 := prob1 and not prob2;
+prop4:= F x;  
+
+eval prob1 on s1 with p1 in [0, 0.5], p2 in [0, 0.5]
+eval prob2 on s2, s3 with p1 in [0, 0.5], p2 in [0, 0.5]
