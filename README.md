@@ -83,12 +83,12 @@ The algorithm generalizes binary search on the continuum from one-dimensional
 Applications include the approximation of Pareto fronts in multi-criteria optimization 
 and parameter synthesis for predicates where the influence of parameters is monotone.
 
-[1] https://hal.archives-ouvertes.fr/hal-01556243/ "Learning Monotone Partitions of Partially-Ordered Domains (Work in Progress) 2017.〈hal-01556243〉"
+[1]: https://hal.archives-ouvertes.fr/hal-01556243/ "Learning Monotone Partitions of Partially-Ordered Domains (Work in Progress) 2017.〈hal-01556243〉"
 
-[2] https://doi.org/10.1007/978-3-030-29662-9_7 "Alexey Bakhirkin, Nicolas Basset, Oded Maler, José-Ignacio Requeno Jarabo:
+[2]: https://doi.org/10.1007/978-3-030-29662-9_7 "Alexey Bakhirkin, Nicolas Basset, Oded Maler, José-Ignacio Requeno Jarabo:
 ParetoLib: A Python Library for Parameter Synthesis. FORMATS 2019: 114-120"
 
-[3] https://doi.org/10.1007/978-3-030-57628-8_5 "Nicolas Basset, Thao Dang, Akshay Mambakam, José-Ignacio Requeno Jarabo:
+[3]: https://doi.org/10.1007/978-3-030-57628-8_5 "Nicolas Basset, Thao Dang, Akshay Mambakam, José-Ignacio Requeno Jarabo:
 Learning Specifications for Labelled Patterns. FORMATS 2020: 76-93"
 
 ## Running
@@ -145,11 +145,11 @@ can be found in Tests/Oracle/Oracle* and Tests/Search/Oracle* folders.
 [paretofront]: https://gricad-gitlab.univ-grenoble-alpes.fr/requenoj/multidimensional_search/blob/master/doc/image/pareto_front.png "Pareto front"
 [multidim_search]: https://gricad-gitlab.univ-grenoble-alpes.fr/requenoj/multidimensional_search/blob/master/doc/image/multidim_search.png "Upper and lower closures"
 
-[4] https://ieeexplore.ieee.org/document/8274915/ "Andrzej Jaszkiewicz, Thibaut Lust: ND-Tree-based update: a Fast Algorithm for the Dynamic Non-Dominance Problem. Arxiv"
+[4]: https://ieeexplore.ieee.org/document/8274915/ "Andrzej Jaszkiewicz, Thibaut Lust: ND-Tree-based update: a Fast Algorithm for the Dynamic Non-Dominance Problem. Arxiv"
 
-[5] https://doi.org/10.1007/978-3-540-30206-3_12 "Oded Maler, Dejan Nickovic: Monitoring Temporal Properties of Continuous Signals. FORMATS/FTRTFT 2004: 152-166"
+[5]: https://doi.org/10.1007/978-3-540-30206-3_12 "Oded Maler, Dejan Nickovic: Monitoring Temporal Properties of Continuous Signals. FORMATS/FTRTFT 2004: 152-166"
 
-[6] https://doi.org/10.1007/978-3-030-17465-1_5 "Alexey Bakhirkin, Nicolas Basset: Specification and Efficient Monitoring Beyond STL. TACAS (2) 2019: 79-97"
+[6]: https://doi.org/10.1007/978-3-030-17465-1_5 "Alexey Bakhirkin, Nicolas Basset: Specification and Efficient Monitoring Beyond STL. TACAS (2) 2019: 79-97"
 
 ### Interaction with STL monitors
 Although ParetoLib can nicely address any optimization problem via the instantiation of abstract *Oracles*, 
@@ -159,9 +159,9 @@ It interfaces to the StlEval tool [7], a tool for monitoring signals and evaluat
 Temporal Logic (STLe) over them.
 ParetoLib also provides access to conventional STL specifications via the AMT 2.0 monitor [8].
 
-[7] https://gitlab.com/abakhirkin/StlEval "StlEval"
+[7]: https://gitlab.com/abakhirkin/StlEval "StlEval"
 
-[8] https://doi.org/10.1007/s10009-020-00582-z "Dejan Nickovic, Olivier Lebeltel, Oded Maler, Thomas Ferrère, Dogan Ulus:
+[8]: https://doi.org/10.1007/s10009-020-00582-z "Dejan Nickovic, Olivier Lebeltel, Oded Maler, Thomas Ferrère, Dogan Ulus:
 AMT 2.0: qualitative and quantitative trace analysis with extended signal temporal logic. Int. J. Softw. Tools Technol. Transf. 22(6): 741-758 (2020)"
 
 ### Running the multidimensional search
