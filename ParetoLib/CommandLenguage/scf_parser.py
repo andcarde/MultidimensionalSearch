@@ -1,5 +1,7 @@
 from ply.yacc import yacc
+import ParetoLib.CommonLanguage.scf_lexer
 
+tokens = scf_lexer.tokens
 
 def p_not(t):
     '''
@@ -12,7 +14,7 @@ def p_and(t):
     '''
     PROB = PROB AND PROB
     '''
-    t[0] = ('and', t[1], t[0], t[2])
+    t[0] = ('and_mas_otrascosas', t[1], t[3])
 
 
 def p_interval(t):
@@ -168,4 +170,5 @@ def p_error(t):
 
 
 # Build the parser
-parser = yacc()
+tmpdirname = "/tmp/"
+parser = yacc.yacc(start='param', debugfile=tmpdirname + 'parser.out', write_tables=True)
