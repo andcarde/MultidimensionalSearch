@@ -1,5 +1,7 @@
 import ply.lex as lex
 
+# En la columna izquierda aparece el texto y en la parte derecha la representación
+# interna en el parser.
 # Reserved words.
 reserved = {'let': 'LET',
             'param': 'PARAM',

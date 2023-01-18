@@ -1,6 +1,5 @@
 import numpy
 import pytest
-import ParetoLib.CommandLenguage.scf_lexer
 from ParetoLib.CommandLenguage.scf_parser import parser
 
 
