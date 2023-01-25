@@ -78,10 +78,10 @@ def t_ID(t):
 def t_NUMBER(t):
     r'\d*\.?\d+ | inf | -inf'
     try:
-        x = float(t.value) # just a check. TODO: exception still needed?
+        t.value = float(t.value)
     except ValueError:
         print("Integer value too large %d", t.value)
-        t.value = 0
+        t.value = 0.0
     return t
 
 
@@ -112,3 +112,10 @@ def t_error(t):
 
 # Build the lexer
 lex.lex()
+
+# Usage mode:
+# -----------
+# from ParetoLib.CommandLanguage.Lexer import *
+# lexer = lex.lex()
+# lexer.input("3")
+# lexer.token()
