@@ -1,7 +1,7 @@
 from ply.yacc import yacc
-import ParetoLib.CommandLenguage.scf_lexer as scf_lexer
+import ParetoLib.CommandLanguage.Lexer as lexer
 
-tokens = scf_lexer.tokens
+tokens = lexer.tokens
 
 def p_let_word(t):
     '''
