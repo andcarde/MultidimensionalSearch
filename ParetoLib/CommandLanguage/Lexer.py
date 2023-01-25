@@ -31,7 +31,7 @@ reserved = {'let': 'LET',
 # All tokens must be named in advance.
 tokens = [
     'ID', 'NUMBER', 'ASSIGNMENT',
-    'PLUS', 'MINUS', 'TIMES', 'DIVIDE', 'VAR'
+    'PLUS', 'MINUS', 'TIMES', 'DIVIDE', 'VAR',
     'NEQ', 'LEQ', 'LESS', 'GEQ', 'GREATER',
     'LPAREN', 'RPAREN', 'LBRACK', 'RBRACK', 'COMMA', 'SEMICOLON'
 ] + list(reserved.values())
