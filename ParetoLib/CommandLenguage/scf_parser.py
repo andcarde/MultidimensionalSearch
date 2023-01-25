@@ -1,5 +1,5 @@
 from ply.yacc import yacc
-import ParetoLib.CommandLenguage.scf_lexer
+import ParetoLib.CommandLenguage.scf_lexer as scf_lexer
 
 tokens = scf_lexer.tokens
 
