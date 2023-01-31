@@ -170,13 +170,6 @@ def p_phi(t):
     t[0] = ('PHI', t[0])
 
 
-def p_on(t):
-    '''
-    r'on'
-    '''
-    t[0] = ('ON', t[0])
-
-
 def p_psi(t):
     '''
     PSI = min PHI | max PHI | integral PHI | der PHI
@@ -237,21 +230,6 @@ def p_constant_signal(t):
     t[0] = ('CONSTANT_SIGNAL', t[0])
 
 # Funciones repetidas desde aquí hacia abajo
-
-def p_param_word(t):
-    '''
-    r'param'
-    '''
-    t[0] = ('PARAM_WORD', t[0])
-
-
-def p_signal_word(t):
-    '''
-    r'signal'
-    '''
-    t[0] = ('SIGNAL_WORD', t[0])
-
-
 def p_probabilistic_word(t):
     '''
     r'probabilistic'
@@ -364,78 +342,6 @@ def p_spec_file(t):
     t[0] = ('SPEC_FILE', t[0])
 
 
-def prop_list(t):
-    '''
-    PROP_LIST = PROP | PROP + PROP_LIST
-    '''
-    t[0] = ('PROP_LIST', t[0])
-
-
-def p_prop(t):
-    '''
-    PROP = ID := [PHI | PSI] [SEMICOLON]?
-    '''
-    t[0] = ('PROP', t[0])
-
-
-def p_phi(t):
-    '''
-    PHI : ID | FUNC | NOT PHI | PROB PHI | PHI BIN_BOOL_OP PHI | F[INTVL]? PHI
-        | G[INTVL]? PHI | PHI U[INTVL]? PHI | ON[INTVL] PSI | LPAR PHI RPAR
-    '''
-    t[0] = ('PHI', t[0])
-
-def p_psi(t):
-    '''
-    PSI = min PHI | max PHI | integral PHI | der PHI
-    '''
-    t[0] = ('PSI', t[0])
-
-
-def p_func(t):
-    '''
-    FUNC = SIG BIN_COND SIG | SIG BIN_OP SIG
-    '''
-    t[0] = ('FUNC', t[0])
-
-
-# Greater op, greater or equal op, less op, less or equal..
-def p_bin_bool_op(t):
-    '''
-    BIN_BOOL_OP = GR_OP | GRE_OP, LE_OP, LEE_OP
-    '''
-    t[0] = ('BIN_BOOL_OP', t[0])
-
-
-# Tengo que añadir la suma, resta, mul., div. (operaciones binarias)
-def p_bin_cond(t):
-    '''
-    BIN_COND = ADD_OP | SUS_OP | MUL_OP | DIV_OP
-    '''
-    t[0] = ('BIN_COND', t[0])
-
-
-# Tengo que añadir AND, OR, IMPLICATE
-def p_bin_bool_op(t):
-    '''
-    BIN_COND = ...
-    '''
-    t[0] = ('BIN_COND', t[0])
-
-
-def p_sig(t):
-    '''
-    SIG = ID | CONSTANT_SIGNAL
-    '''
-    t[0] = ('SIG', t[0])
-
-
-def p_constant_signal(t):
-    '''
-    CONSTANT_SIGNAL = NUMBER
-    '''
-    t[0] = ('CONSTANT_SIGNAL', t[0])
-
 # Funciones repetidas desde aquí hacia arriba
 
 def p_not(t):
@@ -443,13 +349,6 @@ def p_not(t):
     PROB: NOT + PROB
     '''
     t[0] = ('not', t[0], t[1])
-
-
-def p_and(t):
-    '''
-    PROB = PROB AND PROB
-    '''
-    t[0] = ('and_mas_otrascosas', t[1], t[3])
 
 
 def p_interval(t):
