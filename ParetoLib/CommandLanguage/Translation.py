@@ -1,7 +1,8 @@
+import numpy
 
 '''
 Funciones
-
+- Se traducirá el lenguaje CPN a STLE
 - Encargarse de que sale una variable una solo vez
 - Asegurarse de que tengan sentido las expresiones
     - Si asignamos un valor Tipo1 (ej: Entero) un valor Tipo2 (ej: Boolean) será incorrecto.
@@ -22,19 +23,25 @@ class NameChecker :
 ap = {}
 
 # STLCommand
-def translate(tree) :
-    string = buildString(tree)
-    sol = generateFormula(string)
-    return sol
+def translate(cpnTree) :
+    stleTree
+    tipoVar = cpnTree[0]
+    # Igual no hay switch en Python
+    if tipoVar == max :
+        stleTree = generateNumber(cpnTree)
+    elif tipoVar == 'min' :
+        stleTree = generateFormula(cpnTree)
+    stleFormula = generateFormula(stleTree)
+    return stleFormula
 def buildString(tree) :
     string = ""
     check(tree, string)
     return string
 def check(nodo_actual, string) :
-        if nodo_actual.left != None
+        if nodo_actual.left != None :
             check(nodo_actual.left, string)
         string = string + nodo_actual.raiz;
-        if nodo_actual.left != None
+        if nodo_actual.left != None :
             check(nodo_actual.right, string)
 
 # <NUMBER> ::= Floating-point number | inf | -inf
@@ -59,7 +66,19 @@ def generateVariable(string) :
 #     (F <INTERVAL> <FORMULA>)  |
 #     (G <INTERVAL> <FORMULA>)  |
 #     (StlUntil <INTERVAL> <FORMULA> <FORMULA>)
-def generateFormula(string) :
+def generateFormula(treeSTLE) :
+    string = ''
+    if (numpy.size(treeSTLE) == 1) :
+        string += treeSTLE[0]
+    else :
+        string += '('
+        for i in numpy.size(treeSTLE) :
+            string += generateFormula(treeSTLE[i])
+        string += ')'
+
+
+
+
     formula = generateVariable(string)
     if formula is None :
         formula = generateNumber(string)
@@ -87,19 +106,60 @@ def generateF(string) :
     sol += ')'
     return sol
 # (G <INTERVAL> <FORMULA>)
-def generateG(string):
+def generateG(treeCPN):
     sol = '('
     sol += 'G'
     sol += generateInterval(string)
     sol += generateFormula(string)
     sol += ')'
     return sol
+# Precondition: treeCPN := treeCPN[0]='F', treeCPN[1]=<TreeInterval>;
+# <TreeInterval> := <TreeInterval>[0]=INTERVAL, <TreeInterval>[1] = <name>, <TreeInterval>[2] = <name>
+# stringCPN: 'F[<value>,<value>]', <value> = <name> | <integer>, <name> = r{[a-zA-Z][a-zA-Z]*[0-9]*}, <integer> = r{[0-9]+}
 # (StlUntil <INTERVAL> <FORMULA> <FORMULA>)
-def generateU(string):
-    sol = '('
-    sol += 'StlUntil'
-    sol += generateInterval(string)
-    sol += generateFormula(string)
-    sol += generateFormula(string)
-    sol += ')'
-    return sol
+def generateU(treeCPN):
+    treeSTLE = '('
+    treeSTLE += 'StlUntil'
+    treeSTLE += generateInterval(treeCPN)
+    treeSTLE += generateFormula(treeCPN)
+    treeSTLE += generateFormula(treeCPN)
+    treeSTLE += ')'
+    return treeSTLE
+
+'''
+PARAM: let param PARAM_LIST
+SIGNAL: let signal SIGNAL_LIST
+PROBSIGNAL: let probabilistic signal PROBSIGNAL_LIST
+
+PARAM_LIST: ID_LIST;
+SIGNAL_LIST: ID_LIST;
+PROBSIGNAL_LIST: ID_LIST;
+
+ID_LIST: ID |
+		ID, ID_LIST
+
+INTVL: LBRACKET NUMBER COMMA NUMBER RBRACKET
+INTVL_LIST: ID in INTVL |
+		ID in INTVL, INTVL_LIST
+
+PROP: ID := PHI | PSI
+
+SIG: ID | CONSTANT_SIGNAL
+CONSTANT_SIGNAL: NUMBER
+
+FUNC: SIG BIN_COND SIG | SIG BIN_OP SIG
+PHI : ID | FUNC | NOT PHI | PROB PHI | PHI BIN_BOOL_OP PHI | F[INTVL]? PHI | G[INTVL]? PHI | PHI U[INTVL]? PHI | ON[INTVL] PSI | LPAR PHI RPAR
+PSI : MIN PHI | MAX PHI | INTEGRAL PHI | DER PHI
+
+EVAL: eval ID on SIGNAL_LIST with INTVL_LIST
+
+SPEC_FILE:
+	[DEF_SIGNAL | DEF_PROBSIGNAL]?
+	[DEF_PARAM]?
+	[PROP]+
+	[EVAL]+
+
+? = 0, 1
++ = 1...N
+* = 0...N
+'''
