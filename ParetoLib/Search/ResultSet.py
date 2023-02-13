@@ -12,7 +12,7 @@ composed of three elements: the upper closure (X1), the lower
 closure (X2), and the gap between X1 and X2 representing the
 precision error of the learning process.
 The size of this gap depends on the accuracy of the learning process,
-which can be tuned by the EPS and DELTA parameters during the
+which can be tuned by the EPS and DELTA parametechars during the
 invocation of the learning method.
 
 The ResultSet class provides functions for:

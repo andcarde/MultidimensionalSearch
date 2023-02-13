@@ -164,6 +164,11 @@ def multidim_search_BMNN22(xspace: Rectangle,
     else:  # Dinamyc cell creation
         ps = 0.95
         g = mult(xspace.diag_vector(), 1.0 / 10.0)
+        border = xspace.volume()
+        RootSearch.logger.info('Report\nStep, Red, Green, Border, Total, nRed, nGreen, nBorder')
+        RootSearch.logger.info(
+        '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(0, 0.0, 0.0, border, border, 0,
+                                                        0, 1))  # 0th step
         rs = multidim_search_BMNN22_opt_1(xspace,
                                           oracles,
                                           num_samples=num_samples,
@@ -171,7 +176,9 @@ def multidim_search_BMNN22(xspace: Rectangle,
                                           sleep=sleep,
                                           logging=logging,
                                           ps=ps,
-                                          g=g)
+                                          g=g,
+                                          vol_border=border,
+                                          n_border=1)
     end = time.time()
     time0 = end - start
     RootSearch.logger.info('Time multidim search (Pareto front): ' + str(time0))
@@ -1791,7 +1798,7 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
     green = list()
     red = list()
     border = list()
-    vol_green, vol_red, vol_border = 0.0, 0.0, 0.0  # Area of all the regions for debugging purposes
+    vol_green, vol_red, vol_border = 0.0, 0.0, xspace.volume()  # Area of all the regions for debugging purposes
     mems = [ora.membership() for ora in oracles]
 
     step = 0
@@ -1853,7 +1860,11 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
                                  blocking: bool = False,
                                  sleep: float = 0.0,
                                  logging: bool = True,
-                                 ps: float = 0.95) -> ResultSet:
+                                 ps: float = 0.95,
+                                 step: int = 0,
+                                 vol_green : float = 0.0,
+                                 vol_red : float = 0.0,
+                                 vol_border : float = 0.0) -> ResultSet:
     # type: (Rectangle, list[Oracle], int, tuple, bool, float, bool, float) -> ResultSet
 
     green = set()
@@ -1869,18 +1880,34 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
 
     all_fs_in_sample = (all(f(s) for f in mems) for s in samples)
     counter = sum(all_fs_in_sample)
+    curr_step = step
+    curr_vol_green, curr_vol_red, curr_vol_border = vol_green, vol_red, vol_border
+    
     if counter == 0:
         red.add(xspace)
+        curr_vol_red = curr_vol_red + xspace.volume()
+        curr_vol_border = vol_border - xspace.volume()
     elif counter / num_samples >= ps or less_equal(xspace.diag_vector(), g):
         green.add(xspace)
+        curr_vol_green = curr_vol_green + xspace.volume()
+        curr_vol_border = vol_border - xspace.volume()
     else:
         n = pow(2, d)
         rect_list = xspace.cell_partition_bin(n)
         for r in rect_list:
-            temp_rs = multidim_search_BMNN22_opt_1(r, oracles, num_samples, g, blocking, sleep, logging, ps)
+            curr_step = curr_step + 1
+            curr_vol_border = r.volume()
+            temp_rs = multidim_search_BMNN22_opt_1(r, oracles, num_samples, g, blocking, sleep, logging, ps, curr_step, curr_vol_green, curr_vol_red, curr_vol_border)
             green = green.union(set(temp_rs.yup))
+            curr_vol_green = curr_vol_green + sum((x.volume() for x in list(temp_rs.yup)))
             red = red.union(set(temp_rs.ylow))
+            curr_vol_red = curr_vol_red + sum((x.volume() for x in list(temp_rs.ylow)))
             border = border.union(set(temp_rs.border))
+            curr_vol_border = sum((x.volume() for x in list(temp_rs.border)))
+    
+    RootSearch.logger.info(
+        '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(curr_step, curr_vol_red, curr_vol_green, curr_vol_border, xspace.volume(), len(red),
+                                                        len(green), len(border)))  # Current step
 
     # Visualization
     if sleep > 0.0:

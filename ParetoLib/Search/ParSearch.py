@@ -2709,6 +2709,10 @@ def multidim_search_BMNN22(xspace : Rectangle,
 
     RootSearch.logger.info('Starting multidimensional search (BMNN22)')
     start = time.time()
+    RootSearch.logger.info('Report\nStep, Red, Green, Border, Total, nRed, nGreen, nBorder')
+    RootSearch.logger.info(
+        '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(0, 0.0, 0.0, xspace.volume(), xspace.volume(), 0,
+                                                        0, 1))  # 0th step
     if opt_level == 0:  # Fixed cell creation
         rs = multidim_search_BMNN22_opt_0(xspace,
                                           oracles,
@@ -2770,33 +2774,35 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
                                  sleep: float = 0.0,
                                  logging: bool = True) -> ParResultSet:
     # type: (Rectangle, list[Oracle], int, int, bool, float, bool) -> ParResultSet
-    cells = xspace.cell_partition_bin(num_cells)
-    border = list()
+    border = xspace.cell_partition_bin(num_cells)
+    nBorder = len(border) # Number of rectangles inside the border
     green = list()
     red = list()
     d = xspace.dim()
     step = 0
 
     p = Pool(cpu_count())
-    args = ((cell, copy.deepcopy(oracles), num_samples, d) for cell in cells)
+    args = ((cell, copy.deepcopy(oracles), num_samples, d) for cell in border)
     green_cells = p.map(process_fix, args)
-    step = step + 1
-    vol_green, vol_red, vol_border = 0.0, 0.0, 0.0  # Area of all the regions for debugging purposess
+    vol_green, vol_red, vol_border = 0.0, 0.0, xspace.volume()  # Area of all the regions for debugging purposess
     tempdir = tempfile.mkdtemp()
-    RootSearch.logger.info('Report\nStep, Red, Green, Border, Total, nRed, nGreen, nBorder')
-    RootSearch.logger.info(
-        '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(step, vol_red, vol_green, vol_border, xspace.volume(), len(red),
-                                                        len(green), len(border)))  # 0th step
-    for i, cell in enumerate(cells):
+
+    for i, cell in enumerate(border):
         if green_cells[i]:
             green.append(cell)
             vol_green = vol_green + cell.volume()
+            vol_border = vol_border - cell.volume()
         else:
             red.append(cell)
             vol_red = vol_red + cell.volume()
-            RootSearch.logger.info(
+            vol_border = vol_border - cell.volume()
+        nBorder = nBorder - 1
+        step = step + 1
+        
+        RootSearch.logger.info(
                 '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(step, vol_red, vol_green, vol_border, xspace.volume(),
-                                                            len(red), len(green), len(border)))
+                                                            len(red), len(green), nBorder))
+
         # Visualization
         if sleep > 0.0:
             rs = ParResultSet(border, red, green, xspace)
@@ -2823,11 +2829,11 @@ def process_dyn(args: Tuple[Rectangle,
                             float,
                             Tuple[float]]) -> Tuple[Rectangle, Union[bool,None]]:
     cell, oracles, num_samples, d, ps, g = args
-
     fs = [ora.membership() for ora in oracles]
 
     # Take num_samples uniformly between cell.min_corner and cell.max_corner
     samples = cell.uniform_sampling(num_samples)
+
     all_fs_in_sample = (all(f(s) for f in fs) for s in samples)
     counter = sum(all_fs_in_sample)
     if counter == 0:
@@ -2852,30 +2858,43 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
                                  logging: bool = True,
                                  ps: float = 0.95) -> ParResultSet:
     # type: (Rectangle, list[Oracle], int, tuple[float], bool, float, bool, float) -> ParResultSet
-
     green = list()
     red = list()
-    border = list()
+    border = [xspace]
+    vol_green, vol_red, vol_border = 0.0, 0.0, xspace.volume()
+    nBorder = 1
     step = 0
     d = xspace.dim()
     p = Pool(cpu_count())
 
     # Create temporary directory for storing the result of each step
     tempdir = tempfile.mkdtemp()
-    cell_list = [xspace]
 
-    while len(cell_list) > 0:
-        args = ((cell, copy.deepcopy(oracles), num_samples, d, ps, g) for cell in cell_list)
+
+    while len(border) > 0:
+        args = ((cell, copy.deepcopy(oracles), num_samples, d, ps, g) for cell in border)
         cols_list = p.map(process_dyn, args)
-        cell_list = list()
+        border = list()
         for (cell, is_green) in cols_list:
             if is_green is None:
                 n = pow(2, d)
-                cell_list = cell_list + cell.cell_partition_bin(n)
+                border = border + cell.cell_partition_bin(n)
+                nBorder = nBorder + n
             elif is_green:
                 green.append(cell)
+                vol_green = vol_green + cell.volume()
+                vol_border = vol_border - cell.volume()
+                nBorder = nBorder - 1
             else:
                 red.append(cell)
+                vol_red = vol_red + cell.volume()
+                vol_border = vol_border - cell.volume()
+                nBorder = nBorder - 1
+            step = step + 1
+            RootSearch.logger.info(
+                '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(step, vol_red, vol_green, vol_border, xspace.volume(),
+                                                            len(red), len(green), nBorder))
+            
 
         # Visualization
         if sleep > 0.0:
