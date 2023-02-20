@@ -17,7 +17,7 @@ from ParetoLib.GUI.Window import Ui_MainWindow
 from ParetoLib.Oracle.OracleSTLe import OracleSTLeLib
 from ParetoLib.Oracle.OracleEpsSTLe import OracleEpsSTLe
 from ParetoLib.Search.Search import SearchND_2, SearchIntersectionND_2, SearchND_2_BMNN22, EPS, DELTA, STEPS
-from ParetoLib.Search.ResultSet import ResultSet
+from ParetoLib.Search.ResultSet import ResultSet, champions_selection
 
 matplotlib.use('Qt5Agg')
 pd.set_option('display.float_format', lambda x: '%.7f' % x)  # For rounding purposes
@@ -104,6 +104,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.save_project_button.triggered.connect(self.save_project)
         self.load_project_button.setShortcut("Ctrl+O")
         self.load_project_button.triggered.connect(self.load_project)
+        self.actionIdentify_champion.triggered.connect(self.champion_select)
 
         self.mining_comboBox.activated.connect(self.not_saved)
         self.param_stl_selection_comboBox.activated.connect(self.not_saved)
@@ -144,6 +145,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def not_saved(self):
         self.has_been_saved = False
+    
+    def champion_select(self):
+        rs_list_filepaths , _ = QFileDialog.getOpenFileNames(self,"Select the ResultSets","./Projects")
+        rs_list = []
+        for file in rs_list_filepaths:
+            rs = ResultSet()
+            rs.from_file(file)
+            rs_list.append(rs)
+        champions = champions_selection(rs_list)
+        print(champions)
+
+
+        
 
     def closeEvent(self, event):
         def is_non_zero_file(fpath):
@@ -391,6 +405,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             interval = (float(min_val_text.text()), float(max_val_text.text()))
             intervals.append(interval)
         return intervals
+    
 
     def run_non_parametric_stle(self):
         # type: (_) -> (bool, dict)
@@ -421,6 +436,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             RootGUI.logger.debug(e)
         finally:
             return satisfied, bool_signal
+
 
     def run_parametric_stle(self):
         # type: (_) -> ResultSet
