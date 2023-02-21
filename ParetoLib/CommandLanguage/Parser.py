@@ -3,21 +3,16 @@ import ParetoLib.CommandLanguage.Lexer as lexer
 
 tokens = lexer.tokens
 
+# dictionary of names
+id_dict = {}
+
+
 def p_param_list(t):
     '''
     PARAM_LIST = ID_LIST
     '''
     t[0] = ('PARAM_LIST', t[1])
 
-def p_id_list(t):
-    '''
-    ID_LIST = ID | ID, ID_LIST
-    '''
-    if len(t) == 1:
-        t[0] = ('ID_LIST', t[1])
-    else:
-        # blabla
-        t[0] = ('ID_LIST', t[1], t[2])
 
 def p_signal_list(t):
     '''
@@ -33,38 +28,54 @@ def p_probsignal_list(t):
     t[0] = ('PROBSIGNAL_LIST', t[0])
 
 
+def p_id_list(t):
+    '''
+    ID_LIST = ID | ID, ID_LIST
+    '''
+    if len(t) == 1:
+        # TODO: Insert ID in id_dict
+        # ID is either a PARAM, a SIGNAL or a PROBSIGNAL
+        if id_dict[t[1]] is not None:
+            print("Error: ID already defined!")
+        else:
+            id_dict[t[1]] = "Insert type of ID"
+        t[0] = ('ID_LIST', t[1])
+    else:
+        # blabla
+        t[0] = ('ID_LIST', t[1], t[2])
+
+
 def p_def_param(t):
     '''
-    PARAM = LET_WORD PARAM_WORD PARAM_LIST SEMICOLON
+    PARAM_DEF = LET PARAM PARAM_LIST SEMICOLON
     '''
     t[0] = ('PARAM', t[1], t[2], ...)
 
 
 def p_def_signal(t):
     '''
-    SIGNAL = LET_WORD SIGNAL_WORD SIGNAL_LIST SEMICOLON
+    SIGNAL_DEF = LET SIGNAL SIGNAL_LIST SEMICOLON
     '''
     t[0] = ('SIGNAL', t[0])
 
 
 def p_def_probsignal(t):
     '''
-    PROBSIGNAL = LET_WORD + PROBABILISTIC_WORD + SIGNAL_WORD + PROBSIGNAL_LIST + SEMICOLON
+    PROBSIGNAL_DEF = LET PROBABILISTIC SIGNAL PROBSIGNAL_LIST SEMICOLON
     '''
     t[0] = ('PROBSIGNAL', t[0])
 
 
 def p_eval(t):
     '''
-    EVAL = eval ID ON SIGNAL_LIST WITH INTVL_LIST |
-           eval ID ON PROBSIGNAL_LIST WITH INTVL_LIST |
-           eval ID WITH INTVL_LIST ON SIGNAL_LIST |
-           eval ID WITH INTVL_LIST ON PROBSIGNAL_LIST
+    EVAL_EXPR = EVAL ID ON SIGNAL_LIST WITH INTVL_LIST |
+           EVAL ID ON PROBSIGNAL_LIST WITH INTVL_LIST
     '''
     if t[3] == tokens.ON:
         t[0] = ('EVAL', t[0])
 
 
+# TODO: parametric intervals
 def p_intvl_list(t):
     '''
     INTVL_LIST = ID IN INTVL |
@@ -83,7 +94,7 @@ def p_intvl(t):
 def p_spec_file(t):
     '''
     SPEC_FILE = [DEF_SIGNAL | DEF_PROBSIGNAL]?
-	    [DEF_PARAM]? PROP_LIST [EVAL]+
+	    [DEF_PARAM]? PROP_LIST [EVAL_EXPR]+
     '''
     t[0] = ('SPEC_FILE', t[0])
 
@@ -97,7 +108,7 @@ def prop_list(t):
 
 def p_prop(t):
     '''
-    PROP = ID := [PHI | PSI] [SEMICOLON]?
+    PROP = ID := PHI | PSI
     '''
     t[0] = ('PROP', t[0])
 
@@ -112,7 +123,10 @@ def p_phi(t):
 
 def p_psi(t):
     '''
-    PSI = [MIN | MAX | integral | der] PHI
+    PSI = MIN PHI |
+          MAX PHI |
+          INTEGRAL PHI |
+          DER PHI
     '''
     t[0] = ('PSI', t[0])
 
@@ -155,6 +169,7 @@ def p_bin_arith_op(t):
     #       OP    SIG1  SIG2
     t[0] = (t[2], t[1], t[3])
 
+
 def p_sig(t):
     '''
     SIG = ID | CONSTANT_SIGNAL
@@ -167,26 +182,6 @@ def p_constant_signal(t):
     CONSTANT_SIGNAL = NUMBER
     '''
     t[0] = ('CONSTANT_SIGNAL', t[0])
-
-
-def p_not(t):
-    '''
-    PROB: NOT + PROB
-    '''
-    t[0] = ('PROB', t[0])
-
-
-
-# Ignored token with an action associated with it
-def t_ignore_newline(t):
-    r'\n+'
-    t.lexer.lineno += t.value.count('\n')
-
-
-# Error handler for illegal characters
-def t_error(t):
-    print(f'Illegal character {t.value[0]!r}')
-    t.lexer.skip(1)
 
 
 # Build the parser
