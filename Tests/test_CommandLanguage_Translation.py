@@ -5,7 +5,7 @@ from ParetoLib.CommandLanguage.Translation import translate
 class TestController :
     tests = []
     def addTest(self, entrada, function, salida) :
-        self.tests[1] = [entrada, salida]
+        self.tests[1] = [entrada, function, salida]
     def run(self) :
         for i in numpy.size(self.tests) :
             salidaReal = self. tests[i][1](self.tests[0])

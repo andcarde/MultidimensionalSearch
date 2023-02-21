@@ -9,17 +9,14 @@ Funciones
 - Contruir la string en lenguage STL
 '''
 
-
-class NameChecker:
+class NameChecker :
     names = []
-
-    def checkName(name):
-        for n in NameChecker.names:
-            if n == name:
+    def checkName(name) :
+        for n in NameChecker.names :
+            if n == name :
                 return False
         return True
-
-    def addName(name):
+    def addName(name) :
         NameChecker.names.add(name);
 
 
@@ -28,11 +25,10 @@ ap = {}
 
 
 # STLCommand
-def translate(cpnTree):
-    stleTree
+def translate(cpnTree) :
     tipoVar = cpnTree[0]
     # Igual no hay switch en Python
-    if tipoVar == max:
+    if tipoVar == 'max' :
         stleTree = generateNumber(cpnTree)
     elif tipoVar == 'min':
         stleTree = generateFormula(cpnTree)
@@ -46,28 +42,32 @@ def buildString(tree):
     return string
 
 
-def check(nodo_actual, string):
-    if nodo_actual.left != None:
-        check(nodo_actual.left, string)
-    string = string + nodo_actual.raiz;
-    if nodo_actual.left != None:
-        check(nodo_actual.right, string)
+def check(nodo_actual, string) :
+        if nodo_actual.left != None :
+            check(nodo_actual.left, string)
+        string = string + nodo_actual.raiz
+        if nodo_actual.left != None :
+            check(nodo_actual.right, string)
 
 
 # <NUMBER> ::= Floating-point number | inf | -inf
-def generateNumber(string):
-
+def generateNumber(string) :
+    i = 0
 
 # <BOOLEAN> ::= false | true
 def generateBoolean(string):
 
-
 # <INTERVAL> ::= (<NUMBER> <NUMBER>)
-def generateInterval(string):
+def generate_interval(string):
+    i = 0
+
+#<VARIABLE> ::= x<INTEGER>
+def generate_variable(string):
+    i = 0
 
 
-# <VARIABLE> ::= x<INTEGER>
-def generateVariable(string):
+def generate_function(string):
+    i = 0
 
 
 # Input: treeSTLE (tuple)
@@ -85,32 +85,23 @@ def generateVariable(string):
 #     <NUMBER>    |
 #     <BOOLEAN>   |
 #     (<FUNCTION> <FORMULA>*)   |
-#     "(F <INTERVAL> <FORMULA>)"  |
-#     "(G <INTERVAL> <FORMULA>)"  |
-#     "(StlUntil <INTERVAL> <FORMULA> <FORMULA>)"
-
-def generate_formula(tree_stle: tuple) -> str:
+#     (F <INTERVAL> <FORMULA>)  |
+#     (G <INTERVAL> <FORMULA>)  |
+#     (StlUntil <INTERVAL> <FORMULA> <FORMULA>)
+def generateFormula(treeSTLE) :
     string = ''
-    if len(tree_stle) == 1:
-        string = "{0}".format(tree_stle[0])
-    elif len(tree_stle) == 3:
-        "[a, b], a <= b"
-        op, intv, form = tree_stle
-        string = "({0} {1} {2})".format(op, intv, form)
-    elif len(tree_stle) == 4:
-        op, intv, form1, form2 = tree_stle
-        string = "({0} {1} {2} {3})".format(op, intv, form1, form2)
-    else:
-        # (<FUNCTION> <FORMULA>*)
+    if (numpy.size(treeSTLE) == 1) :
+        string += treeSTLE[0]
+    else :
+        string += '('
+        for i in numpy.size(treeSTLE) :
+            string += generateFormula(treeSTLE[i])
+        string += ')'
 
-    return string
-
-
-#########################################
     formula = generateVariable(string)
-    if formula is None:
+    if formula is None :
         formula = generateNumber(string)
-        if formula is None:
+        if formula is None :
             formula = generateBoolean()
             if formula is None:
                 formula = generateFunction()
@@ -140,8 +131,8 @@ def generateF(string):
 def generateG(treeCPN):
     sol = '('
     sol += 'G'
-    sol += generateInterval(string)
-    sol += generateFormula(string)
+    sol += generateInterval(treeCPN)
+    sol += generateFormula(treeCPN)
     sol += ')'
     return sol
 

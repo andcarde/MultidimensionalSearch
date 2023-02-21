@@ -37,7 +37,7 @@ tokens = [
 ] + list(reserved.values())
 
 # Ignored characters
-t_ignore = ' \t'
+t_ignore = ' \t\n'
 
 # Token matching rules are written as regexs
 t_COMMA = r'\,'
