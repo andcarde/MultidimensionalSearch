@@ -3,90 +3,27 @@ import ParetoLib.CommandLanguage.Lexer as lexer
 
 tokens = lexer.tokens
 
-# Nodos unarios --------------------------------------------
-# Los nodos unarios probablemente los deba quitar ya que son
-# detectados por el Lexer.py.
-def p_let_word(t):
+def p_param_list(t):
     '''
-    r'let'
+    PARAM_LIST = ID_LIST
     '''
-    t[0] = ('LET_WORD', t[0])
-
-
-def p_param_word(t):
-    '''
-    r'param'
-    '''
-    t[0] = ('PARAM_WORD', t[0])
-
-
-def p_signal_word(t):
-    '''
-    r'signal'
-    '''
-    t[0] = ('SIGNAL_WORD', t[0])
-
-
-def p_probabilistic_word(t):
-    '''
-    r'probabilistic'
-    '''
-    t[0] = ('PROBABILISTIC_WORD', t[0])
-
-
-def p_semicolon(t):
-    '''
-    r';'
-    '''
-    t[0] = ('SEMICOLON', t[0])
-
-
-def p_id(t):
-    '''
-    r'[\w+][\d*]'
-    '''
-    t[0] = ('ID', t[0])
-
-
-def p_number(t):
-    '''
-    r'[-]?[\d+].[\d+]'
-    '''
-    t.value = float(t.value)
-    t[0] = ('NUMBER', t[0])
-
-
-# Write the matching regex in the docstring.
-# Cuando hacemos t.value almacenamos información en dicho patrón
-# El (int), castea el texto en un integer (tipo de Python)
-def t_integer(t):
-    '''
-    r'[-]?\d+'
-    '''
-    t.value = int(t.value)
-    return t
-# Fin de nodos unarios ----------------------------------
-
+    t[0] = ('PARAM_LIST', t[1])
 
 def p_id_list(t):
     '''
     ID_LIST = ID | ID, ID_LIST
     '''
-    t[0] = ('ID_LIST', t[0])
-
-
-def p_param_list(t):
-    '''
-    PARAM_LIST = ID_LIST
-    '''
-    t[0] = ('PARAM_LIST', t[0])
-
+    if len(t) == 1:
+        t[0] = ('ID_LIST', t[1])
+    else:
+        # blabla
+        t[0] = ('ID_LIST', t[1], t[2])
 
 def p_signal_list(t):
     '''
     SIGNAL_LIST = ID_LIST
     '''
-    t[0] = ('SIGNAL_LIST', t[0])
+    t[0] = ('SIGNAL_LIST', t[1])
 
 
 def p_probsignal_list(t):
@@ -98,14 +35,14 @@ def p_probsignal_list(t):
 
 def p_def_param(t):
     '''
-    PARAM = LET_WORD + PARAM_WORD + PARAM_LIST + SEMICOLON
+    PARAM = LET_WORD PARAM_WORD PARAM_LIST SEMICOLON
     '''
-    t[0] = ('PARAM', t[0])
+    t[0] = ('PARAM', t[1], t[2], ...)
 
 
 def p_def_signal(t):
     '''
-    SIGNAL = LET_WORD + SIGNAL_WORD + SIGNAL_LIST + SEMICOLON
+    SIGNAL = LET_WORD SIGNAL_WORD SIGNAL_LIST SEMICOLON
     '''
     t[0] = ('SIGNAL', t[0])
 
@@ -124,7 +61,8 @@ def p_eval(t):
            eval ID WITH INTVL_LIST ON SIGNAL_LIST |
            eval ID WITH INTVL_LIST ON PROBSIGNAL_LIST
     '''
-    t[0] = ('EVAL', t[0])
+    if t[3] == tokens.ON:
+        t[0] = ('EVAL', t[0])
 
 
 def p_intvl_list(t):
@@ -152,7 +90,7 @@ def p_spec_file(t):
 
 def prop_list(t):
     '''
-    PROP_LIST = PROP | PROP + PROP_LIST
+    PROP_LIST = PROP | PROP PROP_LIST
     '''
     t[0] = ('PROP_LIST', t[0])
 
@@ -174,7 +112,7 @@ def p_phi(t):
 
 def p_psi(t):
     '''
-    PSI = [min | max | integral | der] PHI
+    PSI = [MIN | MAX | integral | der] PHI
     '''
     t[0] = ('PSI', t[0])
 
