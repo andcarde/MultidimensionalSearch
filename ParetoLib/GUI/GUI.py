@@ -185,7 +185,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     
     def champion_select(self):
-        rs_list_filepaths , _ = QFileDialog.getOpenFileNames(self,"Select the ResultSets","./Projects")
+        rs_list_filepaths , _ = QFileDialog.getOpenFileNames(self,"Select the ResultSets","./Projects","(*.zip)")
         rs_list = []
         for file in rs_list_filepaths:
             rs = ResultSet()
@@ -401,18 +401,21 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         try:
             # Read csvfile from self.label_3
             # csvfile = '../../Tests/Oracle/OracleSTLe/2D/stabilization/stabilization.csv'
-            csvfile = self.signal_filepath_textbox.toPlainText()
+            csvfiles = self.signal_filepath_textbox.toPlainText()
+            csvfiles = csvfiles.split('\n')
 
-            # Read CSV file
-            names = ['Time', 'Signal']
-            # dtypes = [int, float]
-            # df_signal = pd.read_csv(csvfile, sep=',', names=names, dtypes=dtypes)
-            df_signal = pd.read_csv(csvfile, sep=',', names=names)
+            # Read CSV files
+            df_signal = pd.DataFrame({'Class': list(), 'Time': list(), 'Signal': list()})
+            for csvfile in csvfiles:
+                curr_df = pd.read_csv(csvfile,sep=',',names=['Time','Signal'])
+                curr_df.insert(0,'Class',csvfile.split('/')[-1])
+                df_signal = df_signal.append(curr_df)
 
             # Plot the responses for different events and regions
             # sns.set_theme(style='darkgrid')
             ax = sns.lineplot(x='Time',
                               y='Signal',
+                              hue='Class',
                               data=df_signal,
                               ax=canvas.axes)
             ax.set(xlabel=None)
