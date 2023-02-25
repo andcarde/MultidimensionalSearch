@@ -145,6 +145,44 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def not_saved(self):
         self.has_been_saved = False
+
+    
+    def plot_champions(self, champion_list, dim_champ):
+        curr_class_champions = [champ[1] for champ in champion_list]
+        canvas = MplCanvas(parent=self)
+        self.layout().addWidget(canvas)
+        fig = canvas.figure
+        
+
+        if dim_champ == 2:
+            ax = fig.add_subplot(111)
+            curr_class = 1
+            for ch in curr_class_champions: #plot each point + it's index as text above
+                if ch is not None:
+                    ax.scatter(ch[0],ch[1],color='b') 
+                    ax.text(ch[0],ch[1],  f"Champion class {curr_class}", size=20, zorder=1, color='k')
+                curr_class = curr_class + 1
+
+            ax.set_xlabel('x')
+            ax.set_ylabel('y')
+
+        elif dim_champ == 3:
+            ax = fig.add_subplot(111, projection='3d')
+            curr_class = 1
+            for ch in curr_class_champions: #plot each point + it's index as text above
+                if ch is not None:
+                    ax.scatter(ch[0],ch[1],ch[2],color='b') 
+                    ax.text(ch[0],ch[1],ch[2],  f"Class {curr_class}", size=10, zorder=1, color='k')
+                curr_class = curr_class + 1
+
+            ax.set_xlabel('x')
+            ax.set_ylabel('y')
+            ax.set_zlabel('z')
+        
+        matplotlib.pyplot.show()
+
+
+
     
     def champion_select(self):
         rs_list_filepaths , _ = QFileDialog.getOpenFileNames(self,"Select the ResultSets","./Projects")
@@ -154,7 +192,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             rs.from_file(file)
             rs_list.append(rs)
         champions = champions_selection(rs_list)
-        print(champions)
+        dim_champ = None
+        if len(champions) > 0 and champions[0] is not None:
+            dim_champ = len(champions[0][1])
+        
+        if dim_champ is not None:
+            self.plot_champions(champions, dim_champ)
+        else:
+            RootGUI.logger.info("No champions were found")
 
 
         
