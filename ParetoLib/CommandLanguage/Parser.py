@@ -1,6 +1,14 @@
 from ply.yacc import yacc
 import ParetoLib.CommandLanguage.Lexer as lexer
 
+'''
+In the intended language there are no precedence rules.
+However, if necessary, they will be included in the "precedence" array.
+
+precedence = (
+)
+'''
+
 tokens = lexer.tokens
 
 # dictionary of names
@@ -25,7 +33,7 @@ def p_probsignal_list(t):
     '''
     PROBSIGNAL_LIST = ID_LIST
     '''
-    t[0] = ('PROBSIGNAL_LIST', t[0])
+    t[0] = ('PROBSIGNAL_LIST', t[1])
 
 
 def p_id_list(t):
@@ -41,7 +49,7 @@ def p_id_list(t):
             id_dict[t[1]] = "Insert type of ID"
         t[0] = ('ID_LIST', t[1])
     else:
-        # blabla
+        # recursive case
         t[0] = ('ID_LIST', t[1], t[2])
 
 
@@ -49,21 +57,21 @@ def p_def_param(t):
     '''
     PARAM_DEF = LET PARAM PARAM_LIST SEMICOLON
     '''
-    t[0] = ('PARAM', t[1], t[2], ...)
+    t[0] = ('PARAM', t[0], t[1], t[2])
 
 
 def p_def_signal(t):
     '''
     SIGNAL_DEF = LET SIGNAL SIGNAL_LIST SEMICOLON
     '''
-    t[0] = ('SIGNAL', t[0])
+    t[0] = ('SIGNAL', t[0], t[1], t[2])
 
-
+# Probablemente haya algún fallo en este
 def p_def_probsignal(t):
     '''
     PROBSIGNAL_DEF = LET PROBABILISTIC SIGNAL PROBSIGNAL_LIST SEMICOLON
     '''
-    t[0] = ('PROBSIGNAL', t[0])
+    t[0] = ('PROBSIGNAL', t[0], t[4], t[3])
 
 
 def p_eval(t):
@@ -71,8 +79,7 @@ def p_eval(t):
     EVAL_EXPR = EVAL ID ON SIGNAL_LIST WITH INTVL_LIST |
            EVAL ID ON PROBSIGNAL_LIST WITH INTVL_LIST
     '''
-    if t[3] == tokens.ON:
-        t[0] = ('EVAL', t[0])
+    t[0] = ('EVAL_EXPR', t[3], t[2], t[4], t[6])
 
 
 # TODO: parametric intervals
@@ -81,36 +88,60 @@ def p_intvl_list(t):
     INTVL_LIST = ID IN INTVL |
                  ID IN INTVL COMMA INTVL_LIST
     '''
-    t[0] = ('INTVL_LIST', t[0])
+    if len(t) == 3:
+        t[0] = (t[2], t[1], t[3])
+    elif len(t) == 5:
+        t[0] = (t[2], t[1], t[3], t[4])
 
+
+def p_eval_list(t):
+    '''
+    EVAL_LIST = EVAL_EXPR | EVAL_EXPR EVAL_LIST
+    '''
+    if len(t) == 1:
+        t[0] = ('EVAL_LIST', t[1])
+    elif len(t) == 2:
+        t[0] = ('EVAL_LIST', t[1], t[2])
 
 def p_intvl(t):
     '''
     INTVL = LBRACKET [NUMBER | ID ] COMMA [NUMBER | ID] RBRACKET
     '''
-    t[0] = ('INTVL', t[0])
+    t[0] = ('INTVL', t[1], t[2], t[3], t[4])
 
 
 def p_spec_file(t):
     '''
     SPEC_FILE = [DEF_SIGNAL | DEF_PROBSIGNAL]?
-	    [DEF_PARAM]? PROP_LIST [EVAL_EXPR]+
+	    [DEF_PARAM]? PROP_LIST EVAL_LIST
     '''
-    t[0] = ('SPEC_FILE', t[0])
+    counter = 0
+    if t[0] == 'DEF_SIGNAL' | t[0] == 'DEF_PROBSIGNAL':
+        counter += 1
+    if t[counter] == 'DEF_PARAM':
+        counter += 1
+    if counter == 0:
+        t[0] = ('SPEC_FILE', t[1], t[2])
+    elif counter == 1:
+        t[0] = ('SPEC_FILE', t[2], t[1], t[3])
+    elif counter == 2:
+        t[0] = ('SPEC_FILE', t[3], t[1], t[2], t[4])
+
 
 
 def prop_list(t):
     '''
     PROP_LIST = PROP | PROP PROP_LIST
     '''
-    t[0] = ('PROP_LIST', t[0])
+    t[0] = ('PROP_LIST', t[1])
 
 
 def p_prop(t):
     '''
     PROP = ID := PHI | PSI
     '''
-    t[0] = ('PROP', t[0])
+    #       TYPE    OP    ID    PHI/PSI
+    t[0] = ('PROP', t[2], t[1], t[3])
 
 
 def p_phi(t):
@@ -119,6 +150,16 @@ def p_phi(t):
         | G[INTVL]? PHI | PHI U[INTVL]? PHI | ON[INTVL] PSI | LPAR PHI RPAR
     '''
     t[0] = ('PHI', t[0])
+    # Case of ID, FUNC
+    if len(t) == 1:
+        t[0] = ('PHI', t[1])
+    # Case of NOT PHI, PROB PHI
+    elif len(t) == 2:
+        #       TYPE   OP    PHI
+        t[0] = ('PHI', t[1], t[2])
+    elif len(t) == 3:
+        #       TYPE   OP    PHI   PHI
+        t[0] = ('PHI', t[2], t[1], t[3])
 
 
 def p_psi(t):
@@ -128,14 +169,16 @@ def p_psi(t):
           INTEGRAL PHI |
           DER PHI
     '''
-    t[0] = ('PSI', t[0])
+    #       TYPE   OP   PHI
+    t[0] = ('PSI', t[1], t[2])
 
 
 def p_func(t):
     '''
     FUNC = SIG BIN_COND SIG | SIG BIN_OP SIG
     '''
-    t[0] = ('FUNC', t[0])
+    #       TYPE    OP    SIG1  SIG2
+    t[0] = ('FUNC', t[2], t[1], t[3])
 
 
 def p_bin_bool_op(t):
@@ -174,14 +217,14 @@ def p_sig(t):
     '''
     SIG = ID | CONSTANT_SIGNAL
     '''
-    t[0] = ('SIG', t[0])
+    t[0] = ('SIG', t[1])
 
 
 def p_constant_signal(t):
     '''
     CONSTANT_SIGNAL = NUMBER
     '''
-    t[0] = ('CONSTANT_SIGNAL', t[0])
+    t[0] = ('CONSTANT_SIGNAL', t[1])
 
 
 # Build the parser
