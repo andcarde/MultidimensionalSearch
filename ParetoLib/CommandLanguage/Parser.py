@@ -101,7 +101,7 @@ def p_eval(t):
     t[0] = ('EVAL_EXPR', t[3], t[2], t[4], t[6])
 
 
-# TODO: parametric intervals
+# TODO: define a rule for parametric intervals
 def p_intvl_list(t):
     '''
     INTVL_LIST = ID IN INTVL |
@@ -123,7 +123,7 @@ def p_spec_file(t):
     '''
     SPEC_FILE = [DEF_SIGNAL]? [DEF_PROBSIGNAL]? [DEF_PARAM]? PROP_LIST EVAL_LIST
     '''
-    #TODO: To Complete
+    #TODO: To Complete the addition of ('PROP_LIST', _), ('EVAL_LIST', _)
     if len(t) == 2:
         t[0] = ('SPEC_FILE', ('PROP_LIST', t[1]), ('EVAL_LIST', t[2]))
     elif len(t) == 3:
@@ -174,6 +174,7 @@ def p_phi(t):
         t[0] = ('PHI', t[2], t[1], t[3])
 
 
+#TODO: (OP, PHI) instead of (TPE, OP, PHI) in p_psi and p_func?
 def p_psi(t):
     '''
     PSI = MIN PHI |
