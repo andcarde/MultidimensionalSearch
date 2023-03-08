@@ -11,6 +11,7 @@ precedence = (
 
 tokens = lexer.tokens
 
+
 # dictionary of names
 id_dict = {}
 
@@ -42,15 +43,17 @@ def p_id_list(t):
     '''
     if len(t) == 1:
         # TODO: Insert ID in id_dict
-        # ID is either a PARAM, a SIGNAL or a PROBSIGNAL
+        # ID is either a PARAM, a SIGNAL or a PROB_SIGNAL
         if id_dict[t[1]] is not None:
             print("Error: ID already defined!")
         else:
             id_dict[t[1]] = "Insert type of ID"
-        t[0] = ('ID_LIST', t[1])
+        # Using Python lists here
+        #       ID
+        t[0] = [t[1]]
     else:
-        # recursive case
-        t[0] = ('ID_LIST', t[1], t[2])
+        # Concatenation of Python lists
+        t[0] = t[1] + t[3]
 
 
 def p_def_param(t):
@@ -78,10 +81,19 @@ def p_def_probsignal(t):
     t[0] = ('PROBSIGNAL', t[4])
 
 
+def p_eval_list(t):
+    '''
+    EVAL_LIST = EVAL_EXPR | EVAL_EXPR EVAL_LIST
+    '''
+    if len(t) == 1:
+        t[0] = ('EVAL_LIST', t[1])
+    elif len(t) == 2:
+        t[0] = ('EVAL_LIST', t[1], t[2])
+
 def p_eval(t):
     '''
     EVAL_EXPR = EVAL ID ON SIGNAL_LIST WITH INTVL_LIST |
-           EVAL ID ON PROBSIGNAL_LIST WITH INTVL_LIST
+                EVAL ID ON PROBSIGNAL_LIST WITH INTVL_LIST
     '''
     t[0] = ('EVAL_EXPR', t[3], t[2], t[4], t[6])
 
@@ -96,17 +108,6 @@ def p_intvl_list(t):
         t[0] = (t[2], t[1], t[3])
     elif len(t) == 5:
         t[0] = (t[2], t[1], t[3], t[4])
-
-
-def p_eval_list(t):
-    '''
-    EVAL_LIST = EVAL_EXPR | EVAL_EXPR EVAL_LIST
-    '''
-    if len(t) == 1:
-        t[0] = ('EVAL_LIST', t[1])
-    elif len(t) == 2:
-        t[0] = ('EVAL_LIST', t[1], t[2])
-
 
 def p_intvl(t):
     '''
@@ -133,12 +134,18 @@ def p_spec_file(t):
         t[0] = ('SPEC_FILE', t[3], t[1], t[2], t[4])
 
 
-
 def prop_list(t):
     '''
     PROP_LIST = PROP | PROP PROP_LIST
     '''
-    t[0] = ('PROP_LIST', t[1])
+    if len(t) == 1:
+        # Using Python lists here
+        #       PROP
+        t[0] = [t[1]]
+    else:
+        #  Concatenation of property lists
+        #       PROP    PROP_LIST
+        t[0] = t[1] + t[2]
 
 
 def p_prop(t):
