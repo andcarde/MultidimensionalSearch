@@ -38,7 +38,7 @@ def p_probsignal_list(t):
 
 def p_id_list(t):
     '''
-    ID_LIST = ID | ID, ID_LIST
+    ID_LIST = ID | ID COMMA ID_LIST
     '''
     if len(t) == 1:
         # TODO: Insert ID in id_dict
@@ -107,6 +107,7 @@ def p_eval_list(t):
     elif len(t) == 2:
         t[0] = ('EVAL_LIST', t[1], t[2])
 
+
 def p_intvl(t):
     '''
     INTVL = LBRACKET [NUMBER | ID ] COMMA [NUMBER | ID] RBRACKET
@@ -120,7 +121,7 @@ def p_spec_file(t):
 	    [DEF_PARAM]? PROP_LIST EVAL_LIST
     '''
     counter = 0
-    if t[0] == 'DEF_SIGNAL' | t[0] == 'DEF_PROBSIGNAL':
+    if t[0] == 'DEF_SIGNAL' or t[0] == 'DEF_PROBSIGNAL':
         counter += 1
     if t[counter] == 'DEF_PARAM':
         counter += 1
