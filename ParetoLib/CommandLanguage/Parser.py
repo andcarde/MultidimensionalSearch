@@ -222,14 +222,17 @@ def p_sig(t):
     '''
     SIG = ID | CONSTANT_SIGNAL
     '''
-    t[0] = ('SIG', t[1])
+    # Save the ID or NUMBER
+    t[0] = t[1]
 
 
 def p_constant_signal(t):
     '''
     CONSTANT_SIGNAL = NUMBER
     '''
-    t[0] = ('CONSTANT_SIGNAL', t[1])
+    # Save number
+    # t[0] = float(t[1])
+    t[0] = t[1].value
 
 
 # Build the parser
