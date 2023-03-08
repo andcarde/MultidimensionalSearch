@@ -53,7 +53,7 @@ def p_id_list(t):
         t[0] = [t[1]]
     else:
         # Concatenation of Python lists
-        t[0] = t[1] + t[3]
+        t[0] = [t[1]] + t[3]
 
 
 def p_def_param(t):
@@ -86,9 +86,12 @@ def p_eval_list(t):
     EVAL_LIST = EVAL_EXPR | EVAL_EXPR EVAL_LIST
     '''
     if len(t) == 1:
-        t[0] = ('EVAL_LIST', t[1])
-    elif len(t) == 2:
-        t[0] = ('EVAL_LIST', t[1], t[2])
+        # Using Python lists here
+        #       EVAL_EXPR
+        t[0] = [t[1]]
+    else:
+        # Concatenation of Python lists
+        t[0] = [t[1]] + t[2]
 
 def p_eval(t):
     '''
@@ -118,20 +121,17 @@ def p_intvl(t):
 
 def p_spec_file(t):
     '''
-    SPEC_FILE = [DEF_SIGNAL | DEF_PROBSIGNAL]?
-	    [DEF_PARAM]? PROP_LIST EVAL_LIST
+    SPEC_FILE = [DEF_SIGNAL]? [DEF_PROBSIGNAL]? [DEF_PARAM]? PROP_LIST EVAL_LIST
     '''
-    counter = 0
-    if t[0] == 'DEF_SIGNAL' or t[0] == 'DEF_PROBSIGNAL':
-        counter += 1
-    if t[counter] == 'DEF_PARAM':
-        counter += 1
-    if counter == 0:
-        t[0] = ('SPEC_FILE', t[1], t[2])
-    elif counter == 1:
-        t[0] = ('SPEC_FILE', t[2], t[1], t[3])
-    elif counter == 2:
-        t[0] = ('SPEC_FILE', t[3], t[1], t[2], t[4])
+    #TODO: To Complete
+    if len(t) == 2:
+        t[0] = ('SPEC_FILE', ('PROP_LIST', t[1]), ('EVAL_LIST', t[2]))
+    elif len(t) == 3:
+        t[0] = ('SPEC_FILE', t[1], t[2], t[3])
+    elif len(t) == 4:
+        t[0] = ('SPEC_FILE', t[1], t[2], t[3], t[4])
+    elif len(t) == 5:
+        t[0] = ('SPEC_FILE', t[1], t[2], t[3], t[4]. t[5])
 
 
 def prop_list(t):
@@ -145,12 +145,12 @@ def prop_list(t):
     else:
         #  Concatenation of property lists
         #       PROP    PROP_LIST
-        t[0] = t[1] + t[2]
+        t[0] = [t[1]] + t[2]
 
 
 def p_prop(t):
     '''
-    PROP = ID := PHI | PSI
+    PROP = ID := [PHI | PSI]
     '''
     #       TYPE    OP    ID    PHI/PSI
     t[0] = ('PROP', t[2], t[1], t[3])
