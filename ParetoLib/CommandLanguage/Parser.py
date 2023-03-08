@@ -57,21 +57,25 @@ def p_def_param(t):
     '''
     PARAM_DEF = LET PARAM PARAM_LIST SEMICOLON
     '''
-    t[0] = ('PARAM', t[0], t[1], t[2])
+    #                PARAM_LIST
+    t[0] = ('PARAM', t[3])
 
 
 def p_def_signal(t):
     '''
     SIGNAL_DEF = LET SIGNAL SIGNAL_LIST SEMICOLON
     '''
-    t[0] = ('SIGNAL', t[0], t[1], t[2])
+    #                SIGNAL_LIST
+    t[0] = ('SIGNAL', t[3])
+
 
 # Probablemente haya algún fallo en este
 def p_def_probsignal(t):
     '''
-    PROBSIGNAL_DEF = LET PROBABILISTIC SIGNAL PROBSIGNAL_LIST SEMICOLON
+    PROBSIGNAL_DEF = LET PROB SIGNAL PROBSIGNAL_LIST SEMICOLON
     '''
-    t[0] = ('PROBSIGNAL', t[0], t[4], t[3])
+    #                   PROBSIGNAL_LIST
+    t[0] = ('PROBSIGNAL', t[4])
 
 
 def p_eval(t):
