@@ -131,23 +131,18 @@ def p_definitions(t):
 
     t[0] = (declaration for declaration in t[1:])
 
+
 def p_spec_file(t):
     '''
     SPEC_FILE = DEFINITIONS PROP_LIST EVAL_LIST
     '''
     #TODO: To Complete the addition of ('PROP_LIST', _), ('EVAL_LIST', _)
     #TODO Done -> Check in tutorship
-    if len(t) == 2:
-        t[0] = ('SPEC_FILE', ('PROP_LIST', t[1]), ('EVAL_LIST', t[2]))
-    elif len(t) == 3:
-        t[0] = ('SPEC_FILE', t[1], ('PROP_LIST', t[2]), ('EVAL_LIST', t[3]))
-    elif len(t) == 4:
-        t[0] = ('SPEC_FILE', t[1], t[2], ('PROP_LIST', t[3]), ('EVAL_LIST', t[4]))
-    elif len(t) == 5:
-        t[0] = ('SPEC_FILE', t[1], t[2], t[3], ('PROP_LIST', t[4]), ('EVAL_LIST', t[5]))
+    assert len(t) == 3, "Missing definitions, property list or eval list"
+    t[0] = ('SPEC_FILE', ('DEF', t[1]), ('PROP_LIST', t[2]), ('EVAL_LIST', t[3]))
 
 
-def prop_list(t):
+def p_prop_list(t):
     '''
     PROP_LIST = PROP | PROP PROP_LIST
     '''
@@ -165,8 +160,8 @@ def p_prop(t):
     '''
     PROP = ID := [PHI | PSI]
     '''
-    #       TYPE    OP    ID    PHI/PSI
-    t[0] = ('PROP', t[2], t[1], t[3])
+    #       TYPE    ID    PHI/PSI
+    t[0] = ('PROP', t[1], t[3])
 
 
 def p_phi(t):
@@ -178,7 +173,7 @@ def p_phi(t):
     # Case of ID, FUNC
     if len(t) == 1:
         t[0] = ('PHI', t[1])
-    # Case of NOT PHI, PROB PHI, PHI PHI
+    # Case of NOT PHI, PROB PHI, PHI
     elif len(t) == 2:
         #       TYPE   OP    PHI
         t[0] = ('PHI', t[1], t[2])
@@ -186,7 +181,7 @@ def p_phi(t):
         if t[2] == 'BIN_BOOL_OP':
             #       TYPE   OP    PHI   PHI
             t[0] = ('PHI', t[2], t[1], t[3])
-        elif t[1] == 'LPAR' & t[3] == 'RPAR':
+        elif t[1] == 'LPAR' and t[3] == 'RPAR':
             #      PHI
             t[0] = t[2]
     elif len(t) == 5:
