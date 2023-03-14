@@ -21,7 +21,7 @@ def p_param_list(t):
     PARAM_LIST = ID_LIST
     '''
     t[0] = ('PARAM_LIST', t[1])
-
+    # t[0] = ('PARAM_LIST', [p1, p2, p3])
 
 def p_signal_list(t):
     '''
@@ -107,7 +107,9 @@ def p_intvl(t):
     '''
     INTVL = LBRACKET [NUMBER | ID ] COMMA [NUMBER | ID] RBRACKET
     '''
-    t[0] = ('INTVL', t[2], t[3])
+    # Check that t[2].value (NUMBER) or t[2].type (ID).
+    # In case that it is ID, check that p1 == t[2], then p1 is param and p1 is defined in PARAM_LIST
+    t[0] = ('INTVL', t[2], t[4])
 
 
 def p_intvl_list(t):
@@ -123,7 +125,7 @@ def p_intvl_list(t):
 
 def p_spec_file(t):
     '''
-    SPEC_FILE = [DEF_SIGNAL]? [DEF_PROBSIGNAL]? [DEF_PARAM]? PROP_LIST EVAL_LIST
+    SPEC_FILE = [DEF_SIGNAL | DEF_PROBSIGNAL]? [DEF_PARAM]? PROP_LIST EVAL_LIST
     '''
     #TODO: To Complete the addition of ('PROP_LIST', _), ('EVAL_LIST', _)
     #TODO Done -> Check in tutorship
@@ -162,10 +164,10 @@ def p_prop(t):
 def p_phi(t):
     # TODO Is correct? -> Check in tutorship
     '''
-    PHI : ID | FUNC | NOT PHI | PROB PHI | PHI BIN_BOOL_OP PHI | F[INTVL]? PHI
-        | G[INTVL]? PHI | PHI U[INTVL]? PHI | ON[INTVL] PSI | LPAR PHI RPAR
+    PHI : ID | FUNC | NOT PHI | PROB PHI | PHI BIN_BOOL_OP PHI | F INTVL PHI
+        | G INTVL PHI | PHI U INTVL PHI | ON INTVL PSI | LPAR PHI RPAR
     '''
-    # Case of ID, FUNC, PHI
+    # Case of ID, FUNC
     if len(t) == 1:
         t[0] = ('PHI', t[1])
     # Case of NOT PHI, PROB PHI, PHI PHI
