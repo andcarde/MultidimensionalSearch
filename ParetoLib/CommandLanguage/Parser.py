@@ -123,9 +123,17 @@ def p_intvl_list(t):
         t[0] = (t[2], t[1], t[3], t[4])
 
 
+def p_definitions(t):
+    '''
+    DEFINITIONS = [DEF_SIGNAL | DEF_PROBSIGNAL]+ [DEF_PARAM]?
+    '''
+    # t[1:] = (('SIGNAL_LIST', [...]), ('PROBSIGNAL_LIST', [...]), ('PARAM_LIST', [...]))
+
+    t[0] = (declaration for declaration in t[1:])
+
 def p_spec_file(t):
     '''
-    SPEC_FILE = [DEF_SIGNAL | DEF_PROBSIGNAL]? [DEF_PARAM]? PROP_LIST EVAL_LIST
+    SPEC_FILE = DEFINITIONS PROP_LIST EVAL_LIST
     '''
     #TODO: To Complete the addition of ('PROP_LIST', _), ('EVAL_LIST', _)
     #TODO Done -> Check in tutorship
@@ -263,4 +271,4 @@ def p_constant_signal(t):
 
 # Build the parser
 tmpdirname = "/tmp/"
-parser = yacc.yacc(start='param', debugfile=tmpdirname + 'parser.out', write_tables=True)
+parser = yacc.yacc(start='p_spec_file', debugfile=tmpdirname + 'parser.out', write_tables=True)
