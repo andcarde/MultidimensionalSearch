@@ -31,30 +31,51 @@ global dic
 
 # STLCommand
 def translate(cpn_tree):
-    if cpn_tree[0] == 'max':
-        formula = generate_number(cpn_tree)
-    elif cpn_tree[0] == 'min':
-        formula = generate_formula(cpn_tree)
+    assert cpn_tree[0] == 'SPEC_FILE'
+    # DEFINITIONS
+    # cpn_tree[1] == ('DEF', t[1])
+    _, defs = cpn_tree[1]
+    translate_defs(defs)
+
+    # PROP_LIST
+    # cpn_tree[2] == ('PROP_LIST', t[2])
+    _, prop_list = cpn_tree[2]
+    translate_prop_list(prop_list)
+
+    # EVAL_LIST
+    # cpn_tree[3] == ('EVAL_LIST', t[3])
+    _, eval_list = cpn_tree[3]
+    translate_eval_list(eval_list)
+
+
+def translate_defs(defs):
+    # defs == (('SIGNAL_LIST', [...]), ('PROBSIGNAL_LIST', [...]), ('PARAM_LIST', [...]))
+    for (keyword, signal_or_param_list) in defs:
+        if keyword == 'SIGNAL_LIST':
+            None
+        elif keyword == 'PROBSIGNAL_LIST':
+            None
+        elif keyword == 'PARAM_LIST':
+            # Save 'signal_or_param_list' into temporary file and save record
+            None
+
+
+def translate_prop_list(prop_list):
+    for prop in prop_list:
+        # Translate prop into STLe format
+        generate_property(prop)
+        # Each property will be stored in a 'temporary.stl' file
+
+
+def translate_eval_list(eval_list):
+    None
+
+
+def translate_psi(cpn_tree):
+    # cpn_tree == ('PSI', OP, PHI)
+    _, op, phi = cpn_tree
+    formula = '({0} {1})'.format(op, generate_property(phi))
     return formula
-
-
-def build_string(tree):
-    string = ""
-    check(tree, string)
-    return string
-
-
-def check(nodo_actual, string):
-    if nodo_actual.left is not None:
-        check(nodo_actual.left, string)
-    string = string + nodo_actual.raiz
-    if nodo_actual.left is not None:
-        check(nodo_actual.right, string)
-
-
-# <NUMBER> ::= Floating-point number | inf | -inf
-def generate_number(tree_cpn):
-    return tree_cpn[0]
 
 
 # <BOOLEAN> ::= false | true
@@ -65,14 +86,10 @@ def generate_boolean(tree_cpn):
         return 'false'
 
 
+# <NUMBER> ::= Floating-point number | inf | -inf
 # <INTERVAL> ::= (<NUMBER> <NUMBER>)
 def generate_interval(tree_cpn):
-    sol = '('
-    sol += generate_number(tree_cpn[1])
-    sol += ','
-    sol += generate_number(tree_cpn[2])
-    sol += ')'
-    return sol
+    return '({0} {1})'.format(tree_cpn[1], tree_cpn[2])
 
 
 # <VARIABLE> ::= x<INTEGER>
@@ -88,7 +105,7 @@ def generate_function(tree_cpn):
         sol = '('
         for i in len(tree_cpn):
             if i > 0:
-                sol += generate_formula(tree_cpn[i])
+                sol += generate_property(tree_cpn[i])
         return sol
     return None
 
@@ -111,16 +128,10 @@ def generate_function(tree_cpn):
 #     (F <INTERVAL> <FORMULA>)  |
 #     (G <INTERVAL> <FORMULA>)  |
 #     (StlUntil <INTERVAL> <FORMULA> <FORMULA>)
-def generate_formula(tree_cpn):
-    sol = ''
-    for i in range(len(tree_cpn)):
-        if i != 0:
-            if i != 1 and i != len(tree_cpn):
-                sol += ' '
-            sol += transform_formula(tree_cpn[i])
-    if len(tree_cpn) > 1:
-        sol = '(' + sol + ')'
-    return sol
+def generate_property(prop):
+    # prop = ('PROP', ID, PHI/PSI)
+    _, id_prop, phi_or_psi = prop
+    return id_prop, transform_formula(phi_or_psi)
 
 
 def transform_formula(tree_cpn):
@@ -128,7 +139,7 @@ def transform_formula(tree_cpn):
     if var_type == 'variable':
         formula = generate_variable(tree_cpn)
     elif var_type == 'number':
-        formula = generate_number(tree_cpn)
+        formula = str(tree_cpn)
     elif var_type == 'boolean':
         formula = generate_boolean(tree_cpn)
     elif var_type == 'function':
@@ -147,7 +158,7 @@ def generate_f(tree_cpn):
     sol = '(F '
     sol += generate_interval(tree_cpn[2])
     sol = ' '
-    sol += generate_formula(tree_cpn[3])
+    sol += generate_property(tree_cpn[3])
     sol += ')'
     return sol
 
@@ -157,7 +168,7 @@ def generate_g(tree_cpn):
     sol = '(G '
     sol += generate_interval(tree_cpn[2])
     sol = ' '
-    sol += generate_formula(tree_cpn[3])
+    sol += generate_property(tree_cpn[3])
     sol += ')'
     return sol
 
@@ -170,8 +181,8 @@ def generate_u(tree_cpn):
     sol = '(StlUntil '
     sol += generate_interval(tree_cpn)
     sol = ' '
-    sol += generate_formula(tree_cpn)
+    sol += generate_property(tree_cpn)
     sol = ' '
-    sol += generate_formula(tree_cpn)
+    sol += generate_property(tree_cpn)
     sol += ')'
     return sol
