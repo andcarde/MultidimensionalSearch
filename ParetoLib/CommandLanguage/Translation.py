@@ -1,4 +1,4 @@
-import numpy
+from ParetoLib.CommandLanguage.Parser import parser, id_dict
 
 '''
 Funciones
@@ -45,10 +45,10 @@ def build_string(tree):
 
 
 def check(nodo_actual, string):
-    if nodo_actual.left != None:
+    if nodo_actual.left is not None:
         check(nodo_actual.left, string)
     string = string + nodo_actual.raiz
-    if nodo_actual.left != None:
+    if nodo_actual.left is not None:
         check(nodo_actual.right, string)
 
 
@@ -84,7 +84,7 @@ def generate_variable(tree_cpn):
 
 # (<FUNCTION> <FORMULA>*)
 def generate_function(tree_cpn):
-    if tree_cpn[0] == 'BIN_BOOL_OP' | tree_cpn[0] == 'BIN_COND':
+    if tree_cpn[0] == 'BIN_BOOL_OP' or tree_cpn[0] == 'BIN_COND':
         sol = '('
         for i in len(tree_cpn):
             if i > 0:
@@ -113,9 +113,9 @@ def generate_function(tree_cpn):
 #     (StlUntil <INTERVAL> <FORMULA> <FORMULA>)
 def generate_formula(tree_cpn):
     sol = ''
-    for i in len(tree_cpn):
+    for i in range(len(tree_cpn)):
         if i != 0:
-            if i != 1 & i != len(tree_cpn):
+            if i != 1 and i != len(tree_cpn):
                 sol += ' '
             sol += transform_formula(tree_cpn[i])
     if len(tree_cpn) > 1:
