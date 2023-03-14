@@ -9,65 +9,80 @@ Funciones
 - Contruir la string en lenguage STL
 '''
 
-class NameChecker :
-    names = []
-    def checkName(name) :
-        for n in NameChecker.names :
-            if n == name :
-                return False
-        return True
-    def addName(name) :
-        NameChecker.names.add(name);
-
-
+# TODO Do we need to use it?
 # Diccionario de preposiciones atomicas
 ap = {}
 
+# To count how many variables has been declared
+global variable_counter
+variable_counter = 0
+
+# To map variable names into variable 'x<NUMBER' format
+global dic
+
 
 # STLCommand
-def translate(cpnTree) :
-    tipoVar = cpnTree[0]
-    # Igual no hay switch en Python
-    if tipoVar == 'max' :
-        stleTree = generateNumber(cpnTree)
-    elif tipoVar == 'min':
-        stleTree = generateFormula(cpnTree)
-    stleFormula = generateFormula(stleTree)
-    return stleFormula
+def translate(cpn_tree):
+    if cpn_tree[0] == 'max':
+        formula = generate_number(cpn_tree)
+    elif cpn_tree[0] == 'min':
+        formula = generate_formula(cpn_tree)
+    return formula
 
 
-def buildString(tree):
+def build_string(tree):
     string = ""
     check(tree, string)
     return string
 
 
-def check(nodo_actual, string) :
-        if nodo_actual.left != None :
-            check(nodo_actual.left, string)
-        string = string + nodo_actual.raiz
-        if nodo_actual.left != None :
-            check(nodo_actual.right, string)
+def check(nodo_actual, string):
+    if nodo_actual.left != None:
+        check(nodo_actual.left, string)
+    string = string + nodo_actual.raiz
+    if nodo_actual.left != None:
+        check(nodo_actual.right, string)
 
 
 # <NUMBER> ::= Floating-point number | inf | -inf
-def generateNumber(string) :
-    i = 0
+def generate_number(tree_cpn):
+    return tree_cpn[0]
+
 
 # <BOOLEAN> ::= false | true
-def generateBoolean(string):
+def generate_boolean(tree_cpn):
+    if tree_cpn[0]:
+        return 'true'
+    else:
+        return 'false'
+
 
 # <INTERVAL> ::= (<NUMBER> <NUMBER>)
-def generate_interval(string):
-    i = 0
+def generate_interval(tree_cpn):
+    sol = '('
+    sol += generate_number(tree_cpn[1])
+    sol += ','
+    sol += generate_number(tree_cpn[2])
+    sol += ')'
+    return sol
 
-#<VARIABLE> ::= x<INTEGER>
-def generate_variable(string):
-    i = 0
+
+# <VARIABLE> ::= x<INTEGER>
+def generate_variable(tree_cpn):
+    variable_counter += 1
+    dic[tree_cpn[1]] = variable_counter
+    return 'x' + str(variable_counter)
 
 
-def generate_function(string):
-    i = 0
+# (<FUNCTION> <FORMULA>*)
+def generate_function(tree_cpn):
+    if tree_cpn[0] == 'BIN_BOOL_OP' | tree_cpn[0] == 'BIN_COND':
+        sol = '('
+        for i in len(tree_cpn):
+            if i > 0:
+                sol += generate_formula(tree_cpn[i])
+        return sol
+    return None
 
 
 # Input: treeSTLE (tuple)
@@ -88,51 +103,53 @@ def generate_function(string):
 #     (F <INTERVAL> <FORMULA>)  |
 #     (G <INTERVAL> <FORMULA>)  |
 #     (StlUntil <INTERVAL> <FORMULA> <FORMULA>)
-def generateFormula(treeSTLE) :
-    string = ''
-    if (numpy.size(treeSTLE) == 1) :
-        string += treeSTLE[0]
-    else :
-        string += '('
-        for i in numpy.size(treeSTLE) :
-            string += generateFormula(treeSTLE[i])
-        string += ')'
-
-    formula = generateVariable(string)
-    if formula is None :
-        formula = generateNumber(string)
-        if formula is None :
-            formula = generateBoolean()
-            if formula is None:
-                formula = generateFunction()
-                if formula is None:
-                    formula = generateF()
-                    if formula is None:
-                        formula = generateG()
-                        if formula is None:
-                            formula = generateG()
-    sol = '('
-    sol += formula
-    sol += ')'
+def generate_formula(tree_cpn):
+    sol = ''
+    for i in len(tree_cpn):
+        if i != 0:
+            if i != 1 & i != len(tree_cpn):
+                sol += ' '
+            sol += transform_formula(tree_cpn[i])
+    if len(tree_cpn) > 1:
+        sol = '(' + sol + ')'
     return sol
 
 
+def transform_formula(tree_cpn):
+    var_type = str(tree_cpn[0]).lower()
+    if var_type == 'variable':
+        formula = generate_variable(tree_cpn)
+    elif var_type == 'number':
+        formula = generate_number(tree_cpn)
+    elif var_type == 'boolean':
+        formula = generate_boolean(tree_cpn)
+    elif var_type == 'function':
+        formula = generate_function(tree_cpn)
+    elif var_type == 'f':
+        formula = generate_f(tree_cpn)
+    elif var_type == 'g':
+        formula = generate_g(tree_cpn)
+    elif var_type == 'u':
+        formula = generate_u(tree_cpn)
+    return formula
+
+
 # (F <INTERVAL> <FORMULA>)
-def generateF(string):
-    sol = '('
-    sol += 'F'
-    sol += generateInterval(string)
-    sol += generateFormula(string)
+def generate_f(tree_cpn):
+    sol = '(F '
+    sol += generate_interval(tree_cpn[2])
+    sol = ' '
+    sol += generate_formula(tree_cpn[3])
     sol += ')'
     return sol
 
 
 # (G <INTERVAL> <FORMULA>)
-def generateG(treeCPN):
-    sol = '('
-    sol += 'G'
-    sol += generateInterval(treeCPN)
-    sol += generateFormula(treeCPN)
+def generate_g(tree_cpn):
+    sol = '(G '
+    sol += generate_interval(tree_cpn[2])
+    sol = ' '
+    sol += generate_formula(tree_cpn[3])
     sol += ')'
     return sol
 
@@ -141,50 +158,12 @@ def generateG(treeCPN):
 # <TreeInterval> := <TreeInterval>[0]=INTERVAL, <TreeInterval>[1] = <name>, <TreeInterval>[2] = <name>
 # stringCPN: 'F[<value>,<value>]', <value> = <name> | <integer>, <name> = r{[a-zA-Z][a-zA-Z]*[0-9]*}, <integer> = r{[0-9]+}
 # (StlUntil <INTERVAL> <FORMULA> <FORMULA>)
-def generateU(treeCPN):
-    treeSTLE = '('
-    treeSTLE += 'StlUntil'
-    treeSTLE += generateInterval(treeCPN)
-    treeSTLE += generateFormula(treeCPN)
-    treeSTLE += generateFormula(treeCPN)
-    treeSTLE += ')'
-    return treeSTLE
-
-
-'''
-PARAM: let param PARAM_LIST
-SIGNAL: let signal SIGNAL_LIST
-PROBSIGNAL: let probabilistic signal PROBSIGNAL_LIST
-
-PARAM_LIST: ID_LIST;
-SIGNAL_LIST: ID_LIST;
-PROBSIGNAL_LIST: ID_LIST;
-
-ID_LIST: ID |
-		ID, ID_LIST
-
-INTVL: LBRACKET NUMBER COMMA NUMBER RBRACKET
-INTVL_LIST: ID in INTVL |
-		ID in INTVL, INTVL_LIST
-
-PROP: ID := PHI | PSI
-
-SIG: ID | CONSTANT_SIGNAL
-CONSTANT_SIGNAL: NUMBER
-
-FUNC: SIG BIN_COND SIG | SIG BIN_OP SIG
-PHI : ID | FUNC | NOT PHI | PROB PHI | PHI BIN_BOOL_OP PHI | F[INTVL]? PHI | G[INTVL]? PHI | PHI U[INTVL]? PHI | ON[INTVL] PSI | LPAR PHI RPAR
-PSI : MIN PHI | MAX PHI | INTEGRAL PHI | DER PHI
-
-EVAL: eval ID on SIGNAL_LIST with INTVL_LIST
-
-SPEC_FILE:
-	[DEF_SIGNAL | DEF_PROBSIGNAL]?
-	[DEF_PARAM]?
-	[PROP]+
-	[EVAL]+
-
-? = 0, 1
-+ = 1...N
-* = 0...N
-'''
+def generate_u(tree_cpn):
+    sol = '(StlUntil '
+    sol += generate_interval(tree_cpn)
+    sol = ' '
+    sol += generate_formula(tree_cpn)
+    sol = ' '
+    sol += generate_formula(tree_cpn)
+    sol += ')'
+    return sol

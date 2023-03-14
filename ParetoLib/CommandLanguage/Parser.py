@@ -36,18 +36,17 @@ def p_probsignal_list(t):
     '''
     t[0] = ('PROBSIGNAL_LIST', t[1])
 
-
 def p_id_list(t):
     '''
     ID_LIST = ID | ID COMMA ID_LIST
     '''
+    # ID is either a PARAM, a SIGNAL or a PROB_SIGNAL
+    if id_dict[t[1]] is not None:
+        print("Error: ID already defined!")
+    else:
+        # Insert type of ID
+        id_dict[t[1]] = t[1]
     if len(t) == 1:
-        # TODO: Insert ID in id_dict
-        # ID is either a PARAM, a SIGNAL or a PROB_SIGNAL
-        if id_dict[t[1]] is not None:
-            print("Error: ID already defined!")
-        else:
-            id_dict[t[1]] = "Insert type of ID"
         # Using Python lists here
         #       ID
         t[0] = [t[1]]
@@ -98,10 +97,19 @@ def p_eval(t):
     EVAL_EXPR = EVAL ID ON SIGNAL_LIST WITH INTVL_LIST |
                 EVAL ID ON PROBSIGNAL_LIST WITH INTVL_LIST
     '''
-    t[0] = ('EVAL_EXPR', t[3], t[2], t[4], t[6])
+    #                    ON    ID    INTVL_LIST
+    t[0] = ('EVAL_EXPR', t[3], t[2], t[6])
 
 
 # TODO: define a rule for parametric intervals
+# TODO A Generic INTVL is already defined -> Check in tutorship
+def p_intvl(t):
+    '''
+    INTVL = LBRACKET [NUMBER | ID ] COMMA [NUMBER | ID] RBRACKET
+    '''
+    t[0] = ('INTVL', t[2], t[3])
+
+
 def p_intvl_list(t):
     '''
     INTVL_LIST = ID IN INTVL |
@@ -112,26 +120,21 @@ def p_intvl_list(t):
     elif len(t) == 5:
         t[0] = (t[2], t[1], t[3], t[4])
 
-def p_intvl(t):
-    '''
-    INTVL = LBRACKET [NUMBER | ID ] COMMA [NUMBER | ID] RBRACKET
-    '''
-    t[0] = ('INTVL', t[1], t[2], t[3], t[4])
-
 
 def p_spec_file(t):
     '''
     SPEC_FILE = [DEF_SIGNAL]? [DEF_PROBSIGNAL]? [DEF_PARAM]? PROP_LIST EVAL_LIST
     '''
     #TODO: To Complete the addition of ('PROP_LIST', _), ('EVAL_LIST', _)
+    #TODO Done -> Check in tutorship
     if len(t) == 2:
         t[0] = ('SPEC_FILE', ('PROP_LIST', t[1]), ('EVAL_LIST', t[2]))
     elif len(t) == 3:
-        t[0] = ('SPEC_FILE', t[1], t[2], t[3])
+        t[0] = ('SPEC_FILE', t[1], ('PROP_LIST', t[2]), ('EVAL_LIST', t[3]))
     elif len(t) == 4:
-        t[0] = ('SPEC_FILE', t[1], t[2], t[3], t[4])
+        t[0] = ('SPEC_FILE', t[1], t[2], ('PROP_LIST', t[3]), ('EVAL_LIST', t[4]))
     elif len(t) == 5:
-        t[0] = ('SPEC_FILE', t[1], t[2], t[3], t[4]. t[5])
+        t[0] = ('SPEC_FILE', t[1], t[2], t[3], ('PROP_LIST', t[4]), ('EVAL_LIST', t[5]))
 
 
 def prop_list(t):
@@ -157,24 +160,37 @@ def p_prop(t):
 
 
 def p_phi(t):
+    # TODO Is correct? -> Check in tutorship
     '''
     PHI : ID | FUNC | NOT PHI | PROB PHI | PHI BIN_BOOL_OP PHI | F[INTVL]? PHI
         | G[INTVL]? PHI | PHI U[INTVL]? PHI | ON[INTVL] PSI | LPAR PHI RPAR
     '''
-    t[0] = ('PHI', t[0])
-    # Case of ID, FUNC
+    # Case of ID, FUNC, PHI
     if len(t) == 1:
         t[0] = ('PHI', t[1])
-    # Case of NOT PHI, PROB PHI
+    # Case of NOT PHI, PROB PHI, PHI PHI
     elif len(t) == 2:
         #       TYPE   OP    PHI
         t[0] = ('PHI', t[1], t[2])
     elif len(t) == 3:
-        #       TYPE   OP    PHI   PHI
-        t[0] = ('PHI', t[2], t[1], t[3])
+        if t[2] == 'BIN_BOOL_OP':
+            #       TYPE   OP    PHI   PHI
+            t[0] = ('PHI', t[2], t[1], t[3])
+        elif t[1] == 'LPAR' & t[3] == 'RPAR':
+            #      PHI
+            t[0] = t[2]
+    elif len(t) == 5:
+        #       TYPE   ON    INTVL  PSI
+        #       TYPE   F     INTVL  PHI
+        #       TYPE   G     INTVL  PHI
+        t[0] = ('PHI', t[1], t[3], t[5])
+    elif len(t) == 6:
+        #       TYPE   U     INTVL PHI   PHI
+        t[0] = ('PHI', t[2], t[4], t[1], t[6])
 
 
 #TODO: (OP, PHI) instead of (TPE, OP, PHI) in p_psi and p_func?
+# I don't understand the difference -> Check in tutorship
 def p_psi(t):
     '''
     PSI = MIN PHI |
