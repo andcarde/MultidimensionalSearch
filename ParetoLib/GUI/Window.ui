@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1053</width>
-    <height>796</height>
+    <height>873</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -418,7 +418,7 @@
             </sizepolicy>
            </property>
            <property name="readOnly">
-            <bool>true</bool>
+            <bool>false</bool>
            </property>
            <property name="plainText">
             <string/>
@@ -438,7 +438,7 @@
      <x>0</x>
      <y>0</y>
      <width>1053</width>
-     <height>20</height>
+     <height>29</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuCreate">
