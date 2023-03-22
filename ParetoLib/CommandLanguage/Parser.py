@@ -94,9 +94,10 @@ def p_eval_list(t):
 
 def p_eval(t):
     '''
-    EVAL_EXPR = EVAL ID ON SIGNAL_LIST WITH INTVL_LIST |
-                EVAL ID ON PROBSIGNAL_LIST WITH INTVL_LIST
+    EVAL_EXPR = EVAL ID ON SIGNAL_LIST [WITH INTVL_LIST]* |
+                EVAL ID ON PROBSIGNAL_LIST [WITH INTVL_LIST]*
     '''
+    # Check that len([WITH INTVL_LIST]*) == len(PARAM_LIST)
     #                    ON    ID    INTVL_LIST
     t[0] = ('EVAL_EXPR', t[3], t[2], t[6])
 
