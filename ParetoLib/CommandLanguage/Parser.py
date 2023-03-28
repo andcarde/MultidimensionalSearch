@@ -1,4 +1,5 @@
 from ply.yacc import yacc
+import os
 import ParetoLib.CommandLanguage.Lexer as lexer
 
 '''
@@ -137,8 +138,6 @@ def p_spec_file(t):
     '''
     SPEC_FILE = DEFINITIONS PROP_LIST EVAL_LIST
     '''
-    #TODO: To Complete the addition of ('PROP_LIST', _), ('EVAL_LIST', _)
-    #TODO Done -> Check in tutorship
     assert len(t) == 3, "Missing definitions, property list or eval list"
     t[0] = ('SPEC_FILE', ('DEF', t[1]), ('PROP_LIST', t[2]), ('EVAL_LIST', t[3]))
 
@@ -166,7 +165,6 @@ def p_prop(t):
 
 
 def p_phi(t):
-    # TODO Is correct? -> Check in tutorship
     '''
     PHI : ID | FUNC | NOT PHI | PROB PHI | PHI BIN_BOOL_OP PHI | F INTVL PHI
         | G INTVL PHI | PHI U INTVL PHI | ON INTVL PSI | LPAR PHI RPAR
@@ -195,8 +193,6 @@ def p_phi(t):
         t[0] = ('PHI', t[2], t[4], t[1], t[6])
 
 
-#TODO: (OP, PHI) instead of (TPE, OP, PHI) in p_psi and p_func?
-# I don't understand the difference -> Check in tutorship
 def p_psi(t):
     '''
     PSI = MIN PHI |
@@ -266,5 +262,6 @@ def p_constant_signal(t):
 
 
 # Build the parser
-tmpdirname = "/tmp/"
-parser = yacc.yacc(start='p_spec_file', debugfile=tmpdirname + 'parser.out', write_tables=True)
+current_dir = os.path.dirname(__file__)
+tmpdirname = current_dir + "/tmp/"
+parser = yacc(start='p_spec_file', debugfile=tmpdirname + 'parser.out', write_tables=True)
