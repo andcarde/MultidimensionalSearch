@@ -39,7 +39,8 @@ def p_probsignal_list(t):
 
 def p_id_list(t):
     '''
-    ID_LIST : ID | ID COMMA ID_LIST
+    ID_LIST : ID
+            | ID COMMA ID_LIST
     '''
     # ID is either a PARAM, a SIGNAL or a PROB_SIGNAL
     if id_dict[t[1]] is not None:
@@ -83,7 +84,8 @@ def p_def_probsignal(t):
 
 def p_eval_list(t):
     '''
-    EVAL_LIST : EVAL_EXPR | EVAL_EXPR EVAL_LIST
+    EVAL_LIST : EVAL_EXPR
+            | EVAL_EXPR EVAL_LIST
     '''
     if len(t) == 1:
         # Using Python lists here
@@ -97,14 +99,13 @@ def p_with_intvl(t):
     '''
     INTVL_LIST : INTVL INTVL_LIST
                 | INTVL
-
     '''
     None
 
 def p_eval(t):
     '''
-    EVAL_EXPR : EVAL ID ON SIGNAL_LIST WITH WITH_INTVL |
-                EVAL ID ON PROBSIGNAL_LIST WITH WITH_INTVL
+    EVAL_EXPR : EVAL ID ON SIGNAL_LIST WITH WITH_INTVL
+                | EVAL ID ON PROBSIGNAL_LIST WITH WITH_INTVL
     '''
     # Check that len([WITH INTVL_LIST]*) == len(PARAM_LIST)
     #                    ON    ID    INTVL_LIST
@@ -132,8 +133,8 @@ def p_intvl(t):
 
 def p_intvl_list(t):
     '''
-    INTVL_LIST : ID IN INTVL |
-                 ID IN INTVL COMMA INTVL_LIST
+    INTVL_LIST : ID IN INTVL
+            | ID IN INTVL COMMA INTVL_LIST
     '''
     if len(t) == 3:
         t[0] = (t[2], t[1], t[3])
@@ -143,7 +144,8 @@ def p_intvl_list(t):
 
 def p_definitions(t):
     '''
-    DEFINITIONS : [DEF_SIGNAL | DEF_PROBSIGNAL]+ [DEF_PARAM]?
+    DEFINITIONS : [DEF_SIGNAL
+            | DEF_PROBSIGNAL]+ [DEF_PARAM]?
     '''
     # t[1:] = (('SIGNAL_LIST', [...]), ('PROBSIGNAL_LIST', [...]), ('PARAM_LIST', [...]))
 
@@ -160,7 +162,8 @@ def p_spec_file(t):
 
 def p_prop_list(t):
     '''
-    PROP_LIST : PROP | PROP PROP_LIST
+    PROP_LIST : PROP
+            | PROP PROP_LIST
     '''
     if len(t) == 1:
         # Using Python lists here
@@ -182,8 +185,16 @@ def p_prop(t):
 
 def p_phi(t):
     '''
-    PHI : ID | FUNC | NOT PHI | PROB PHI | PHI BIN_BOOL_OP PHI | F INTVL PHI
-        | G INTVL PHI | PHI U INTVL PHI | ON INTVL PSI | LPAR PHI RPAR
+    PHI : ID
+        | FUNC
+        | NOT PHI
+        | PROB PHI
+        | PHI BIN_BOOL_OP PHI
+        | F INTVL PHI
+        | G INTVL PHI
+        | PHI U INTVL PHI
+        | ON INTVL PSI
+        | LPAR PHI RPAR
     '''
     # Case of ID, FUNC
     if len(t) == 1:
@@ -211,10 +222,10 @@ def p_phi(t):
 
 def p_psi(t):
     '''
-    PSI : MIN PHI |
-          MAX PHI |
-          INTEGRAL PHI |
-          DER PHI
+    PSI : MIN PHI
+            | MAX PHI
+            | INTEGRAL PHI
+            | DER PHI
     '''
     #       TYPE   OP   PHI
     t[0] = ('PSI', t[1], t[2])
@@ -222,7 +233,8 @@ def p_psi(t):
 
 def p_func(t):
     '''
-    FUNC : SIG BIN_COND SIG | SIG BIN_OP SIG
+    FUNC : SIG BIN_COND SIG
+            | SIG BIN_OP SIG
     '''
     #       TYPE    OP    SIG1  SIG2
     t[0] = ('FUNC', t[2], t[1], t[3])
@@ -230,9 +242,9 @@ def p_func(t):
 
 def p_bin_bool_op(t):
     '''
-    BIN_BOOL_OP : PHI AND PHI |
-                  PHI OR PHI |
-                  PHI IMPLY PHI
+    BIN_BOOL_OP : PHI AND PHI
+            | PHI OR PHI
+            | PHI IMPLY PHI
     '''
     #       OP    PHI1  PHI2
     t[0] = (t[2], t[1], t[3])
@@ -240,10 +252,10 @@ def p_bin_bool_op(t):
 
 def p_bin_cond(t):
     '''
-    BIN_COND : SIG LEQ SIG |
-               SIG LESS SIG |
-               SIG GEQ SIG |
-               SIG GREATER SIG
+    BIN_COND : SIG LEQ SIG
+            | SIG LESS SIG
+            | SIG GEQ SIG
+            | SIG GREATER SIG
     '''
     #       OP    SIG1  SIG2
     t[0] = (t[2], t[1], t[3])
@@ -251,10 +263,10 @@ def p_bin_cond(t):
 
 def p_bin_arith_op(t):
     '''
-    BIN_OP : SIG PLUS SIG |
-               SIG MINUS SIG |
-               SIG TIMES SIG |
-               SIG DIVIDE SIG
+    BIN_OP : SIG PLUS SIG
+            | SIG MINUS SIG
+            | SIG TIMES SIG
+            | SIG DIVIDE SIG
     '''
     #       OP    SIG1  SIG2
     t[0] = (t[2], t[1], t[3])
@@ -262,7 +274,8 @@ def p_bin_arith_op(t):
 
 def p_sig(t):
     '''
-    SIG : ID | CONSTANT_SIGNAL
+    SIG : ID
+            | CONSTANT_SIGNAL
     '''
     # Save the ID or NUMBER
     t[0] = t[1]
