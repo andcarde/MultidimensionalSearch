@@ -93,10 +93,18 @@ def p_eval_list(t):
         # Concatenation of Python lists
         t[0] = [t[1]] + t[2]
 
+def p_with_intvl(t):
+    '''
+    INTVL_LIST : INTVL INTVL_LIST
+                | INTVL
+
+    '''
+    None
+
 def p_eval(t):
     '''
-    EVAL_EXPR : EVAL ID ON SIGNAL_LIST [WITH INTVL_LIST]* |
-                EVAL ID ON PROBSIGNAL_LIST [WITH INTVL_LIST]*
+    EVAL_EXPR : EVAL ID ON SIGNAL_LIST WITH WITH_INTVL |
+                EVAL ID ON PROBSIGNAL_LIST WITH WITH_INTVL
     '''
     # Check that len([WITH INTVL_LIST]*) == len(PARAM_LIST)
     #                    ON    ID    INTVL_LIST
@@ -105,9 +113,17 @@ def p_eval(t):
 
 # TODO: define a rule for parametric intervals
 # TODO A Generic INTVL is already defined -> Check in tutorship
+def p_number_or_id(t):
+    '''
+    NUMBER_ID : NUMBER
+                | ID
+    '''
+    None
+
+
 def p_intvl(t):
     '''
-    INTVL : LBRACKET [NUMBER | ID ] COMMA [NUMBER | ID] RBRACKET
+    INTVL : LBRACKET NUMBER_ID COMMA NUMBER_ID RBRACKET
     '''
     # Check that t[2].value (NUMBER) or t[2].type (ID).
     # In case that it is ID, check that p1 == t[2], then p1 is param and p1 is defined in PARAM_LIST
