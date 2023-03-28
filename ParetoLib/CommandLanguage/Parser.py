@@ -19,27 +19,27 @@ id_dict = {}
 
 def p_param_list(t):
     '''
-    PARAM_LIST = ID_LIST
+    PARAM_LIST : ID_LIST
     '''
     t[0] = ('PARAM_LIST', t[1])
     # t[0] = ('PARAM_LIST', [p1, p2, p3])
 
 def p_signal_list(t):
     '''
-    SIGNAL_LIST = ID_LIST
+    SIGNAL_LIST : ID_LIST
     '''
     t[0] = ('SIGNAL_LIST', t[1])
 
 
 def p_probsignal_list(t):
     '''
-    PROBSIGNAL_LIST = ID_LIST
+    PROBSIGNAL_LIST : ID_LIST
     '''
     t[0] = ('PROBSIGNAL_LIST', t[1])
 
 def p_id_list(t):
     '''
-    ID_LIST = ID | ID COMMA ID_LIST
+    ID_LIST : ID | ID COMMA ID_LIST
     '''
     # ID is either a PARAM, a SIGNAL or a PROB_SIGNAL
     if id_dict[t[1]] is not None:
@@ -58,7 +58,7 @@ def p_id_list(t):
 
 def p_def_param(t):
     '''
-    PARAM_DEF = LET PARAM PARAM_LIST SEMICOLON
+    PARAM_DEF : LET PARAM PARAM_LIST SEMICOLON
     '''
     #                PARAM_LIST
     t[0] = ('PARAM', t[3])
@@ -66,7 +66,7 @@ def p_def_param(t):
 
 def p_def_signal(t):
     '''
-    SIGNAL_DEF = LET SIGNAL SIGNAL_LIST SEMICOLON
+    SIGNAL_DEF : LET SIGNAL SIGNAL_LIST SEMICOLON
     '''
     #                SIGNAL_LIST
     t[0] = ('SIGNAL', t[3])
@@ -75,7 +75,7 @@ def p_def_signal(t):
 # Probablemente haya algún fallo en este
 def p_def_probsignal(t):
     '''
-    PROBSIGNAL_DEF = LET PROB SIGNAL PROBSIGNAL_LIST SEMICOLON
+    PROBSIGNAL_DEF : LET PROB SIGNAL PROBSIGNAL_LIST SEMICOLON
     '''
     #                   PROBSIGNAL_LIST
     t[0] = ('PROBSIGNAL', t[4])
@@ -83,7 +83,7 @@ def p_def_probsignal(t):
 
 def p_eval_list(t):
     '''
-    EVAL_LIST = EVAL_EXPR | EVAL_EXPR EVAL_LIST
+    EVAL_LIST : EVAL_EXPR | EVAL_EXPR EVAL_LIST
     '''
     if len(t) == 1:
         # Using Python lists here
@@ -95,7 +95,7 @@ def p_eval_list(t):
 
 def p_eval(t):
     '''
-    EVAL_EXPR = EVAL ID ON SIGNAL_LIST [WITH INTVL_LIST]* |
+    EVAL_EXPR : EVAL ID ON SIGNAL_LIST [WITH INTVL_LIST]* |
                 EVAL ID ON PROBSIGNAL_LIST [WITH INTVL_LIST]*
     '''
     # Check that len([WITH INTVL_LIST]*) == len(PARAM_LIST)
@@ -107,7 +107,7 @@ def p_eval(t):
 # TODO A Generic INTVL is already defined -> Check in tutorship
 def p_intvl(t):
     '''
-    INTVL = LBRACKET [NUMBER | ID ] COMMA [NUMBER | ID] RBRACKET
+    INTVL : LBRACKET [NUMBER | ID ] COMMA [NUMBER | ID] RBRACKET
     '''
     # Check that t[2].value (NUMBER) or t[2].type (ID).
     # In case that it is ID, check that p1 == t[2], then p1 is param and p1 is defined in PARAM_LIST
@@ -116,7 +116,7 @@ def p_intvl(t):
 
 def p_intvl_list(t):
     '''
-    INTVL_LIST = ID IN INTVL |
+    INTVL_LIST : ID IN INTVL |
                  ID IN INTVL COMMA INTVL_LIST
     '''
     if len(t) == 3:
@@ -127,7 +127,7 @@ def p_intvl_list(t):
 
 def p_definitions(t):
     '''
-    DEFINITIONS = [DEF_SIGNAL | DEF_PROBSIGNAL]+ [DEF_PARAM]?
+    DEFINITIONS : [DEF_SIGNAL | DEF_PROBSIGNAL]+ [DEF_PARAM]?
     '''
     # t[1:] = (('SIGNAL_LIST', [...]), ('PROBSIGNAL_LIST', [...]), ('PARAM_LIST', [...]))
 
@@ -136,7 +136,7 @@ def p_definitions(t):
 
 def p_spec_file(t):
     '''
-    SPEC_FILE = DEFINITIONS PROP_LIST EVAL_LIST
+    SPEC_FILE : DEFINITIONS PROP_LIST EVAL_LIST
     '''
     assert len(t) == 3, "Missing definitions, property list or eval list"
     t[0] = ('SPEC_FILE', ('DEF', t[1]), ('PROP_LIST', t[2]), ('EVAL_LIST', t[3]))
@@ -144,7 +144,7 @@ def p_spec_file(t):
 
 def p_prop_list(t):
     '''
-    PROP_LIST = PROP | PROP PROP_LIST
+    PROP_LIST : PROP | PROP PROP_LIST
     '''
     if len(t) == 1:
         # Using Python lists here
@@ -158,7 +158,7 @@ def p_prop_list(t):
 
 def p_prop(t):
     '''
-    PROP = ID := [PHI | PSI]
+    PROP : ID := [PHI | PSI]
     '''
     #       TYPE    ID    PHI/PSI
     t[0] = ('PROP', t[1], t[3])
@@ -195,7 +195,7 @@ def p_phi(t):
 
 def p_psi(t):
     '''
-    PSI = MIN PHI |
+    PSI : MIN PHI |
           MAX PHI |
           INTEGRAL PHI |
           DER PHI
@@ -206,7 +206,7 @@ def p_psi(t):
 
 def p_func(t):
     '''
-    FUNC = SIG BIN_COND SIG | SIG BIN_OP SIG
+    FUNC : SIG BIN_COND SIG | SIG BIN_OP SIG
     '''
     #       TYPE    OP    SIG1  SIG2
     t[0] = ('FUNC', t[2], t[1], t[3])
@@ -214,7 +214,7 @@ def p_func(t):
 
 def p_bin_bool_op(t):
     '''
-    BIN_BOOL_OP = PHI AND PHI |
+    BIN_BOOL_OP : PHI AND PHI |
                   PHI OR PHI |
                   PHI IMPLY PHI
     '''
@@ -224,7 +224,7 @@ def p_bin_bool_op(t):
 
 def p_bin_cond(t):
     '''
-    BIN_COND = SIG LEQ SIG |
+    BIN_COND : SIG LEQ SIG |
                SIG LESS SIG |
                SIG GEQ SIG |
                SIG GREATER SIG
@@ -235,7 +235,7 @@ def p_bin_cond(t):
 
 def p_bin_arith_op(t):
     '''
-    BIN_OP = SIG PLUS SIG |
+    BIN_OP : SIG PLUS SIG |
                SIG MINUS SIG |
                SIG TIMES SIG |
                SIG DIVIDE SIG
@@ -246,7 +246,7 @@ def p_bin_arith_op(t):
 
 def p_sig(t):
     '''
-    SIG = ID | CONSTANT_SIGNAL
+    SIG : ID | CONSTANT_SIGNAL
     '''
     # Save the ID or NUMBER
     t[0] = t[1]
@@ -254,7 +254,7 @@ def p_sig(t):
 
 def p_constant_signal(t):
     '''
-    CONSTANT_SIGNAL = NUMBER
+    CONSTANT_SIGNAL : NUMBER
     '''
     # Save number
     # t[0] = float(t[1])
