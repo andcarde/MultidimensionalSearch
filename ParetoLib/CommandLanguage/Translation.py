@@ -17,7 +17,6 @@ Output:
     - (optionally) CSV file (e.g, signal)
 '''
 
-# TODO Do we need to use it?
 # Diccionario de preposiciones atomicas
 ap = {}
 

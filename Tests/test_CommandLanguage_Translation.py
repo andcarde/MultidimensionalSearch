@@ -82,3 +82,4 @@ def test_g_parametrico(intvl):
     input_tree[0] = ["G"]
     self.assertEqual(output_tree, "(G [1, 4] (< x 0))")
     assert output_tree == "(G [1, 4] (< x 0))", "Mensaje de error"
+
