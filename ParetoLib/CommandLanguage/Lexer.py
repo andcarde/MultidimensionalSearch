@@ -48,7 +48,7 @@ t_MINUS = r'-'
 t_TIMES = r'\*'
 t_DIVIDE = r'/'
 # Required for absolute value
-t_VAR = r'\|'
+# t_VAR = r'\|'
 # t_ABS = r'\|.\|'
 
 t_ASSIGNMENT = r':='
@@ -79,12 +79,13 @@ def t_NUMBER(t):
     r'\d*\.?\d+ | inf | -inf'
     try:
         t.value = float(t.value)
+        t.type = reserved.get()
     except ValueError:
         print("Integer value too large %d", t.value)
         t.value = 0.0
     return t
 
-
+# TODO ¿Qué es (?i)?, no aparece en https://wtools.io/check-regex-online
 def t_BOOL(t):
     r'(?i)true|false'
     # (?i) = ignore case.
@@ -111,7 +112,7 @@ def t_error(t):
 
 
 # Build the lexer
-lex.lex()
+lexer = lex.lex()
 
 # Usage mode:
 # -----------
