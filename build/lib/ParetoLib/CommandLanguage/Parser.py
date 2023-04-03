@@ -48,6 +48,7 @@ def p_id_list(t):
     else:
         # Insert type of ID
         id_dict[t[1]] = t[1]
+        print("Inserted the ID: " + t[1] + '\n')
     if len(t) == 1:
         # Using Python lists here
         #       ID
@@ -76,7 +77,7 @@ def p_def_signal(t):
 # Probablemente haya algún fallo en este
 def p_def_probsignal(t):
     '''
-    PROBSIGNAL_DEF : LET PROB SIGNAL PROBSIGNAL_LIST SEMICOLON
+    PROBSIGNAL_DEF : LET PROBABILISTIC SIGNAL PROBSIGNAL_LIST SEMICOLON
     '''
     #                   PROBSIGNAL_LIST
     t[0] = ('PROBSIGNAL', t[4])
@@ -95,10 +96,11 @@ def p_eval_list(t):
         # Concatenation of Python lists
         t[0] = [t[1]] + t[2]
 
-def p_eval(t):
+
+def p_eval_expr(t):
     '''
-    EVAL_EXPR : EVAL ID ON SIGNAL_LIST [WITH INTVL_LIST]*
-            | EVAL ID ON PROBSIGNAL_LIST [WITH INTVL_LIST]*
+    EVAL_EXPR : EVAL ID ON SIGNAL_LIST WITH INTVL_LIST
+                | EVAL ID ON PROBSIGNAL_LIST WITH INTVL_LIST
     '''
     # Check that len([WITH INTVL_LIST]*) == len(PARAM_LIST)
     #                    ON    ID    INTVL_LIST
@@ -107,9 +109,17 @@ def p_eval(t):
 
 # TODO: define a rule for parametric intervals
 # TODO A Generic INTVL is already defined -> Check in tutorship
+def p_number_or_id(t):
+    '''
+    NUMBER_ID : NUMBER
+                | ID
+    '''
+    None
+
+
 def p_intvl(t):
     '''
-    INTVL : LBRACKET [NUMBER | ID ] COMMA [NUMBER | ID] RBRACKET
+    INTVL : LBRACK NUMBER_ID COMMA NUMBER_ID RBRACK
     '''
     # Check that t[2].value (NUMBER) or t[2].type (ID).
     # In case that it is ID, check that p1 == t[2], then p1 is param and p1 is defined in PARAM_LIST
@@ -127,14 +137,25 @@ def p_intvl_list(t):
         t[0] = (t[2], t[1], t[3], t[4])
 
 
+def p_def(t):
+    '''
+    DEF : PARAM_DEF
+            | SIGNAL_DEF
+            | PROBSIGNAL_DEF
+    '''
+    None
+
 def p_definitions(t):
     '''
-    DEFINITIONS : [DEF_SIGNAL
-            | DEF_PROBSIGNAL]+ [DEF_PARAM]?
+    DEFINITIONS : DEF
+        | DEF DEFINITIONS
     '''
-    # t[1:] = (('SIGNAL_LIST', [...]), ('PROBSIGNAL_LIST', [...]), ('PARAM_LIST', [...]))
-
-    t[0] = (declaration for declaration in t[1:])
+    if len(t) == 2:
+        t[0] = (t[1], t[2])
+        # t[1:] = (('SIGNAL_LIST', [...]), ('PROBSIGNAL_LIST', [...]), ('PARAM_LIST', [...]))
+        # t[0] = (declaration for declaration in t[1:])
+    elif len(t) == 1:
+        t[0] == t[1]
 
 
 def p_spec_file(t):
@@ -162,7 +183,8 @@ def p_prop_list(t):
 
 def p_prop(t):
     '''
-    PROP : ID := [PHI | PSI]
+    PROP : ID ASSIGNMENT PHI
+            | ID ASSIGNMENT PSI
     '''
     #       TYPE    ID    PHI/PSI
     t[0] = ('PROP', t[1], t[3])
@@ -177,9 +199,9 @@ def p_phi(t):
         | PHI BIN_BOOL_OP PHI
         | F INTVL PHI
         | G INTVL PHI
-        | PHI U INTVL PHI
+        | PHI UNTIL INTVL PHI
         | ON INTVL PSI
-        | LPAR PHI RPAR
+        | LPAREN PHI RPAREN
     '''
     # Case of ID, FUNC
     if len(t) == 1:
@@ -209,7 +231,7 @@ def p_psi(t):
     '''
     PSI : MIN PHI
             | MAX PHI
-            | INTEGRAL PHI
+            | INT PHI
             | DER PHI
     '''
     #       TYPE   OP   PHI
@@ -241,6 +263,7 @@ def p_bin_cond(t):
             | SIG LESS SIG
             | SIG GEQ SIG
             | SIG GREATER SIG
+            | SIG NEQ SIG
     '''
     #       OP    SIG1  SIG2
     t[0] = (t[2], t[1], t[3])
@@ -278,4 +301,4 @@ def p_constant_signal(t):
 # Build the parser
 current_dir = os.path.dirname(__file__)
 tmpdirname = current_dir + "/tmp/"
-parser = yacc(start='p_spec_file', debugfile=tmpdirname + 'parser.out', write_tables=True)
+parser = yacc(start='SPEC_FILE', debugfile=tmpdirname + 'parser.out', write_tables=True)
