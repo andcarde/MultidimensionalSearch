@@ -33,7 +33,7 @@ if __name__ == '__main__':
             'prop1 := F[0,p1] s1 < 0;' + '\n' +
             'prop2 := F[0,p2] (s2 + s3) > 1.0;' + '\n' +
             'prop3 := prop1 and not prop2;' + '\n' +
-            'prop4:= Pr F (s3 < 0);' + '\n' +
+            'prop4 := Pr F (s3 < 0);' + '\n' +
             'eval prob1 with p1 in [0, 0.5], p2 in [0, 0.5]' + '\n' +
             'eval prob2 with p1 in [0, 0.5], p2 in [0, 0.5]'
     )
