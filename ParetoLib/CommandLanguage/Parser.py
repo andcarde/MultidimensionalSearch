@@ -1,6 +1,6 @@
 from ply.yacc import yacc
 import os
-import ParetoLib.CommandLanguage.Lexer as lexer
+import ParetoLib.CommandLanguage.Lexer as Lexer
 
 '''
 In the intended language there are no precedence rules.
@@ -10,7 +10,7 @@ precedence = (
 )
 '''
 
-tokens = lexer.tokens
+tokens = Lexer.tokens
 
 
 # dictionary of names
@@ -24,6 +24,7 @@ def p_param_list(t):
     t[0] = ('PARAM_LIST', t[1])
     # t[0] = ('PARAM_LIST', [p1, p2, p3])
 
+
 def p_signal_list(t):
     '''
     SIGNAL_LIST : ID_LIST
@@ -36,6 +37,7 @@ def p_probsignal_list(t):
     PROBSIGNAL_LIST : ID_LIST
     '''
     t[0] = ('PROBSIGNAL_LIST', t[1])
+
 
 def p_id_list(t):
     '''
@@ -144,6 +146,7 @@ def p_def(t):
             | PROBSIGNAL_DEF
     '''
     None
+
 
 def p_definitions(t):
     '''
