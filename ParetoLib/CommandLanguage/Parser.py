@@ -14,7 +14,7 @@ tokens = Lexer.tokens
 
 
 # dictionary of names
-id_dict = {}
+id_dict = dict()
 
 
 def p_param_list(t):
@@ -45,18 +45,19 @@ def p_id_list(t):
             | ID COMMA ID_LIST
     '''
     # ID is either a PARAM, a SIGNAL or a PROB_SIGNAL
-    if id_dict[t[1]] is not None:
+    if t[1] in id_dict.keys():
         print("Error: ID already defined!")
     else:
         # Insert type of ID
         id_dict[t[1]] = t[1]
-        print("Inserted the ID: " + t[1] + '\n')
-    if len(t) == 1:
+        print("Inserted the ID: " + t[1])
+    if len(t) == 2:
         # Using Python lists here
         #       ID
         t[0] = [t[1]]
     else:
         # Concatenation of Python lists
+        print("Generating {0} with length {1}".format([i for i in t], len(t)))
         t[0] = [t[1]] + t[3]
 
 
@@ -153,11 +154,11 @@ def p_definitions(t):
     DEFINITIONS : DEF
         | DEF DEFINITIONS
     '''
-    if len(t) == 2:
+    if len(t) == 3:
         t[0] = (t[1], t[2])
         # t[1:] = (('SIGNAL_LIST', [...]), ('PROBSIGNAL_LIST', [...]), ('PARAM_LIST', [...]))
         # t[0] = (declaration for declaration in t[1:])
-    elif len(t) == 1:
+    elif len(t) == 2:
         t[0] = t[1]
 
 
