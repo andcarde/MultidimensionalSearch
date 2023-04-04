@@ -155,7 +155,7 @@ def p_definitions(t):
         # t[1:] = (('SIGNAL_LIST', [...]), ('PROBSIGNAL_LIST', [...]), ('PARAM_LIST', [...]))
         # t[0] = (declaration for declaration in t[1:])
     elif len(t) == 1:
-        t[0] == t[1]
+        t[0] = t[1]
 
 
 def p_spec_file(t):
