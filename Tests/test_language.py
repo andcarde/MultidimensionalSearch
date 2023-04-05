@@ -3,14 +3,16 @@ from ParetoLib.CommandLanguage.Parser import parser
 from ParetoLib.CommandLanguage.Translation import translate
 
 
-def printb_tree(tree):
-    for j in len(tree):
-        print('{(' + j + ')')
-        if len(j) == 1:
-            print(j)
-        else:
-            printb_tree(tree[j])
-        print('},')
+def print_tree(tree):
+    if tree is None:
+        print('None')
+    elif not isinstance(tree, (list, tuple)):
+        print(tree)
+    else:
+        for j in range(len(tree)):
+            print('{(' + str(j) + ')')
+            print_tree(tree[j])
+            print('},')
 
 
 if __name__ == '__main__':
@@ -27,21 +29,27 @@ if __name__ == '__main__':
     ),
     '''
     parserInput = (
-            'let param p1, p2;' + '\n' +
-            'let signal s1, s2, s3;' + '\n' +
-            'let probabilistic signal ps1, ps2;' + '\n' +
-            'prop1 := F[0,p1] s1 < 0;' + '\n' +
-            'prop2 := F[0,p2] (s2 + s3) > 1.0;' + '\n' +
-            'prop3 := prop1 and not prop2;' + '\n' +
-            'prop4 := Pr F (s3 < 0);' + '\n' +
-            'eval prob1 with p1 in [0, 0.5], p2 in [0, 0.5]' + '\n' +
-            'eval prob2 with p1 in [0, 0.5], p2 in [0, 0.5]'
+        'let param p1, p2;' + '\n' +
+        'let signal s1, s2, s3;' + '\n' +
+        'let probabilistic signal ps1, ps2;' + '\n' +
+        'prop1 := s1 < 0;' + '\n' +
+        'eval prob1 on s3 with p1 in [0, 0.5], p2 in [0, 0.5]'
     )
+    #'prop1 := F[0,p1] s1 < 0;'
+    #(:=(prop1, F([0, p1], < (s1, 0))))
+    '''
+    + '\n' +
+    'prop2 := F[0,p2] (s2 + s3) > 1.0;' + '\n' +
+    'prop3 := prop1 and not prop2;' + '\n' +
+    'prop4 := Pr F (s3 < 0);' + '\n' +
+    'eval prob1 with p1 in [0, 0.5], p2 in [0, 0.5]' + '\n' +
+    'eval prob2 with p1 in [0, 0.5], p2 in [0, 0.5]'
+    '''
 
     # for i in input:
     out_parser = parser.parse(input=parserInput, tracking=True, lexer=lexer)
     print('Output of the Parser\n')
-    # printTree(out_parser)
+    print_tree(out_parser)
     '''
     print('Output of the Translator\n')
     out_translator = translate(out_parser)
