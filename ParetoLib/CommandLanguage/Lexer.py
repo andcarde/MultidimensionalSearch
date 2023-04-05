@@ -79,13 +79,13 @@ def t_NUMBER(t):
     r'\d*\.?\d+ | inf | -inf'
     try:
         t.value = float(t.value)
-        t.type = reserved.get()
+        t.type = 'NUMBER'
     except ValueError:
         print("Integer value too large %d", t.value)
         t.value = 0.0
     return t
 
-# TODO ¿Qué es (?i)?, no aparece en https://wtools.io/check-regex-online
+# TODO Probar con FALSE (en mayúsculas)
 def t_BOOL(t):
     r'(?i)true|false'
     # (?i) = ignore case.
