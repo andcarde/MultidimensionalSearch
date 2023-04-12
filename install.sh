@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # pip3 uninstall ParetoLib
-pip3 install -r requirements.txt
+pip install -r requirements.txt
 python3 setup.py bdist_wheel --universal
-pip3 install dis/*.whl
+pip install dist/*.whl
 # ----------------------------
 # pip3 install .
 # ----------------------------

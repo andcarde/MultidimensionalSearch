@@ -2821,6 +2821,20 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
     return ParResultSet(border=border, ylow=red, yup=green, xspace=xspace)
 
 
+# Function that divides a cell into the minimum resolution possible, set by g
+def divide_to_min(cell : Rectangle, g : Tuple[float]) -> List[Rectangle]:
+    n = pow(2, cell.dim())
+    cut_list = [cell]
+    while not all(less_equal(rect.diag_vector(), g) for rect in cut_list):
+        new_list = list()
+        for rect in cut_list:
+            new_list.extend(rect.cell_partition_bin(n))
+        cut_list = new_list
+            
+    return cut_list
+    
+
+
 # Dynamic size cell method
 def process_dyn(args: Tuple[Rectangle,
                             List[Oracle],
@@ -2861,10 +2875,11 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
     green = list()
     red = list()
     border = [xspace]
-    vol_green, vol_red, vol_border = 0.0, 0.0, xspace.volume()
     nBorder = 1
+    vol_green, vol_red, vol_border = 0.0, 0.0, xspace.volume()
     step = 0
     d = xspace.dim()
+    n = pow(2, d)
     p = Pool(cpu_count())
 
     # Create temporary directory for storing the result of each step
@@ -2877,16 +2892,17 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
         border = list()
         for (cell, is_green) in cols_list:
             if is_green is None:
-                n = pow(2, d)
                 border = border + cell.cell_partition_bin(n)
-                nBorder = nBorder + n
+                nBorder = nBorder + n - 1
             elif is_green:
-                green.append(cell)
+                list_cell = divide_to_min(cell,g)
+                green.extend(list_cell)
                 vol_green = vol_green + cell.volume()
                 vol_border = vol_border - cell.volume()
                 nBorder = nBorder - 1
             else:
-                red.append(cell)
+                list_cell = divide_to_min(cell,g)
+                red.extend(list_cell)
                 vol_red = vol_red + cell.volume()
                 vol_border = vol_border - cell.volume()
                 nBorder = nBorder - 1
