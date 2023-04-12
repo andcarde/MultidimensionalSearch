@@ -91,7 +91,7 @@ from ParetoLib._py3k import red
 @cython.cclass
 class Rectangle(object):
     privilege = cython.declare(cython.double, visibility='public')
-    cython.declare(_min_corner=tuple, _max_corner=tuple, vol=cython.double, vertx=list)  # , privilege=cython.double)
+    cython.declare(_min_corner=tuple, _max_corner=tuple, vol=cython.double, vertx=list) #, privilege=cython.double)
 
     def __init__(self,
                  min_corner=(float('-inf'),) * 2,

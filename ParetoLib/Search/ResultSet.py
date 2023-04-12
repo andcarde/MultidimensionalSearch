@@ -1638,7 +1638,6 @@ class ResultSet(object):
         # Adapt data type to directed_hausdorff format. Besides, lists allow indexing.
         current_class_list = list(current_class)
         other_classes_list = list(other_classes)
-        
         # Remove points in other classes that also belong to current class
         # other_classes_list = [point for point in other_classes if not self.member_yup(point)]
         # Remove points in current class that also belong to other classes

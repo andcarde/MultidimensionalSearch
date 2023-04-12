@@ -42,10 +42,6 @@ class ParResultSet(ResultSet):
     @cython.returns(cython.void)
     def __init__(self, border=list(), ylow=list(), yup=list(), xspace=Rectangle()):
         # type: (ParResultSet, iter, iter, iter, Rectangle) -> None
-<<<<<<< HEAD
-        # super(ParResultSet, self).__init__(border, ylow, yup, xspace)
-        ResultSet.__init__(self, border, ylow, yup, xspace)
-=======
         super(ParResultSet, self).__init__(border, ylow, yup, xspace)
         # ResultSet.__init__(self, border, ylow, yup, xspace)
         self.p = Pool(cpu_count())
@@ -55,7 +51,6 @@ class ParResultSet(ResultSet):
         # Stop multiprocessing
         self.p.close()
         self.p.join()
->>>>>>> 69f61c4a25fe1af5b2d9040645e0a8bc5b065f66
 
     # Vertex functions
     # @cython.ccall
