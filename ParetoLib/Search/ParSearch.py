@@ -1720,13 +1720,8 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
     tempdir = tempfile.mkdtemp()
 
     RootSearch.logger.info('Report\nStep, Ylow, Yup, Border, Total, nYlow, nYup, nBorder')
-<<<<<<< HEAD
     while (vol_border >= vol_total * delta) and (remaining_steps > 0) and (len(border) > 0) and \
             (len(intersect_box) == 0) and (len(intersect_region) == 0):
-=======
-    while (vol_border >= vol_total * delta) and (step <= max_step) and (len(border) > 0) and (len(intersect_box) == 0) \
-            and (len(intersect_region) == 0):
->>>>>>> 69f61c4a25fe1af5b2d9040645e0a8bc5b065f66
         # Divide the list of incomparable rectangles in chunks of 'num_proc' elements.
         # We get the 'num_proc' elements with highest volume.
 

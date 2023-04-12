@@ -9,9 +9,16 @@
 This module implements a multithreading version of the learning
 algorithms described in [1] for searching the Pareto front.
 
+Paper in [2] introduces a variant of the algorithm presented in [1],
+which allows the intersection of two Pareto fronts according to some epsilon count.
+
 [1] Learning Monotone Partitions of Partially-Ordered Domains,
 Nicolas Basset, Oded Maler, J.I Requeno, in
 doc/article.pdf.
+
+[2] Learning Specifications for Labelled Patterns,
+Nicolas Basset, Thao Dang, Akshay Mambakam, J.I Requeno, in
+FORMATS 2020: 76-93
 """
 
 import os
