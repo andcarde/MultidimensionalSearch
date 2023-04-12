@@ -1624,7 +1624,7 @@ class ResultSet(object):
         other_classes_green_cells = set()
         other_classes_green_cells_generator = (set(rs.yup) for rs in rs_list)
         other_classes_green_cells = other_classes_green_cells.union(*other_classes_green_cells_generator)
-        other_classes_green_cells = other_classes_green_cells -  current_class_green_cells
+        # other_classes_green_cells = other_classes_green_cells -  current_class_green_cells
         # intersection_green_cells = other_classes_green_cells.intersection(current_class_green_cells)
         # other_classes_green_cells = other_classes_green_cells - intersection_green_cells
 
@@ -1632,19 +1632,17 @@ class ResultSet(object):
         current_class = self.vertices_yup()
         other_classes = set()
         other_classes_generator = (yup.vertices() for yup in other_classes_green_cells)
-        other_classes_generator = (rs.vertices_yup() for rs in rs_list if rs != self)
+        # other_classes_generator = (rs.vertices_yup() for rs in rs_list if rs != self)
         other_classes = other_classes.union(*other_classes_generator)
 
         # Adapt data type to directed_hausdorff format. Besides, lists allow indexing.
         current_class_list = list(current_class)
-        other_classes_list = list(other_classes - current_class)
+        other_classes_list = list(other_classes)
         
         # Remove points in other classes that also belong to current class
-        other_classes_list = [point for point in other_classes if not self.member_yup(point)]
+        # other_classes_list = [point for point in other_classes if not self.member_yup(point)]
         # Remove points in current class that also belong to other classes
-        current_class_list = [point for point in current_class for other_class in rs_list if not other_class.member_yup(point)]
-        # current_class_list = [point for point in current_class]
-        # other_classes_list = [point for point in other_classes]
+        # current_class_list = [point for point in current_class for other_class in rs_list if not other_class.member_yup(point)]
 
         # Removing current_class vertices from other_classes may raise errors when current_class
         # is strictly included inside other_classes
