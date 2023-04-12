@@ -405,26 +405,33 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             csvfiles = csvfiles.split('\n')
 
             # Read CSV files
-            df_signal = pd.DataFrame({'Class': list(), 'Time': list(), 'Signal': list()})
+            df_signal = pd.DataFrame({'Tipo': list(), 'Time': list(), 'Signal': list()})
             for csvfile in csvfiles:
                 curr_df = pd.read_csv(csvfile,sep=',',names=['Time','Signal'])
-                curr_df.insert(0,'Class',csvfile.split('/')[-1])
+                curr_df.insert(0,'Tipo',csvfile.split('/')[-1])
                 df_signal = df_signal.append(curr_df)
 
             # Plot the responses for different events and regions
             # sns.set_theme(style='darkgrid')
+
+            styles = [(2, 2) if l_class.replace('.csv', '') != 'Normal' else '' for l_class in df_signal['Tipo'].unique()]
+           
             ax = sns.lineplot(x='Time',
-                              y='Signal',
-                              hue='Class',
-                              data=df_signal,
-                              ax=canvas.axes)
-            ax.set(xlabel=None)
-            ax.set(ylabel=None)
+                            y='Signal',
+                            hue='Tipo',
+                            style='Tipo',
+                            dashes=styles,
+                            data=df_signal,  
+                            ax=canvas.axes)       
+
+            ax.set(xlabel='Tiempo')
+            ax.set(ylabel='Consumo(Kwh)')
             canvas.figure.tight_layout(pad=0)
 
             self.clearLayout(self.signal_layout)
             # self.signal_layout.layout().addWidget(canvas)
             self.signal_layout.addWidget(canvas)
+            canvas.print_figure('./images/file.png', bbox_inches = 'tight')
             self.show()
         except Exception as e:
             RootGUI.logger.debug(e)
