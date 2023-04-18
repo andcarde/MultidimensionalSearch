@@ -71,7 +71,6 @@ def p_def_signal(t):
     t[0] = t[3]
 
 
-
 def p_def_probsignal(t):
     '''
     PROBSIGNAL_DEF : LET PROBABILISTIC SIGNAL PROBSIGNAL_LIST SEMICOLON
@@ -171,7 +170,6 @@ def p_definitions(t):
         print('Definitions Rule -> t: {0}\n'.format([i for i in t[0]]))
 
 
-
 def p_spec_file(t):
     '''
     SPEC_FILE : DEFINITIONS PROP_LIST EVAL_LIST
@@ -204,18 +202,26 @@ def p_prop(t):
             | ID ASSIGNMENT PSI SEMICOLON
     '''
     #       TYPE    ID    PHI/PSI
-    t[0] = ('PROP', t[1], t[3])
+    t[0] = ['PROP', t[1], t[3]]
+    if t[1] in id_dict.keys():
+        print("Error: ID already defined!")
+    else:
+        # Insert type of ID
+        id_dict[t[1]] = t[1]
+        print("Inserted the ID: " + t[1])
 
 
 def p_phi(t):
     '''
-    PHI : ID
+    PHI : SIG
         | FUNC
         | NOT PHI
         | PROB PHI
         | PHI BIN_BOOL_OP PHI
         | F INTVL PHI
+        | F PHI
         | G INTVL PHI
+        | G PHI
         | PHI UNTIL INTVL PHI
         | ON INTVL PSI
         | LPAREN PHI RPAREN
@@ -229,13 +235,13 @@ def p_phi(t):
         #       TYPE   OP    PHI
         t[0] = ('PHI', t[1], t[2])
     elif len(t) == 4:
-        if t[2] == 'BIN_BOOL_OP':
+        if t[2][0] == 'BIN_BOOL_OP':
             #       TYPE   OP    PHI   PHI
             t[0] = ('PHI', t[2], t[1], t[3])
         elif t[2] == 'PHI':
             #      PHI
             t[0] = t[2]
-        elif t[2] == 'UNTIL':
+        elif t[2][0] == 'UNTIL':
             #       TYPE   UNTIL PHI   PHI
             t[0] = ('PHI', t[2], t[1], t[3])
         # Case of 'F INTVL PHI', 'G INTVL PHI' and 'ON INTVL PSI', elif t[2] == 'INTVL'
@@ -262,7 +268,6 @@ def p_psi(t):
 def p_func(t):
     '''
     FUNC : SIG BIN_COND SIG
-            | PHI BIN_OP PHI
     '''
     #       TYPE    OP    SIG/PHI1  SIG/PHI2
     t[0] = ('FUNC', t[2], t[1], t[3])
@@ -277,7 +282,7 @@ def p_bin_bool_op(t):
             | IMPLY
     '''
     #       OP
-    t[0] = t[1]
+    t[0] = ('BIN_BOOL_OP', t[1])
 
 
 def p_bin_cond(t):
@@ -294,24 +299,37 @@ def p_bin_cond(t):
 
 def p_bin_arith_op(t):
     '''
-    BIN_OP : SIG PLUS SIG
-            | SIG MINUS SIG
-            | SIG TIMES SIG
-            | SIG DIVIDE SIG
+    BIN_OP : PLUS
+            | MINUS
+            | TIMES
+            | DIVIDE
     '''
     #       OP    SIG1  SIG2
-    t[0] = (t[2], t[1], t[3])
+    t[0] = t[1]
+    if debug:
+        print("BIN_OP: {0} \n".format([i for i in t[0]]))
 
 
 def p_sig(t):
     '''
     SIG : ID
             | CONSTANT_SIGNAL
+            | SIG BIN_OP SIG
+            | LPAREN SIG RPAREN
     '''
     # Save the ID or NUMBER
-    t[0] = t[1]
-    if debug:
-        print('SIG: ' + str(t[0]))
+    if len(t) == 2:
+        t[0] = t[1]
+        if debug:
+            print('SIG: ' + str(t[0]) + '\n')
+    elif t[1] == '(':
+        t[0] = t[2]
+        if debug:
+            print('SIG: ' + str(t[0]) + '\n')
+    else:
+        t[0] = [t[2], t[1], t[3]]
+        if debug:
+            print("SIG: {0} \n".format([i for i in t[0]]))
 
 
 def p_constant_signal(t):

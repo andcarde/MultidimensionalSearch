@@ -58,6 +58,40 @@ def translate_defs(defs):
             # Save 'signal_or_param_list' into temporary file and save record
             None
 
+wrappers = [
+    'BIN_BOOL_OP',
+    'PROBSIGNAL_LIST',
+    'SIGNAL_LIST',
+    'PARAM_LIST',
+    'DEFINITIONS',
+    'PROP_LIST',
+    'EVAL_LIST'
+]
+
+indicators = [
+    'PSI',
+    'FUNC',
+    'SPEC_FILE',
+    'INTVL',
+    'EVAL_EXPR',
+    'PHI',
+]
+
+
+def remove_wrappers(tree):
+    if isinstance(tree, (list, tuple)):
+        for indicator in indicators:
+            if tree[0] == indicator:
+                tree.pop(0)
+                break
+        for wrapper in wrappers:
+            if tree[0] == wrapper:
+                tree = tree[1]
+                break
+        if isinstance(tree, (list, tuple)):
+            for node in tree:
+                remove_wrappers(node)
+
 
 def translate_prop_list(prop_list):
     for prop in prop_list:
