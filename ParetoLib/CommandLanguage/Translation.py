@@ -56,7 +56,8 @@ def translate_defs(defs):
             None
         elif keyword == 'PARAM_LIST':
             # Save 'signal_or_param_list' into temporary file and save record
-            None
+            param_list = ["p1", "p2"]
+            return param_list
 
 wrappers = [
     'BIN_BOOL_OP',
@@ -98,6 +99,9 @@ def translate_prop_list(prop_list):
         # Translate prop into STLe format
         generate_property(prop)
         # Each property will be stored in a 'temporary.stl' file
+        # STL 1.0 format
+        prop_list = ["(F ())", "(G ())"]
+        return prop_list
 
 
 def translate_eval_list(eval_list):
