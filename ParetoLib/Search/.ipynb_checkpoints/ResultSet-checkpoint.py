@@ -1621,7 +1621,9 @@ class ResultSet(object):
 
     @cython.locals(rs_list=list, yup_verts=set, yup_other=set)
     @cython.returns(tuple)
-    def select_champion(self, rs_list):
+    def select_champion_no_intersection(self, rs_list):
+        if len(self.yup) == 0 or sum([len(rs.yup) for rs in rs_list]) == 0:
+            return 0, None, None
         # type: (ResultSet, list[ResultSet]) -> tuple
         # Remove green cells [min_corner, max_corner] that are exactly the same in self and for all rs in rs_list
         current_class_green_cells = set(self.yup)
@@ -1629,8 +1631,6 @@ class ResultSet(object):
         other_classes_green_cells_generator = (set(rs.yup) for rs in rs_list)
         other_classes_green_cells = other_classes_green_cells.union(*other_classes_green_cells_generator)
         other_classes_green_cells = other_classes_green_cells -  current_class_green_cells
-        # intersection_green_cells = other_classes_green_cells.intersection(current_class_green_cells)
-        # other_classes_green_cells = other_classes_green_cells - intersection_green_cells
 
         # Exclude the remaining vertices
         current_class = self.vertices_yup()
@@ -1654,17 +1654,66 @@ class ResultSet(object):
 
         # Checked: directed_haussdorf(self, rs_list)
         distance, current_index, index_other_classes = dhf(current_class_list, other_classes_list)
+        otherdhf = dhf(other_classes_list, current_class_list)
+        
+        if otherdhf[0] > distance:
+            distance, current_index, index_other_classes = otherdhf[0], otherdhf[2], otherdhf[1]
         
         vertex_champion = current_class_list[current_index]
         
         self.champion = vertex_champion
         
+        return distance, vertex_champion, other_classes_list[index_other_classes]
+    
+    
+    
+    @cython.locals(rs_list=list, yup_verts=set, yup_other=set)
+    @cython.returns(tuple)
+    def select_champion_intersection(self, rs_list):
+        if len(self.yup) == 0 or sum([len(rs.yup) for rs in rs_list]) == 0:
+            return 0, None, None
+        # type: (ResultSet, list[ResultSet]) -> tuple
+        # Remove green cells [min_corner, max_corner] that are exactly the same in self and for all rs in rs_list
+        current_class_green_cells = set(self.yup)
+        other_classes_green_cells = set()
+        other_classes_green_cells_generator = (set(rs.yup) for rs in rs_list)
+        other_classes_green_cells = other_classes_green_cells.union(*other_classes_green_cells_generator)
 
+        # Exclude the remaining vertices
+        current_class = self.vertices_yup()
+        other_classes = set()
+        other_classes_generator = (yup.vertices() for yup in other_classes_green_cells)
+        other_classes_generator = (rs.vertices_yup() for rs in rs_list if rs != self)
+        other_classes = other_classes.union(*other_classes_generator)
+
+        # Adapt data type to directed_hausdorff format. Besides, lists allow indexing.
+        current_class_list = list(current_class)
+        other_classes_list = list(other_classes)
+
+        # Removing current_class vertices from other_classes may raise errors when current_class
+        # is strictly included inside other_classes
+        if len(current_class_list) == 0 or len(other_classes_list) == 0:
+            return 0, None, None
+
+        # Checked: directed_haussdorf(self, rs_list)
+        distance, current_index, index_other_classes = dhf(current_class_list, other_classes_list)
+        otherdhf = dhf(other_classes_list, current_class_list)
+        
+        if otherdhf[0] > distance:
+            distance, current_index, index_other_classes = otherdhf[0], otherdhf[2], otherdhf[1]
+        
+        vertex_champion = current_class_list[current_index]
+        
+        self.champion = vertex_champion
+        
         return distance, vertex_champion, other_classes_list[index_other_classes]
 
 
-@cython.locals(rs_list=list)
+
+@cython.locals(rs_list=list,intersection=int)
 @cython.returns(list)
-def champions_selection(rs_list):
+def champions_selection(rs_list,intersection=0):
     # type: (list[ResultSet]) -> list[tuple]
-    return [rs.select_champion(rs_list) for rs in rs_list]
+    if intersection == 0:
+        return [rs.select_champion_no_intersection(rs_list) for rs in rs_list]
+    return [rs.select_champion_intersection(rs_list) for rs in rs_list]
