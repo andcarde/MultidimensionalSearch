@@ -701,7 +701,7 @@ class ResultSet(object):
     @cython.returns(list)
     def _plot_champion_2D(self, xaxe=0, yaxe=1, zaxe=2, opacity=1.0, clip_box=None):
         assert self.champion is not None
-        faces = [rect.plot_3D('cyan', xaxe, yaxe, zaxe, 1.0, clip_box) for rect in self.yup if self.champion in rect.vertices()]
+        faces = [rect.plot_2D('cyan', xaxe, yaxe, 1.0, clip_box) for rect in self.yup if self.champion in rect.vertices()]
         return faces
 
     # @cython.ccall
@@ -1374,6 +1374,76 @@ class ResultSet(object):
 
         return fig1
 
+    @cython.returns(object)
+    def plot_2D_champion(self,
+                      filename='',
+                      xaxe=0,
+                      yaxe=1,
+                      var_names=list(),
+                      blocking=False,
+                      sec=0.0,
+                      opacity=1.0,
+                      fig_title='Approximation of the Pareto front',
+                      fig1=None):
+        # type: (ResultSet, str, int, int, list, bool, float, float, str, Figure) -> Figure
+        assert self.champion is not None
+
+        embedded_fig = fig1 is not None
+        if fig1 is None:
+            fig1 = plt.figure()
+
+        ax1_list = fig1.axes
+        if ax1_list is None or len(ax1_list) == 0:
+            # ax1 = fig1.add_subplot(111, aspect='equal', projection='3d')
+            ax1 = fig1.add_subplot(111)
+        else:
+            ax1 = ax1_list[0]
+
+        ax1.set_title(fig_title)
+
+        # The name of the inferred parameters using Pareto search are written in the axes of the graphic.
+        # For instance, axe 0 represents parameter 'P0', axe 1 represents parameter 'P1', etc.
+        # If parameter names are not provided (var_names is empty or smaller than 2D), then we use
+        # lexicographic characters by default.
+        var_names = [chr(i) for i in range(ord('a'), ord('z') + 1)] if len(var_names) < 3 else var_names
+        ax1.set_xlabel(var_names[xaxe % len(var_names)])
+        ax1.set_ylabel(var_names[yaxe % len(var_names)])
+        #ax1.set_zlabel(var_names[zaxe % len(var_names)])
+
+        faces = self._plot_champion_2D(xaxe, yaxe, opacity)
+
+        for faces_i in faces:
+            ax1.add_patch(faces_i)      #TODO: Mirar que poner aqui
+
+        # Set limits in the axes
+        ax1.set_xlim(self.xspace.min_corner[xaxe], self.xspace.max_corner[xaxe])
+        ax1.set_ylim(self.xspace.min_corner[yaxe], self.xspace.max_corner[yaxe])
+        #ax1.set_zlim(self.xspace.min_corner[zaxe], self.xspace.max_corner[zaxe])
+
+        fig1.tight_layout()
+
+        ax1.set_xscale('linear')
+        ax1.set_yscale('linear')
+        # ax1.set_zscale('linear')
+        
+        ax1.dist = 12
+
+        if not embedded_fig:
+            if sec > 0.0 and not blocking:
+                plt.ion()
+                plt.show()
+                plt.pause(float(sec))
+            else:
+                plt.ioff()
+                plt.show()
+
+            plt.close()
+
+        if filename != '':
+            fig1.savefig(filename, dpi=90, bbox_inches='tight')
+
+        return fig1
+    
     # @cython.ccall
     @cython.locals(filename=str, xaxe=cython.ushort, yaxe=cython.ushort, zaxe=cython.ushort, var_names=list,
                    blocking=cython.bint, sec=cython.double, fig_title=str, fig1=object, embedded_fig=cython.bint,

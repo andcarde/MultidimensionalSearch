@@ -2716,10 +2716,10 @@ def multidim_search_BMNN22(xspace : Rectangle,
 
     RootSearch.logger.info('Starting multidimensional search (BMNN22)')
     start = time.time()
-    RootSearch.logger.info('Report\nStep, Red, Green, Border, Total, nRed, nGreen, nBorder')
-    RootSearch.logger.info(
-        '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(0, 0.0, 0.0, xspace.volume(), xspace.volume(), 0,
-                                                        0, 1))  # 0th step
+    #RootSearch.logger.info('Report\nStep, Red, Green, Border, Total, nRed, nGreen, nBorder')
+    #RootSearch.logger.info(
+     #   '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(0, 0.0, 0.0, xspace.volume(), xspace.volume(), 0,
+      #                                                  0, 1))  # 0th step
     if opt_level == 0:  # Fixed cell creation
         rs = multidim_search_BMNN22_opt_0(xspace,
                                           oracles,
@@ -2806,9 +2806,9 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
         nBorder = nBorder - 1
         step = step + 1
         
-        RootSearch.logger.info(
-                '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(step, vol_red, vol_green, vol_border, xspace.volume(),
-                                                            len(red), len(green), nBorder))
+        #RootSearch.logger.info(
+         #       '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(step, vol_red, vol_green, vol_border, xspace.volume(),
+          #                                                  len(red), len(green), nBorder))
 
         # Visualization
         if sleep > 0.0:
@@ -2914,9 +2914,9 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
                 vol_border = vol_border - cell.volume()
                 nBorder = nBorder - 1
             step = step + 1
-            RootSearch.logger.info(
-                '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(step, vol_red, vol_green, vol_border, xspace.volume(),
-                                                            len(red), len(green), nBorder))
+            #RootSearch.logger.info(
+             #   '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(step, vol_red, vol_green, vol_border, xspace.volume(),
+              #                                              len(red), len(green), nBorder))
             
 
         # Visualization
