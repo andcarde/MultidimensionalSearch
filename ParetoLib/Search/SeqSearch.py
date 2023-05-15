@@ -177,8 +177,7 @@ def multidim_search_BMNN22(xspace: Rectangle,
                                           logging=logging,
                                           ps=ps,
                                           g=g,
-                                          vol_border=border,
-                                          n_border=1)
+                                          vol_border=border)  #,n_border=1
     end = time.time()
     time0 = end - start
     RootSearch.logger.info('Time multidim search (Pareto front): ' + str(time0))
