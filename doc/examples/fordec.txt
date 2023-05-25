@@ -1,0 +1,3 @@
+./fordec.stl
+./simplep.csv
+./rob.param

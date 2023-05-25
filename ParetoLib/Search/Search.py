@@ -636,3 +636,34 @@ def SearchND_2_BMNN22(ora_list,
         rs.simplify()
         rs.fusion()
     return rs
+
+def SearchRobustIntersectionND_2(ora1, ora2,
+                           ora3, ora4,
+                           list_intervals,
+                           epsilon=EPS,
+                           delta=DELTA,
+                           max_step=STEPS,
+                           blocking=False,
+                           sleep=0.0,
+                           opt_level=2,
+                           parallel=False,
+                           logging=True,
+                           simplify=True):
+    # type: (Oracle, Oracle, Oracle, Oracle, list, float, float, int, bool, float, int, bool, bool, bool) -> ResultSet
+    assert (ora1.dim() == ora1.dim()), 'Oracle 1 and Oracle 2 have different dimensions'
+
+    # list_intervals = [(minx, maxx), (miny, maxy),..., (minz, maxz)]
+    xyspace = create_ND_space(list_intervals)
+
+    if parallel:
+        intersection_result = ParSearch.multidim_robust_intersection_search(xyspace, ora1, ora2, ora3, ora4, epsilon,
+                                                                     delta, max_step, blocking, sleep, opt_level,
+                                                                     logging)
+    else:
+        intersection_result = SeqSearch.multidim_robust_intersection_search(xyspace, ora1, ora2, ora3, ora4, epsilon,
+                                                                     delta, max_step, blocking, sleep, opt_level,
+                                                                     logging)
+    if simplify:
+        intersection_result.simplify()
+        intersection_result.fusion()
+    return intersection_result
