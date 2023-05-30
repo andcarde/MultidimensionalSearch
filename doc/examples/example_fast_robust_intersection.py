@@ -1,7 +1,12 @@
 from ParetoLib.Oracle.OracleSTLe import OracleSTLeLib
-from ParetoLib.Oracle.OracleIpoly import OracleIpoly
-from ParetoLib.Oracle.OracleDpoly import OracleDpoly
+from ParetoLib.Oracle.OraclePolytope import OracleIncreasingPolytope, OracleDecreasingPolytope
 from ParetoLib.Search.Search import SearchRobustIntersectionND_2, EPS, DELTA, STEPS
+
+"""
+This is a toy example for robust intersection of STL formulae. 
+Has increasing and decreasing polytopes.
+The formulae are valid only in the intersection of these polytopes.
+"""
 
 # Files containing the definitions of the Oracles
 nfile1 = './forinc.txt'
@@ -11,8 +16,8 @@ human_readable = True
 # Definition of the n-dimensional space
 list_intervals = [(0,100),(0,100)]
 
-ora1 = OracleIpoly([(1,1,100)])
-ora2 = OracleDpoly([(1,1,130)])
+ora1 = OracleIncreasingPolytope([(1,1,100)])
+ora2 = OracleDecreasingPolytope([(1,1,130)])
 ora3 = OracleSTLeLib()
 ora3.from_file(nfile1, human_readable)
 ora4 = OracleSTLeLib()
