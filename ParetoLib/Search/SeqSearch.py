@@ -2171,8 +2171,87 @@ def multidim_robust_intersection_search_opt_0(xspace,
 
     # intersection
     intersect_box = []
+    RootSearch.logger.debug('xspace: {0}'.format(xspace))
+    RootSearch.logger.debug('vol_border: {0}'.format(vol_border))
+    RootSearch.logger.debug('delta: {0}'.format(delta))
+    RootSearch.logger.debug('step: {0}'.format(step))
+    RootSearch.logger.debug('incomparable: {0}'.format(incomparable))
 
-    # TODO: Not implemented.
+    # Create temporary directory for storing the result of each step
+    tempdir = tempfile.mkdtemp()
+
+    RootSearch.logger.info('Report\nStep, Border, Total, nBorder, BinSearch')
+    while (vol_border >= vol_total * delta) and (step <= max_step) and ((len(qunknown) > 0) or (len(qvalid) > 0)) :
+        step = step + 1
+
+        i = []
+
+        # TODO: Pop and call the divide functions here!
+        if ((len(qunknown)==0) and (len(qvalid)==0)):
+            break
+        elif ((len(qunknown)==0) and (len(qvalid)!=0)):
+            xrectangle = qvalid.pop()
+            vol_boxes -= xrectangle.volume()
+            (vol_boxes, vol_xrest, vol_border) = divide_box_valid(xrectangle,
+                incomparable, incomparable_segment,
+                ffor1, ffor2,
+                qunknown, qvalid, intersect_box,
+                vol_boxes, vol_xrest,
+                vol_border, vol_total, error, step)
+            if (len(intersect_box) > 0):
+                break
+        elif ((len(qunknown)!=0) and (len(qvalid)==0)):
+            xrectangle = qunknown.pop()
+            vol_boxes -= xrectangle.volume()
+            (vol_boxes, vol_xrest, vol_border) = divide_box_full_space(xrectangle,
+                incomparable, incomparable_segment,
+                fcons1, fcons2,
+                qunknown, qvalid,
+                vol_boxes, vol_xrest,
+                vol_border, vol_total, error, step)
+        else:
+            # TODO: Heuristic in the if condition to select from qvalid
+            if (qvalid[-1].volume() >= qunknown[-1].volume()):
+                xrectangle = qvalid.pop()
+                vol_boxes -= xrectangle.volume()
+                (vol_boxes, vol_xrest, vol_border) = divide_box_valid(xrectangle,
+                    incomparable, incomparable_segment,
+                    ffor1, ffor2,
+                    qunknown, qvalid, intersect_box,
+                    vol_boxes, vol_xrest,
+                    vol_border, vol_total, error, step)
+                if(len(intersect_box) > 0):
+                    break
+            else:
+                xrectangle = qunknown.pop()
+                vol_boxes -= xrectangle.volume()
+                (vol_boxes, vol_xrest, vol_border) = divide_box_full_space(xrectangle,
+                    incomparable, incomparable_segment,
+                    fcons1, fcons2,
+                    qunknown, qvalid,
+                    vol_boxes, vol_xrest,
+                    vol_border, vol_total, error, step)
+
+        RootSearch.logger.debug('xrectangle: {0}'.format(xrectangle))
+        RootSearch.logger.debug('xrectangle.volume: {0}'.format(xrectangle.volume()))
+        RootSearch.logger.debug('xrectangle.norm: {0}'.format(xrectangle.norm()))
+
+        if sleep > 0.0:
+            rs = ResultSet(qvalid, qunknown, [], xspace)
+            if n == 2:
+                rs.plot_2D_light(blocking=blocking, sec=sleep, opacity=0.7)
+            elif n == 3:
+                rs.plot_3D_light(blocking=blocking, sec=sleep, opacity=0.7)
+
+        if logging:
+            rs = ResultSet(qvalid, qunknown, [], xspace)
+            name = os.path.join(tempdir, str(step))
+            rs.to_file(name)
+    RootSearch.logger.info('For pareto front robust intersection exploring algorithm (with overlap):')
+    RootSearch.logger.info('remaining volume: {0}'.format(vol_border))
+    RootSearch.logger.info('total volume: {0}'.format(vol_total))
+    RootSearch.logger.info('percentage unexplored: {0}'.format((100.0 * vol_border) / vol_total))
+
     return ResultSet(qvalid, qunknown, intersect_box, xspace)
 
 # Some other heuristic
