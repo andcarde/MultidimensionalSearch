@@ -26,7 +26,7 @@ class OracleMonotonicPolytope(Oracle):
         assert all(len(cons) == d for cons in constraints), "All constraints need to have the same dimension!!!"
 
         # Check if all the coefficients are non-negative
-        assert all(ci > 0 for cons in constraints for ci in cons), "Coefficients should be non-negatives!!!"
+        assert all(ci >= 0 for cons in constraints for ci in cons), "Coefficients should be non-negatives!!!"
 
         self.constraints = constraints
 
