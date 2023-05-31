@@ -35,4 +35,5 @@ rs = SearchRobustIntersectionND_2(ora1, ora2,
                                   parallel=False,
                                   logging=True,
                                   simplify=False)
+rs.filtering()
 rs.plot_2D()
