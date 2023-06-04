@@ -23,7 +23,6 @@ import io
 
 from sortedcontainers import SortedSet
 from sympy import simplify, expand, default_sort_key, Expr, Symbol
-from sympy.utilities.autowrap import autowrap
 
 import cython
 
