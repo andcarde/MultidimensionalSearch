@@ -22,7 +22,7 @@ import pickle
 import io
 
 from sortedcontainers import SortedSet
-from sympy import simplify, expand, default_sort_key, Expr, Symbol
+from sympy import simplify, expand, default_sort_key, Expr, Symbol, autowrap
 
 import cython
 
@@ -68,6 +68,12 @@ class Condition(object):
         self.op = op
         self.f = simplify(f)
         self.g = simplify(g)
+
+        # Compilation of the "f op g" expression into efficient code
+        str_expr = "{0} {1} {2}".format(f, op, g)
+        expr = simplify(str_expr)
+        flat = expr.expand()
+        self.binary_callable = autowrap(flat)
 
         # Internally, type(f) and type(g) are sympy.Expr.
         # Besides, Condition = [sympy.Poly(f - g) op 0] and checks that
@@ -862,6 +868,11 @@ class OracleFunction(Oracle):
         A point belongs to the Oracle if it satisfies all the conditions.
         """
         return self.member(point) is True
+
+    def _member_autowrap(self, point):
+        expr = (x - y) ** 25
+        flat = expr.expand()
+        binary_callable = autowrap(flat)
 
     @cython.returns(cython.bint)
     @cython.locals(point=tuple, var_point=list)
