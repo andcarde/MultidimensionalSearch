@@ -23,7 +23,7 @@ import io
 
 from sortedcontainers import SortedSet
 from sympy import simplify, expand, default_sort_key, Expr, Symbol
-from sympy.utilities.autowrap import autowrap
+from sympy.utilities.autowrap import autowrap, ufuncify
 
 import cython
 
@@ -70,11 +70,8 @@ class Condition(object):
         self.f = simplify(f)
         self.g = simplify(g)
 
-        # Compilation of the "f op g" expression into efficient code
-        str_expr = "{0} {1} {2}".format(f, op, g)
-        expr = simplify(str_expr)
-        flat = expr.expand()
-        self.binary_callable = autowrap(flat, backend='cython')
+        self.binary_callable = None
+        # self._compile()
 
         # Internally, type(f) and type(g) are sympy.Expr.
         # Besides, Condition = [sympy.Poly(f - g) op 0] and checks that
@@ -85,6 +82,16 @@ class Condition(object):
                 'Expression "{0}" contains negative coefficients: {1}'.format(str(self.get_expression()),
                                                                               str(
                                                                                   self._get_expression_with_negative_coeff())))
+
+    def _compile(self):
+        # Compilation of the "f op g" expression into efficient code
+        str_expr = "{0} {1} {2}".format(self.f, self.op, self.g)
+        expr = simplify(str_expr)
+        flat = expr.expand()
+        self.binary_callable = autowrap(flat, backend='cython')
+        # self.binary_callable = ufuncify((x, y), y + x**2, backend='Cython')
+        # keys = self.get_variables()
+        # self.binary_callable = ufuncify(tuple(keys), flat, backend='Cython')
 
     @cython.locals(poly_function=str, op_comp=str, op_regex=str, f_regex=str, g_regex=str, regex=str, regex_comp=object,
                    result=object)
@@ -363,6 +370,10 @@ class Condition(object):
         # E.g.,:
         # >>> binary_callable = autowrap("x + y > 2.5", backend='cython')
         # >>> binary_callable(2.0, 0.5) == True
+        if self.binary_callable is None:
+            # Lazy compilation
+            self._compile()
+
         return self.binary_callable(*point) == 1.0
 
     @cython.locals(variable=object, val=str, fvset=list, fv=object, expr=object, res=object, ex=str)
@@ -491,7 +502,7 @@ class Condition(object):
     @cython.locals(point=tuple, di=dict)
     @cython.returns(object)
     def member(self, point):
-        # type: (Condition, tuple) -> Expr
+        # type: (Condition, tuple) -> Expr # bool
         """
         Function answering whether a point satisfies the inequality
         defined by Condition or not.
@@ -512,6 +523,7 @@ class Condition(object):
         keys = self.get_variables()
         di = {key: point[i] for i, key in enumerate(keys)}
         return self.eval_dict(di)
+        # return self.eval_autowrap(point)
 
     @cython.returns(object)
     def membership(self):
@@ -952,10 +964,10 @@ class OracleFunction(Oracle):
         See Oracle.member().
         A point belongs to the Oracle if it satisfies all the conditions.
         """
+        return self._member_autowrap(point)
         # member_zip_var performs better than member_dict
         # return self._member_zip_tuple(point)
-        # return self.member_dict(point)
-        return self._member_autowrap(point)
+        # return self._member_dict(point)
 
     @cython.returns(object)
     def membership(self):
