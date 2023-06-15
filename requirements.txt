@@ -6,4 +6,4 @@ PyQt5>=5.15.6
 pytest>=2.0
 seaborn>=0.11.2
 sortedcontainers>=1.5.10
-sympy>=1.1.1
+sympy>=1.12
