@@ -393,9 +393,6 @@ class Condition(object):
         # E.g.,:
         # >>> binary_callable = autowrap("x + y > 2.5", backend='cython')
         # >>> binary_callable(2.0, 0.5) == True
-        if self.binary_callable is None:
-            # Lazy compilation
-            self._compile()
 
         # It must return True/False in C/C++ notation (i.e., True == 1.0, False == 0.0)
         return self.binary_callable(*point) == 1.0
@@ -835,7 +832,6 @@ class OracleFunction(Oracle):
         >>> cond = Condition("x + y", ">=", "0")
         >>> ora.add(cond)
         """
-        self.variables = self.variables.union(cond.get_variables())
         self.oracle.add(cond)
 
     @cython.returns(cython.ushort)
@@ -879,6 +875,7 @@ class OracleFunction(Oracle):
         >>> [Symbol('x'), Symbol('y'), Symbol('z')]
         """
         # variable_list = sorted(self.variables, key=default_sort_key)
+        self.variables = SortedSet((ora.get_variables() for ora in self.oracle), key=default_sort_key)
         variable_list = list(self.variables)
         return variable_list
 
