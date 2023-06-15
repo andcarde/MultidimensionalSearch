@@ -393,6 +393,9 @@ class Condition(object):
         # E.g.,:
         # >>> binary_callable = autowrap("x + y > 2.5", backend='cython')
         # >>> binary_callable(2.0, 0.5) == True
+        if self.binary_callable is None:
+            # Lazy compilation
+            self._compile()
 
         # It must return True/False in C/C++ notation (i.e., True == 1.0, False == 0.0)
         return self.binary_callable(*point) == 1.0
