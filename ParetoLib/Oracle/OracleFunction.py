@@ -74,7 +74,7 @@ class Condition(object):
         str_expr = "{0} {1} {2}".format(f, op, g)
         expr = simplify(str_expr)
         flat = expr.expand()
-        self.binary_callable = autowrap(flat)
+        self.binary_callable = autowrap(flat, backend='cython')
 
         # Internally, type(f) and type(g) are sympy.Expr.
         # Besides, Condition = [sympy.Poly(f - g) op 0] and checks that
@@ -334,6 +334,36 @@ class Condition(object):
         """
         expr = self.get_expression()
         return sorted(expr.free_symbols, key=default_sort_key)
+
+    @cython.locals(point=tuple)
+    @cython.returns(object)
+    def eval_autowrap(self, point):
+        # type: (Condition, tuple) -> bool
+        """
+        Substitutes a tuple of values (value_1,..., value_n) in the polynomial expression of Condition.
+        The number of variables in Condition must be equal or greater to n (the length of the tuple).
+        Each value is assigned to a variable in Condition, following the lexicographic order.
+
+        Args:
+            self (Condition): The Condition.
+            point (tuple): The tuple.
+
+        Returns:
+            bool: The result of evaluating the expression.
+
+        Example:
+        >>> cond = Condition("2x - 4y", ">=", "0")
+        >>> point = (4, 2)
+        >>> cond.eval_autowrap(point)
+        >>> True
+        """
+        # self.binary_callable() must be precompiled during the __init__()
+        # It must return True/False in C/C++ notation (i.e., True == 1.0, False == 0.0)
+        # The length of tuple 'point' should match with the number of variables in the 'binary_callable' expression.
+        # E.g.,:
+        # >>> binary_callable = autowrap("x + y > 2.5", backend='cython')
+        # >>> binary_callable(2.0, 0.5) == True
+        return self.binary_callable(*point) == 1.0
 
     @cython.locals(variable=object, val=str, fvset=list, fv=object, expr=object, res=object, ex=str)
     @cython.returns(object)
@@ -818,6 +848,17 @@ class OracleFunction(Oracle):
 
     @cython.locals(var=object, val=str, _eval_list=list, _eval=cython.bint)
     @cython.returns(cython.bint)
+    def _eval_autowrap(self, point):
+        # type: (OracleFunction, tuple) -> bool
+        _eval_list = [cond.eval_autowrap(point) for cond in self.oracle]
+        # All conditions are true (i.e., 'and' policy)
+        _eval = all(_eval_list)
+        # Any condition is true (i.e., 'or' policy)
+        # _eval = any(_eval_list)
+        return _eval
+
+    @cython.locals(var=object, val=str, _eval_list=list, _eval=cython.bint)
+    @cython.returns(cython.bint)
     def _eval_var_val(self, var=None, val='0'):
         # type: (OracleFunction, Symbol, int) -> bool
         _eval_list = [cond.eval_var_val(var, val) for cond in self.oracle]
@@ -870,10 +911,15 @@ class OracleFunction(Oracle):
         """
         return self.member(point) is True
 
+    @cython.returns(cython.bint)
+    @cython.locals(point=tuple)
     def _member_autowrap(self, point):
-        expr = (x - y) ** 25
-        flat = expr.expand()
-        binary_callable = autowrap(flat)
+        # type: (OracleFunction, tuple) -> bool
+        # Implicitly, 'point' should match the ordering of variables in 'keys'
+        # >>> keys = self.variables
+        # keys = [x, y, z]
+        # point = (2, 4, 0)
+        return self._eval_autowrap(point)
 
     @cython.returns(cython.bint)
     @cython.locals(point=tuple, var_point=list)
@@ -907,8 +953,9 @@ class OracleFunction(Oracle):
         A point belongs to the Oracle if it satisfies all the conditions.
         """
         # member_zip_var performs better than member_dict
-        return self._member_zip_tuple(point)
+        # return self._member_zip_tuple(point)
         # return self.member_dict(point)
+        return self._member_autowrap(point)
 
     @cython.returns(object)
     def membership(self):
