@@ -146,21 +146,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def not_saved(self):
         self.has_been_saved = False
 
-    
     def plot_champions(self, champion_list, dim_champ):
         curr_class_champions = [champ[1] for champ in champion_list]
         canvas = MplCanvas(parent=self)
         self.layout().addWidget(canvas)
         fig = canvas.figure
-        
 
         if dim_champ == 2:
             ax = fig.add_subplot(111)
             curr_class = 1
-            for ch in curr_class_champions: #plot each point + it's index as text above
+            for ch in curr_class_champions:  # plot each point + it's index as text above
                 if ch is not None:
-                    ax.scatter(ch[0],ch[1],color='b') 
-                    ax.text(ch[0],ch[1],  f"Champion class {curr_class}", size=20, zorder=1, color='k')
+                    ax.scatter(ch[0], ch[1], color='b')
+                    ax.text(ch[0], ch[1], f"Champion class {curr_class}", size=20, zorder=1, color='k')
                 curr_class = curr_class + 1
 
             ax.set_xlabel('x')
@@ -169,23 +167,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         elif dim_champ == 3:
             ax = fig.add_subplot(111, projection='3d')
             curr_class = 1
-            for ch in curr_class_champions: #plot each point + it's index as text above
+            for ch in curr_class_champions:  # plot each point + it's index as text above
                 if ch is not None:
-                    ax.scatter(ch[0],ch[1],ch[2],color='b') 
-                    ax.text(ch[0],ch[1],ch[2],  f"Class {curr_class}", size=10, zorder=1, color='k')
+                    ax.scatter(ch[0], ch[1], ch[2], color='b')
+                    ax.text(ch[0], ch[1], ch[2], f"Class {curr_class}", size=10, zorder=1, color='k')
                 curr_class = curr_class + 1
 
             ax.set_xlabel('x')
             ax.set_ylabel('y')
             ax.set_zlabel('z')
-        
+
         matplotlib.pyplot.show()
 
-
-
-    
     def champion_select(self):
-        rs_list_filepaths , _ = QFileDialog.getOpenFileNames(self,"Select the ResultSets","./Projects","(*.zip)")
+        rs_list_filepaths, _ = QFileDialog.getOpenFileNames(self, "Select the ResultSets", "./Projects", "(*.zip)")
         rs_list = []
         for file in rs_list_filepaths:
             rs = ResultSet()
@@ -195,14 +190,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         dim_champ = None
         if len(champions) > 0 and champions[0] is not None:
             dim_champ = len(champions[0][1])
-        
+
         if dim_champ is not None:
             self.plot_champions(champions, dim_champ)
         else:
             RootGUI.logger.info("No champions were found")
-
-
-        
 
     def closeEvent(self, event):
         def is_non_zero_file(fpath):
@@ -221,7 +213,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                     event.accept()
                 elif reply == QMessageBox.No:
                     # Check if the file is empty, if it is we delete the file, otherwise we leave it as it is
-                    #project_filename = ''.join(self.project_path)
+                    # project_filename = ''.join(self.project_path)
                     if not is_non_zero_file(self.project_path):
                         os.remove(self.project_path)
                     event.accept()
@@ -281,7 +273,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
             self.data["options"] = options
 
-            #project_filename = ''.join(self.project_path)
+            # project_filename = ''.join(self.project_path)
             saved_file = open(self.project_path, 'w')
             saved_file.write(json.dumps(self.data, indent=2))
             saved_file.close()
@@ -405,33 +397,35 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             csvfiles = csvfiles.split('\n')
 
             # Read CSV files
-            df_signal = pd.DataFrame({'Tipo': list(), 'Time': list(), 'Signal': list()})
+            df_signal = pd.DataFrame({'Type': list(), 'Time': list(), 'Signal': list()})
             for csvfile in csvfiles:
-                curr_df = pd.read_csv(csvfile,sep=',',names=['Time','Signal'])
-                curr_df.insert(0,'Tipo',csvfile.split('/')[-1])
+                curr_df = pd.read_csv(csvfile, sep=',', names=['Time', 'Signal'])
+                curr_df.insert(0, 'Type', csvfile.split('/')[-1])
                 df_signal = df_signal.append(curr_df)
 
             # Plot the responses for different events and regions
             # sns.set_theme(style='darkgrid')
 
-            styles = [(2, 2) if l_class.replace('.csv', '') != 'Normal' else '' for l_class in df_signal['Tipo'].unique()]
-           
-            ax = sns.lineplot(x='Time',
-                            y='Signal',
-                            hue='Tipo',
-                            style='Tipo',
-                            dashes=styles,
-                            data=df_signal,  
-                            ax=canvas.axes)       
+            styles = [(2, 2) if l_class.replace('.csv', '') != 'Normal' else '' for l_class in
+                      df_signal['Type'].unique()]
 
-            ax.set(xlabel='Tiempo')
-            ax.set(ylabel='Consumo(Kwh)')
+            ax = sns.lineplot(x='Time',
+                              y='Signal',
+                              hue='Type',
+                              style='Type',
+                              dashes=styles,
+                              data=df_signal,
+                              ax=canvas.axes)
+
+            ax.set(xlabel='Time')
+            # TODO: Allow users to select the value units (e.g., Kwh). Maybe, this tag can be extracted from the CSV header
+            ax.set(ylabel='Value')
             canvas.figure.tight_layout(pad=0)
 
             self.clearLayout(self.signal_layout)
             # self.signal_layout.layout().addWidget(canvas)
             self.signal_layout.addWidget(canvas)
-            canvas.print_figure('./images/file.png', bbox_inches = 'tight')
+            canvas.print_figure('./images/file.png', bbox_inches='tight')
             self.show()
         except Exception as e:
             RootGUI.logger.debug(e)
@@ -460,7 +454,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             interval = (float(min_val_text.text()), float(max_val_text.text()))
             intervals.append(interval)
         return intervals
-    
 
     def run_non_parametric_stle(self):
         # type: (_) -> (bool, dict)
@@ -491,7 +484,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             RootGUI.logger.debug(e)
         finally:
             return satisfied, bool_signal
-
 
     def run_parametric_stle(self):
         # type: (_) -> ResultSet
@@ -558,7 +550,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                                             simplify=False)
             elif method == 2:
                 # TODO: Use SearchND_2_BMNN22 rather than Search_BMNN22
-                #self.signal_filepaths = [self.signal_filepaths[0], self.signal_filepaths[0], self.signal_filepaths[0]]
+                # self.signal_filepaths = [self.signal_filepaths[0], self.signal_filepaths[0], self.signal_filepaths[0]]
                 self.oracles = [OracleSTLeLib(stl_prop_file, csv_signal_file, stl_param_file) for csv_signal_file in
                                 self.signal_filepaths]
                 # self.oracle.from_file(stl_prop_file, human_readable=True)
