@@ -1711,7 +1711,8 @@ class ResultSet(object):
         # Remove green cells [min_corner, max_corner] that are exactly the same in self and for all rs in rs_list
         current_class_green_cells = set(self.yup)
         other_classes_green_cells = set()
-        other_classes_green_cells_generator = (set(rs.yup) for rs in rs_list)
+        # Filter self from rs_list
+        other_classes_green_cells_generator = (set(rs.yup) for rs in rs_list if rs != self)
         other_classes_green_cells = other_classes_green_cells.union(*other_classes_green_cells_generator)
         other_classes_green_cells = other_classes_green_cells - current_class_green_cells
 
@@ -1719,12 +1720,8 @@ class ResultSet(object):
         current_class = self.vertices_yup()
         other_classes = set()
         other_classes_generator = (yup.vertices() for yup in other_classes_green_cells)
-        other_classes_generator = (rs.vertices_yup() for rs in rs_list if rs != self)
         other_classes = other_classes.union(*other_classes_generator)
 
-        # Adapt data type to directed_hausdorff format. Besides, lists allow indexing.
-        current_class_list = list(current_class)
-        other_classes_list = list(other_classes)
         # Remove points in other classes that also belong to current class
         other_classes_list = [point for point in other_classes if not self.member_yup(point)]
         # Remove points in current class that also belong to other classes
@@ -1754,25 +1751,32 @@ class ResultSet(object):
     def select_champion_intersection(self, rs_list):
         # type: (ResultSet, list[ResultSet]) -> tuple
         # Check that self or rs_list contains at least some boxes
-        if len(self.yup) == 0 or sum([len(rs.yup) for rs in rs_list]) == 0:
+        if len(self.yup) == 0 or sum(len(rs.yup) for rs in rs_list) == 0:
             return 0, None, None
 
         # Remove green cells [min_corner, max_corner] that are exactly the same in self and for all rs in rs_list
         current_class_green_cells = set(self.yup)
         other_classes_green_cells = set()
-        other_classes_green_cells_generator = (set(rs.yup) for rs in rs_list)
+        # Filter self from rs_list
+        other_classes_green_cells_generator = (set(rs.yup) for rs in rs_list if rs != self)
         other_classes_green_cells = other_classes_green_cells.union(*other_classes_green_cells_generator)
+        other_classes_green_cells = other_classes_green_cells - current_class_green_cells
 
         # Exclude the remaining vertices
         current_class = self.vertices_yup()
         other_classes = set()
         other_classes_generator = (yup.vertices() for yup in other_classes_green_cells)
-        other_classes_generator = (rs.vertices_yup() for rs in rs_list if rs != self)
         other_classes = other_classes.union(*other_classes_generator)
 
         # Adapt data type to directed_hausdorff format. Besides, lists allow indexing.
         current_class_list = list(current_class)
         other_classes_list = list(other_classes)
+
+        print("Current class: {0}".format(current_class_green_cells))
+        print("Other class: {0}".format(other_classes_green_cells))
+
+        print("Current class: {0}".format(len(current_class_green_cells)))
+        print("Other class: {0}".format(len(other_classes_green_cells)))
 
         # Removing current_class vertices from other_classes may raise errors when current_class
         # is strictly included inside other_classes

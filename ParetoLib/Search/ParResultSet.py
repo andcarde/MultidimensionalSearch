@@ -252,7 +252,7 @@ def par_haussdorf_distance(args):
 
 @cython.locals(rs_list=list, intersection=bool, args=tuple, p=object, dist_list=list)
 @cython.returns(list)
-def champions_selection(rs_list,intersection=0):
+def champions_selection(rs_list, intersection=0):
     # type: (list[ParResultSet]) -> List[Tuple]
     args = ((rs, rs_list, intersection) for rs in rs_list)
     p = Pool(cpu_count())
