@@ -134,15 +134,15 @@ def multidim_intersection_search(xspace, list_constraints,
 ########################################
 
 def multidim_robust_intersection_search(xspace,
-                                 oracle1, oracle2,
-                                 oracle3, oracle4,
-                                 epsilon=EPS,
-                                 delta=DELTA,
-                                 max_step=STEPS,
-                                 blocking=False,
-                                 sleep=0.0,
-                                 opt_level=2,
-                                 logging=True):
+                                        oracle1, oracle2,
+                                        oracle3, oracle4,
+                                        epsilon=EPS,
+                                        delta=DELTA,
+                                        max_step=STEPS,
+                                        blocking=False,
+                                        sleep=0.0,
+                                        opt_level=2,
+                                        logging=True):
     # type: (Rectangle, Oracle, Oracle, Oracle, Oracle, float, float, int, bool, float, int, bool) -> ParResultSet
     md_search = [multidim_robust_intersection_search_opt_0,
                  multidim_robust_intersection_search_opt_1,
@@ -1968,15 +1968,15 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
 ########################################
 
 def divide_box_full_space(xrectangle,
-               incomparable, incomparable_segment,
-               fcons1, fcons2,
-               qunknown, qvalid,
-               vol_boxes, vol_xrest,
-               vol_border, vol_total, error, step):
-
+                          incomparable, incomparable_segment,
+                          fcons1, fcons2,
+                          qunknown, qvalid,
+                          vol_boxes, vol_xrest,
+                          vol_border, vol_total, error, step):
     # Search on the diagonal
     want_to_expand = True
-    y_in, y_cover, intersect_indicator, steps_binsearch = intersection_expansion_search(xrectangle.diag(), fcons1, fcons2,
+    y_in, y_cover, intersect_indicator, steps_binsearch = intersection_expansion_search(xrectangle.diag(), fcons1,
+                                                                                        fcons2,
                                                                                         error, want_to_expand)
     if intersect_indicator == NO_INTER:
         y = y_in
@@ -1990,7 +1990,8 @@ def divide_box_full_space(xrectangle,
         # vol_xrest += xrectangle.volume()
         # vol_border = vol_total - vol_xrest
         RootSearch.logger.info(
-            '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_xrest + vol_boxes, len(qunknown)+len(qvalid), steps_binsearch))
+            '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_xrest + vol_boxes, len(qunknown) + len(qvalid),
+                                             steps_binsearch))
         return (vol_boxes, vol_xrest, vol_border)
     elif intersect_indicator == INTER:
         pos_box = Rectangle(y_in.low, y_in.high)
@@ -2011,7 +2012,8 @@ def divide_box_full_space(xrectangle,
         vol_xrest += xrectangle.volume()
         vol_border = vol_total - vol_xrest
         RootSearch.logger.info(
-            '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_xrest + vol_boxes, len(qunknown)+len(qvalid), steps_binsearch))
+            '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_xrest + vol_boxes, len(qunknown) + len(qvalid),
+                                             steps_binsearch))
         return (vol_boxes, vol_xrest, vol_border)
     else:
         b0 = Rectangle(xrectangle.min_corner, y.low)
@@ -2040,17 +2042,17 @@ def divide_box_full_space(xrectangle,
     vol_border = vol_total - vol_xrest
 
     RootSearch.logger.info(
-        '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_xrest + vol_boxes, len(qunknown)+len(qvalid), steps_binsearch))
+        '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_xrest + vol_boxes, len(qunknown) + len(qvalid),
+                                         steps_binsearch))
     return (vol_boxes, vol_xrest, vol_border)
 
 
 def divide_box_valid(xrectangle,
-               incomparable, incomparable_segment,
-               ffor1, ffor2,
-               qunknown, qvalid, intersect_box,
-               vol_boxes, vol_xrest,
-               vol_border, vol_total, error, step):
-
+                     incomparable, incomparable_segment,
+                     ffor1, ffor2,
+                     qunknown, qvalid, intersect_box,
+                     vol_boxes, vol_xrest,
+                     vol_border, vol_total, error, step):
     # Search on the diagonal
     want_to_expand = True
     y_in, y_cover, intersect_indicator, steps_binsearch = intersection_expansion_search(xrectangle.diag(), ffor1, ffor2,
@@ -2067,7 +2069,8 @@ def divide_box_valid(xrectangle,
         vol_xrest += xrectangle.volume()
         vol_border = vol_total - vol_xrest
         RootSearch.logger.info(
-            '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_xrest + vol_boxes, len(qunknown)+len(qvalid), steps_binsearch))
+            '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_xrest + vol_boxes, len(qunknown) + len(qvalid),
+                                             steps_binsearch))
         return (vol_boxes, vol_xrest, vol_border)
     elif intersect_indicator == INTER:
         pos_box = Rectangle(y_in.low, y_in.high)
@@ -2087,7 +2090,8 @@ def divide_box_valid(xrectangle,
         vol_xrest += xrectangle.volume()
         vol_border = vol_total - vol_xrest
         RootSearch.logger.info(
-            '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_xrest + vol_boxes, len(qunknown)+len(qvalid), steps_binsearch))
+            '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_xrest + vol_boxes, len(qunknown) + len(qvalid),
+                                             steps_binsearch))
         return (vol_boxes, vol_xrest, vol_border)
     else:
         b0 = Rectangle(xrectangle.min_corner, y.low)
@@ -2116,19 +2120,21 @@ def divide_box_valid(xrectangle,
     vol_border = vol_total - vol_xrest
 
     RootSearch.logger.info(
-        '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_xrest + vol_boxes, len(qunknown)+len(qvalid), steps_binsearch))
+        '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_xrest + vol_boxes, len(qunknown) + len(qvalid),
+                                         steps_binsearch))
     return (vol_boxes, vol_xrest, vol_border)
+
 
 # Try to find a single box of intersection and then exit
 def multidim_robust_intersection_search_opt_0(xspace,
-                                       oracle1, oracle2,
-                                       oracle3, oracle4,
-                                       epsilon=EPS,
-                                       delta=DELTA,
-                                       max_step=STEPS,
-                                       blocking=False,
-                                       sleep=0.0,
-                                       logging=True):
+                                              oracle1, oracle2,
+                                              oracle3, oracle4,
+                                              epsilon=EPS,
+                                              delta=DELTA,
+                                              max_step=STEPS,
+                                              blocking=False,
+                                              sleep=0.0,
+                                              logging=True):
     # type: (Rectangle, Oracle, Oracle, Oracle, Oracle, float, float, float, bool, float, bool) -> ResultSet
 
     # Xspace is a particular case of maximal rectangle
@@ -2159,8 +2165,8 @@ def multidim_robust_intersection_search_opt_0(xspace,
     # oracle functions
     fcons1 = oracle1.membership()
     fcons2 = oracle2.membership()
-    ffor1  = oracle3.membership()
-    ffor2  = oracle4.membership()
+    ffor1 = oracle3.membership()
+    ffor2 = oracle4.membership()
 
     error = (epsilon,) * n
     vol_total = xspace.volume()
@@ -2181,56 +2187,54 @@ def multidim_robust_intersection_search_opt_0(xspace,
     tempdir = tempfile.mkdtemp()
 
     RootSearch.logger.info('Report\nStep, Border, Total, nBorder, BinSearch')
-    while (vol_border >= vol_total * delta) and (step <= max_step) and ((len(qunknown) > 0) or (len(qvalid) > 0)) :
+    while (vol_border >= vol_total * delta) and (step <= max_step) and ((len(qunknown) > 0) or (len(qvalid) > 0)):
         step = step + 1
 
-        i = []
-
         # TODO: Pop and call the divide functions here!
-        if ((len(qunknown)==0) and (len(qvalid)==0)):
+        if (len(qunknown) == 0) and (len(qvalid) == 0):
             break
-        elif ((len(qunknown)==0) and (len(qvalid)!=0)):
+        elif (len(qunknown) == 0) and (len(qvalid) != 0):
             xrectangle = qvalid.pop()
             vol_boxes -= xrectangle.volume()
             (vol_boxes, vol_xrest, vol_border) = divide_box_valid(xrectangle,
-                incomparable, incomparable_segment,
-                ffor1, ffor2,
-                qunknown, qvalid, intersect_box,
-                vol_boxes, vol_xrest,
-                vol_border, vol_total, error, step)
-            if (len(intersect_box) > 0):
+                                                                  incomparable, incomparable_segment,
+                                                                  ffor1, ffor2,
+                                                                  qunknown, qvalid, intersect_box,
+                                                                  vol_boxes, vol_xrest,
+                                                                  vol_border, vol_total, error, step)
+            if len(intersect_box) > 0:
                 break
-        elif ((len(qunknown)!=0) and (len(qvalid)==0)):
+        elif (len(qunknown) != 0) and (len(qvalid) == 0):
             xrectangle = qunknown.pop()
             vol_boxes -= xrectangle.volume()
             (vol_boxes, vol_xrest, vol_border) = divide_box_full_space(xrectangle,
-                incomparable, incomparable_segment,
-                fcons1, fcons2,
-                qunknown, qvalid,
-                vol_boxes, vol_xrest,
-                vol_border, vol_total, error, step)
+                                                                       incomparable, incomparable_segment,
+                                                                       fcons1, fcons2,
+                                                                       qunknown, qvalid,
+                                                                       vol_boxes, vol_xrest,
+                                                                       vol_border, vol_total, error, step)
         else:
             # TODO: Heuristic in the if condition to select from qvalid
-            if (qvalid[-1].volume() >= qunknown[-1].volume()):
+            if qvalid[-1].volume() >= qunknown[-1].volume():
                 xrectangle = qvalid.pop()
                 vol_boxes -= xrectangle.volume()
                 (vol_boxes, vol_xrest, vol_border) = divide_box_valid(xrectangle,
-                    incomparable, incomparable_segment,
-                    ffor1, ffor2,
-                    qunknown, qvalid, intersect_box,
-                    vol_boxes, vol_xrest,
-                    vol_border, vol_total, error, step)
-                if(len(intersect_box) > 0):
+                                                                      incomparable, incomparable_segment,
+                                                                      ffor1, ffor2,
+                                                                      qunknown, qvalid, intersect_box,
+                                                                      vol_boxes, vol_xrest,
+                                                                      vol_border, vol_total, error, step)
+                if (len(intersect_box) > 0):
                     break
             else:
                 xrectangle = qunknown.pop()
                 vol_boxes -= xrectangle.volume()
                 (vol_boxes, vol_xrest, vol_border) = divide_box_full_space(xrectangle,
-                    incomparable, incomparable_segment,
-                    fcons1, fcons2,
-                    qunknown, qvalid,
-                    vol_boxes, vol_xrest,
-                    vol_border, vol_total, error, step)
+                                                                           incomparable, incomparable_segment,
+                                                                           fcons1, fcons2,
+                                                                           qunknown, qvalid,
+                                                                           vol_boxes, vol_xrest,
+                                                                           vol_border, vol_total, error, step)
 
         RootSearch.logger.debug('xrectangle: {0}'.format(xrectangle))
         RootSearch.logger.debug('xrectangle.volume: {0}'.format(xrectangle.volume()))
@@ -2247,6 +2251,7 @@ def multidim_robust_intersection_search_opt_0(xspace,
             rs = ResultSet(qvalid, qunknown, [], xspace)
             name = os.path.join(tempdir, str(step))
             rs.to_file(name)
+
     RootSearch.logger.info('For pareto front robust intersection exploring algorithm (with overlap):')
     RootSearch.logger.info('remaining volume: {0}'.format(vol_border))
     RootSearch.logger.info('total volume: {0}'.format(vol_total))
@@ -2254,16 +2259,17 @@ def multidim_robust_intersection_search_opt_0(xspace,
 
     return ResultSet(qvalid, qunknown, intersect_box, xspace)
 
+
 # Some other heuristic
 def multidim_robust_intersection_search_opt_1(xspace,
-                                       oracle1, oracle2,
-                                       oracle3, oracle4,
-                                       epsilon=EPS,
-                                       delta=DELTA,
-                                       max_step=STEPS,
-                                       blocking=False,
-                                       sleep=0.0,
-                                       logging=True):
+                                              oracle1, oracle2,
+                                              oracle3, oracle4,
+                                              epsilon=EPS,
+                                              delta=DELTA,
+                                              max_step=STEPS,
+                                              blocking=False,
+                                              sleep=0.0,
+                                              logging=True):
     # type: (Rectangle, Oracle, Oracle, Oracle, Oracle, float, float, float, bool, float, bool) -> ResultSet
 
     # Xspace is a particular case of maximal rectangle
@@ -2294,8 +2300,8 @@ def multidim_robust_intersection_search_opt_1(xspace,
     # oracle functions
     fcons1 = oracle1.membership()
     fcons2 = oracle2.membership()
-    ffor1  = oracle3.membership()
-    ffor2  = oracle4.membership()
+    ffor1 = oracle3.membership()
+    ffor2 = oracle4.membership()
 
     error = (epsilon,) * n
     vol_total = xspace.volume()
@@ -2310,16 +2316,17 @@ def multidim_robust_intersection_search_opt_1(xspace,
     # TODO: Not implemented
     return ResultSet(qvalid, qunknown, intersect_box, xspace)
 
+
 # Find the whole intersection space upto some accuracy
 def multidim_robust_intersection_search_opt_2(xspace,
-                                       oracle1, oracle2,
-                                       oracle3, oracle4,
-                                       epsilon=EPS,
-                                       delta=DELTA,
-                                       max_step=STEPS,
-                                       blocking=False,
-                                       sleep=0.0,
-                                       logging=True):
+                                              oracle1, oracle2,
+                                              oracle3, oracle4,
+                                              epsilon=EPS,
+                                              delta=DELTA,
+                                              max_step=STEPS,
+                                              blocking=False,
+                                              sleep=0.0,
+                                              logging=True):
     # type: (Rectangle, Oracle, Oracle, Oracle, Oracle, float, float, float, bool, float, bool) -> ResultSet
 
     # Xspace is a particular case of maximal rectangle
@@ -2350,8 +2357,8 @@ def multidim_robust_intersection_search_opt_2(xspace,
     # oracle functions
     fcons1 = oracle1.membership()
     fcons2 = oracle2.membership()
-    ffor1  = oracle3.membership()
-    ffor2  = oracle4.membership()
+    ffor1 = oracle3.membership()
+    ffor2 = oracle4.membership()
 
     error = (epsilon,) * n
     vol_total = xspace.volume()
@@ -2373,51 +2380,49 @@ def multidim_robust_intersection_search_opt_2(xspace,
     tempdir = tempfile.mkdtemp()
 
     RootSearch.logger.info('Report\nStep, Border, Total, nBorder, BinSearch')
-    while (vol_border >= vol_total * delta) and (step <= max_step) and ((len(qunknown) > 0) or (len(qvalid) > 0)) :
+    while (vol_border >= vol_total * delta) and (step <= max_step) and ((len(qunknown) > 0) or (len(qvalid) > 0)):
         step = step + 1
 
-        i = []
-
         # TODO: Pop and call the divide functions here!
-        if ((len(qunknown)==0) and (len(qvalid)==0)):
+        if (len(qunknown) == 0) and (len(qvalid) == 0):
             break
-        elif ((len(qunknown)==0) and (len(qvalid)!=0)):
+        elif (len(qunknown) == 0) and (len(qvalid) != 0):
             xrectangle = qvalid.pop()
             vol_boxes -= xrectangle.volume()
             (vol_boxes, vol_xrest, vol_border) = divide_box_valid(xrectangle,
-                incomparable, incomparable_segment,
-                ffor1, ffor2,
-                qunknown, qvalid, intersect_box,
-                vol_boxes, vol_xrest,
-                vol_border, vol_total, error, step)
-        elif ((len(qunknown)!=0) and (len(qvalid)==0)):
+                                                                  incomparable, incomparable_segment,
+                                                                  ffor1, ffor2,
+                                                                  qunknown, qvalid, intersect_box,
+                                                                  vol_boxes, vol_xrest,
+                                                                  vol_border, vol_total, error, step)
+        elif (len(qunknown) != 0) and (len(qvalid) == 0):
             xrectangle = qunknown.pop()
             vol_boxes -= xrectangle.volume()
             (vol_boxes, vol_xrest, vol_border) = divide_box_full_space(xrectangle,
-                incomparable, incomparable_segment,
-                fcons1, fcons2,
-                qunknown, qvalid,
-                vol_boxes, vol_xrest,
-                vol_border, vol_total, error, step)
+                                                                       incomparable, incomparable_segment,
+                                                                       fcons1, fcons2,
+                                                                       qunknown, qvalid,
+                                                                       vol_boxes, vol_xrest,
+                                                                       vol_border, vol_total, error, step)
         else:
-            if (qunknown[-1].volume() > qvalid[-1].volume()):
+            if qunknown[-1].volume() > qvalid[-1].volume():
                 xrectangle = qunknown.pop()
                 vol_boxes -= xrectangle.volume()
                 (vol_boxes, vol_xrest, vol_border) = divide_box_full_space(xrectangle,
-                    incomparable, incomparable_segment,
-                    fcons1, fcons2,
-                    qunknown, qvalid,
-                    vol_boxes, vol_xrest,
-                    vol_border, vol_total, error, step)
+                                                                           incomparable, incomparable_segment,
+                                                                           fcons1, fcons2,
+                                                                           qunknown, qvalid,
+                                                                           vol_boxes, vol_xrest,
+                                                                           vol_border, vol_total, error, step)
             else:
                 xrectangle = qvalid.pop()
                 vol_boxes -= xrectangle.volume()
                 (vol_boxes, vol_xrest, vol_border) = divide_box_valid(xrectangle,
-                    incomparable, incomparable_segment,
-                    ffor1, ffor2,
-                    qunknown, qvalid, intersect_box,
-                    vol_boxes, vol_xrest,
-                    vol_border, vol_total, error, step)
+                                                                      incomparable, incomparable_segment,
+                                                                      ffor1, ffor2,
+                                                                      qunknown, qvalid, intersect_box,
+                                                                      vol_boxes, vol_xrest,
+                                                                      vol_border, vol_total, error, step)
 
         RootSearch.logger.debug('xrectangle: {0}'.format(xrectangle))
         RootSearch.logger.debug('xrectangle.volume: {0}'.format(xrectangle.volume()))
@@ -2434,6 +2439,7 @@ def multidim_robust_intersection_search_opt_2(xspace,
             rs = ResultSet(qvalid, qunknown, [], xspace)
             name = os.path.join(tempdir, str(step))
             rs.to_file(name)
+
     RootSearch.logger.info('For pareto front robust intersection exploring algorithm (with overlap):')
     RootSearch.logger.info('remaining volume: {0}'.format(vol_border))
     RootSearch.logger.info('total volume: {0}'.format(vol_total))
