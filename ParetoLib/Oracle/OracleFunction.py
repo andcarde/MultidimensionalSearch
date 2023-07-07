@@ -23,6 +23,7 @@ import io
 
 from sortedcontainers import SortedSet
 from sympy import simplify, expand, default_sort_key, Expr, Symbol
+from sympy.utilities.autowrap import autowrap
 
 import cython
 
@@ -40,6 +41,11 @@ class Condition(object):
     cython.declare(op=str)
     cython.declare(f=object)
     cython.declare(g=object)
+
+    cython.declare(expression=object)
+    cython.declare(var=list)
+    cython.declare(binary_callable=object)
+
 
     @cython.locals(f=str, op=str, g=str)
     @cython.returns(cython.void)
@@ -69,6 +75,12 @@ class Condition(object):
         self.f = simplify(f)
         self.g = simplify(g)
 
+        # Cache
+        self.expression = None
+        self.var = None
+        self.binary_callable = None
+        # self._compile()
+
         # Internally, type(f) and type(g) are sympy.Expr.
         # Besides, Condition = [sympy.Poly(f - g) op 0] and checks that
         # sympy.Poly(f - g) is monotone (i.e., all coefficients are positive)
@@ -78,6 +90,16 @@ class Condition(object):
                 'Expression "{0}" contains negative coefficients: {1}'.format(str(self.get_expression()),
                                                                               str(
                                                                                   self._get_expression_with_negative_coeff())))
+
+    def _compile(self):
+        # Compilation of the "f op g" expression into efficient code
+        str_expr = "{0} {1} {2}".format(self.f, self.op, self.g)
+        expr = simplify(str_expr)
+        flat = expr.expand()
+        self.binary_callable = autowrap(flat, backend='cython')
+        # self.binary_callable = ufuncify((x, y), y + x**2, backend='Cython')
+        # keys = self.get_variables()
+        # self.binary_callable = ufuncify(tuple(keys), flat, backend='Cython')
 
     @cython.locals(poly_function=str, op_comp=str, op_regex=str, f_regex=str, g_regex=str, regex=str, regex_comp=object,
                    result=object)
@@ -116,6 +138,10 @@ class Condition(object):
             self.op = result.group('op')
             self.f = simplify(result.group('f'))
             self.g = simplify(result.group('g'))
+
+            self.expression = None
+            self.var = None
+            self.binary_callable = None
 
             if not self.all_coeff_are_positive():
                 RootOracle.logger.warning(
@@ -208,7 +234,7 @@ class Condition(object):
             expression and values are the numerical coefficients.
 
         Example:
-        >>> cond = Condition("2x - 4y", ">=", "0")
+        >>> cond = Condition("2*x - 4*y", ">=", "0")
         >>> cond.get_coeff_of_expression()
         >>> {'x': 2, 'y': -4}
         """
@@ -234,7 +260,7 @@ class Condition(object):
             expression and values are the positive numerical coefficients.
 
         Example:
-        >>> cond = Condition("2x - 4y", ">=", "0")
+        >>> cond = Condition("2*x - 4*y", ">=", "0")
         >>> cond.get_positive_coeff_of_expression()
         >>> {'x': 2}
         """
@@ -261,7 +287,7 @@ class Condition(object):
             expression and values are the negative numerical coefficients.
 
         Example:
-        >>> cond = Condition("2x - 4y", ">=", "0")
+        >>> cond = Condition("2*x - 4*y", ">=", "0")
         >>> cond.get_negative_coeff_of_expression()
         >>> {'y': -4}
         """
@@ -301,11 +327,13 @@ class Condition(object):
             Expr: Polynomial expression (Sympy).
 
         Example:
-        >>> cond = Condition("2x - 4y", ">=", "-10")
+        >>> cond = Condition("2*x - 4*y", ">=", "-10")
         >>> cond.get_expression()
-        >>> '2x - 4y + 10 >= 0'
+        >>> '2*x - 4*y + 10 >= 0'
         """
-        return simplify(self.f - self.g)
+        if self.expression is None:
+            self.expression = simplify(self.f - self.g)
+        return self.expression
 
     @cython.locals(expr=object)
     @cython.returns(list)
@@ -321,12 +349,53 @@ class Condition(object):
             list: The list of variables.
 
         Example:
-        >>> cond = Condition("2x - 4y", ">=", "0")
+        >>> cond = Condition("2*x - 4*y", ">=", "0")
         >>> cond.get_variables()
         >>> ['x', 'y']
         """
-        expr = self.get_expression()
-        return sorted(expr.free_symbols, key=default_sort_key)
+        if self.var is None:
+            expr = self.get_expression()
+            self.var = sorted(expr.free_symbols, key=default_sort_key)
+        return self.var
+
+    @cython.locals(point=tuple)
+    @cython.returns(object)
+    def eval_autowrap(self, var_point):
+        # type: (Condition, list) -> bool
+        """
+        Substitutes a list of with pairs (variable, value) in the polynomial expression of Condition.
+
+        Args:
+            self (Condition): The Condition.
+            var_point (list): The list.
+
+        Returns:
+            bool: The result of evaluating the expression.
+
+        Example:
+        >>> cond = Condition("2*x - 4*y", ">=", "0")
+        >>>  var_point = [(Symbol('x'), 4), (Symbol('y'), 2)]
+        >>> cond.eval_autowrap(var_point)
+        >>> True
+        """
+        if self.binary_callable is None:
+            # Lazy compilation, in case it is not initialized yet
+            self._compile()
+
+        # Filter the symbols in var_point that are present in self (Condition)
+        # Remark: var_point must be lexicographically sorted
+        # >>> var_point = [(Symbol('x'), 2.0), (Symbol('y'), 0.5), (Symbol('z'), 7.0)]
+        # >>> point = (2.0, 0.5)
+        variables = self.get_variables()
+        point = tuple(val for (var, val) in var_point if var in variables)
+
+        # The length of tuple 'point' should match with the number of variables in the 'binary_callable' expression.
+        # E.g.,:
+        # >>> binary_callable = autowrap("x + y > 2.5", backend='cython')
+        # >>> binary_callable(2.0, 0.5) == True
+
+        # It must return True/False in C/C++ notation (i.e., True == 1.0, False == 0.0)
+        return self.binary_callable(*point) == 1.0
 
     @cython.locals(variable=object, val=str, fvset=list, fv=object, expr=object, res=object, ex=str)
     @cython.returns(object)
@@ -344,9 +413,9 @@ class Condition(object):
             Expr: The expression resulting of evaluating the variable with val.
 
         Example:
-        >>> cond = Condition("2x - 4y", ">=", "0")
-        >>> cond.eval_var_val(Symbol('x'), 2.0)
-        >>> Expr('4-4y')
+        >>> cond = Condition("2*x - 4*y", ">=", "0")
+        >>> cond.eval_var_val(Symbol('x'), '2.0')
+        >>> Expr('4-4*y')
         """
         if variable is None:
             fvset = self.get_variables()
@@ -376,7 +445,7 @@ class Condition(object):
             Expr: The expression resulting of evaluating the expression.
 
         Example:
-        >>> cond = Condition("2x - 4y", ">=", "0")
+        >>> cond = Condition("2*x - 4*y", ">=", "0")
         >>> point = (4, 2)
         >>> cond.eval_tuple(point)
         >>> True
@@ -401,7 +470,7 @@ class Condition(object):
             Expr: The expression resulting of evaluating the expression.
 
         Example:
-        >>> cond = Condition("2x - 4y", ">=", "0")
+        >>> cond = Condition("2*x - 4*y", ">=", "0")
         >>> var_point = [(Symbol('x'), 4), (Symbol('y'), 2)]
         >>> cond.eval_zip_tuple(var_point)
         >>> True
@@ -428,7 +497,7 @@ class Condition(object):
             Expr: The expression resulting of evaluating the expression.
 
         Example:
-        >>> cond = Condition("2x - 4y", ">=", "0")
+        >>> cond = Condition("2*x - 4*y", ">=", "0")
         >>> d = {Symbol('x'): 4, Symbol('y'): 2}
         >>> cond.eval_dict(d)
         >>> True
@@ -468,13 +537,14 @@ class Condition(object):
 
         Example:
         >>> p = (1.0, 1.0)
-        >>> cond = Condition("2x - 4y", ">=", "0")
+        >>> cond = Condition("2*x - 4*y", ">=", "0")
         >>> cond.member(p)
         >>> False
         """
         keys = self.get_variables()
         di = {key: point[i] for i, key in enumerate(keys)}
         return self.eval_dict(di)
+        # return self.eval_autowrap(point)
 
     @cython.returns(object)
     def membership(self):
@@ -491,7 +561,7 @@ class Condition(object):
 
         Example:
         >>> p = (1.0, 1.0)
-        >>> cond = Condition("2x - 4y", ">=", "0")
+        >>> cond = Condition("2*x - 4*y", ">=", "0")
         >>> f = cond.membership()
         >>> f(p)
         >>> False
@@ -780,7 +850,7 @@ class OracleFunction(Oracle):
         """
         See Oracle.get_var_names().
         """
-        return [str(i) for i in self.variables]
+        return [str(i) for i in self.get_variables()]
 
     @cython.locals(variable_list=list)
     @cython.returns(list)
@@ -797,8 +867,8 @@ class OracleFunction(Oracle):
             list: The list of variables (Symbols).
 
         Example:
-        >>> cond1 = Condition("2x - 4y", ">=", "0")
-        >>> cond2 = Condition("2x + z", ">=", "0")
+        >>> cond1 = Condition("2*x - 4*y", ">=", "0")
+        >>> cond2 = Condition("2*x + z", ">=", "0")
         >>> ora = OracleFunction()
         >>> ora.add(cond1)
         >>> ora.add(cond2)
@@ -808,6 +878,17 @@ class OracleFunction(Oracle):
         # variable_list = sorted(self.variables, key=default_sort_key)
         variable_list = list(self.variables)
         return variable_list
+
+    @cython.locals(var=object, val=str, _eval_list=list, _eval=cython.bint)
+    @cython.returns(cython.bint)
+    def _eval_autowrap(self, var_point):
+        # type: (OracleFunction, list) -> bool
+        _eval_list = [cond.eval_autowrap(var_point) for cond in self.oracle]
+        # All conditions are true (i.e., 'and' policy)
+        _eval = all(_eval_list)
+        # Any condition is true (i.e., 'or' policy)
+        # _eval = any(_eval_list)
+        return _eval
 
     @cython.locals(var=object, val=str, _eval_list=list, _eval=cython.bint)
     @cython.returns(cython.bint)
@@ -864,11 +945,22 @@ class OracleFunction(Oracle):
         return self.member(point) is True
 
     @cython.returns(cython.bint)
+    @cython.locals(point=tuple)
+    def _member_autowrap(self, point):
+        # type: (OracleFunction, tuple) -> bool
+        # keys = [x, y, z]
+        keys = self.get_variables()
+        # point = (2, 4, 0)
+        # var_point = [(x, 2), (y, 4), (z, 0)]
+        var_point = list(zip(keys, point))  # Works in Python 2.7 and Python 3.x
+        return self._eval_autowrap(var_point)
+
+    @cython.returns(cython.bint)
     @cython.locals(point=tuple, var_point=list)
     def _member_zip_tuple(self, point):
         # type: (OracleFunction, tuple) -> bool
         # keys = [x, y, z]
-        keys = self.variables
+        keys = self.get_variables()
         # point = (2, 4, 0)
         # var_point = [(x, 2), (y, 4), (z, 0)]
         var_point = list(zip(keys, point))  # Works in Python 2.7 and Python 3.x
@@ -880,7 +972,7 @@ class OracleFunction(Oracle):
     def _member_dict(self, point):
         # type: (OracleFunction, tuple) -> bool
         # keys = [x, y, z]
-        keys = self.variables
+        keys = self.get_variables()
         # point = (2, 4, 0)
         # di = {x: 2, y: 4, z: 0}
         di = {key: point[i] for i, key in enumerate(keys)}
@@ -894,9 +986,10 @@ class OracleFunction(Oracle):
         See Oracle.member().
         A point belongs to the Oracle if it satisfies all the conditions.
         """
+        return self._member_autowrap(point)
         # member_zip_var performs better than member_dict
-        return self._member_zip_tuple(point)
-        # return self.member_dict(point)
+        # return self._member_zip_tuple(point)
+        # return self._member_dict(point)
 
     @cython.returns(object)
     def membership(self):

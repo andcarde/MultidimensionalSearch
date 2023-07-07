@@ -34,7 +34,7 @@ if __name__ == '__main__':
             'sortedcontainers>=1.5.10',
             'typing >= 3.7.4.3',
             'typing_extensions>=4.4.0',
-            'sympy>=1.1.1',
+            'sympy>=1.12',
             'wheel>=0.38.4'
         ],
         #packages_dir={'': 'ParetoLib'},

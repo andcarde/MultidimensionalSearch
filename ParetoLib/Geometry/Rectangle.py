@@ -91,7 +91,7 @@ from ParetoLib._py3k import red
 @cython.cclass
 class Rectangle(object):
     privilege = cython.declare(cython.double, visibility='public')
-    cython.declare(_min_corner=tuple, _max_corner=tuple, vol=cython.double, vertx=list) #, privilege=cython.double)
+    cython.declare(_min_corner=tuple, _max_corner=tuple, vol=cython.double, vertx=list)  # , privilege=cython.double)
 
     def __init__(self,
                  min_corner=(float('-inf'),) * 2,
@@ -1397,11 +1397,11 @@ class Rectangle(object):
         if vertical:
             ver_dist = np.subtract(verts[half], verts[0])
             rect_list = [Rectangle(np.add(verts[0], np.multiply(ver_dist, i / n)),
-                               np.add(verts[half-1], np.multiply(ver_dist, (i + 1) / n))) for i in range(n)]
+                                   np.add(verts[half - 1], np.multiply(ver_dist, (i + 1) / n))) for i in range(n)]
         else:
             ver_dist = np.subtract(verts[1], verts[0])
             rect_list = [Rectangle(np.add(verts[0], np.multiply(ver_dist, i / n)),
-                                np.add(verts[half], np.multiply(ver_dist, (i + 1) / n))) for i in range(n)]
+                                   np.add(verts[half], np.multiply(ver_dist, (i + 1) / n))) for i in range(n)]
 
         return rect_list
 

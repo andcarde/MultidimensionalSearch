@@ -36,6 +36,7 @@ from matplotlib.figure import Figure
 
 from ParetoLib.Oracle.NDTree import NDTree
 from ParetoLib.Geometry.Rectangle import Rectangle
+from ParetoLib.Search.CommonSearch import EPS
 # import ParetoLib.Search as RootSearch
 import ParetoLib.Search
 
@@ -155,6 +156,14 @@ class ResultSet(object):
     def __hash__(self):
         # type: (ResultSet) -> int
         return hash((tuple(self.border), tuple(self.ylow), tuple(self.yup), hash(self.xspace)))
+
+    # Remove boxes that are smaller than a predefined threshold
+    @cython.locals(minimum_area=cython.double)
+    def filtering(self, minimum_area=EPS):
+        # type: (ResultSet, float) -> None
+        self.border = [rect for rect in self.border if rect.volume() > minimum_area]
+        self.ylow = [rect for rect in self.ylow if rect.volume() > minimum_area]
+        self.yup = [rect for rect in self.yup if rect.volume() > minimum_area]
 
     # Vertex functions
     @cython.locals(vertices=set)

@@ -2704,22 +2704,22 @@ def multidim_intersection_search_opt_2_partial(xspace, list_constraints,
 @cython.locals(xspace=object, oracles=list, num_samples=cython.int, num_cells=cython.int, blocking=cython.bint,
                sleep=cython.double, opt_level=cython.uint, logging=cython.bint, md_search=list, start=cython.double,
                end=cython.double, time0=cython.double, rs=object)
-def multidim_search_BMNN22(xspace : Rectangle,
-                           oracles : List[Oracle],
-                           num_samples : int,
-                           num_cells : int,
-                           blocking : bool = False,
-                           sleep : float = 0.0,
-                           opt_level : int = 0,
-                           logging : bool = True) -> ParResultSet:
+def multidim_search_BMNN22(xspace: Rectangle,
+                           oracles: List[Oracle],
+                           num_samples: int,
+                           num_cells: int,
+                           blocking: bool = False,
+                           sleep: float = 0.0,
+                           opt_level: int = 0,
+                           logging: bool = True) -> ParResultSet:
     # type: (Rectangle, list, int, int, bool, float, int, bool) -> ParResultSet
 
     RootSearch.logger.info('Starting multidimensional search (BMNN22)')
     start = time.time()
-    #RootSearch.logger.info('Report\nStep, Red, Green, Border, Total, nRed, nGreen, nBorder')
-    #RootSearch.logger.info(
-     #   '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(0, 0.0, 0.0, xspace.volume(), xspace.volume(), 0,
-      #                                                  0, 1))  # 0th step
+    # RootSearch.logger.info('Report\nStep, Red, Green, Border, Total, nRed, nGreen, nBorder')
+    # RootSearch.logger.info(
+    #   '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(0, 0.0, 0.0, xspace.volume(), xspace.volume(), 0,
+    #                                                  0, 1))  # 0th step
     if opt_level == 0:  # Fixed cell creation
         rs = multidim_search_BMNN22_opt_0(xspace,
                                           oracles,
@@ -2782,7 +2782,7 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
                                  logging: bool = True) -> ParResultSet:
     # type: (Rectangle, list[Oracle], int, int, bool, float, bool) -> ParResultSet
     border = xspace.cell_partition_bin(num_cells)
-    nBorder = len(border) # Number of rectangles inside the border
+    nBorder = len(border)  # Number of rectangles inside the border
     green = list()
     red = list()
     d = xspace.dim()
@@ -2805,10 +2805,10 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
             vol_border = vol_border - cell.volume()
         nBorder = nBorder - 1
         step = step + 1
-        
-        #RootSearch.logger.info(
-         #       '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(step, vol_red, vol_green, vol_border, xspace.volume(),
-          #                                                  len(red), len(green), nBorder))
+
+        # RootSearch.logger.info(
+        #       '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(step, vol_red, vol_green, vol_border, xspace.volume(),
+        #                                                  len(red), len(green), nBorder))
 
         # Visualization
         if sleep > 0.0:
@@ -2829,7 +2829,7 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
 
 
 # Function that divides a cell into the minimum resolution possible, set by g
-def divide_to_min(cell : Rectangle, g : Tuple[float]) -> List[Rectangle]:
+def divide_to_min(cell: Rectangle, g: Tuple[float]) -> List[Rectangle]:
     n = pow(2, cell.dim())
     cut_list = [cell]
     while not all(less_equal(rect.diag_vector(), g) for rect in cut_list):
@@ -2837,9 +2837,8 @@ def divide_to_min(cell : Rectangle, g : Tuple[float]) -> List[Rectangle]:
         for rect in cut_list:
             new_list.extend(rect.cell_partition_bin(n))
         cut_list = new_list
-            
+
     return cut_list
-    
 
 
 # Dynamic size cell method
@@ -2848,7 +2847,7 @@ def process_dyn(args: Tuple[Rectangle,
                             int,
                             int,
                             float,
-                            Tuple[float]]) -> Tuple[Rectangle, Union[bool,None]]:
+                            Tuple[float]]) -> Tuple[Rectangle, Union[bool, None]]:
     cell, oracles, num_samples, d, ps, g = args
     fs = [ora.membership() for ora in oracles]
 
@@ -2892,7 +2891,6 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
     # Create temporary directory for storing the result of each step
     tempdir = tempfile.mkdtemp()
 
-
     while len(border) > 0:
         args = ((cell, copy.deepcopy(oracles), num_samples, d, ps, g) for cell in border)
         cols_list = p.map(process_dyn, args)
@@ -2902,22 +2900,20 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
                 border = border + cell.cell_partition_bin(n)
                 nBorder = nBorder + n - 1
             elif is_green:
-                list_cell = divide_to_min(cell,g)
+                list_cell = divide_to_min(cell, g)
                 green.extend(list_cell)
                 vol_green = vol_green + cell.volume()
                 vol_border = vol_border - cell.volume()
                 nBorder = nBorder - 1
             else:
-                list_cell = divide_to_min(cell,g)
+                list_cell = divide_to_min(cell, g)
                 red.extend(list_cell)
                 vol_red = vol_red + cell.volume()
                 vol_border = vol_border - cell.volume()
                 nBorder = nBorder - 1
             step = step + 1
-            #RootSearch.logger.info(
-             #   '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(step, vol_red, vol_green, vol_border, xspace.volume(),
-              #                                              len(red), len(green), nBorder))
-            
+            # RootSearch.logger.info('{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(step, vol_red, vol_green,
+            # vol_border, xspace.volume(), len(red), len(green), nBorder))
 
         # Visualization
         if sleep > 0.0:
@@ -2931,7 +2927,7 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
             rs = ParResultSet(border, red, green, xspace)
             name = os.path.join(tempdir, str(step))
             rs.to_file(name)
-    
+
     p.close()
     p.join()
     return ParResultSet(border, red, green, xspace)

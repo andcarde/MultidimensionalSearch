@@ -33,8 +33,6 @@ from ParetoLib.Search.ResultSet import ResultSet
 
 
 # @cython.cclass
-
-
 class ParResultSet(ResultSet):
     p = cython.declare(object, visibility='public')
 

@@ -397,7 +397,7 @@ def SearchIntersectionND(ora1, ora2,
                                                                      blocking, sleep, opt_level, logging)
     else:
         intersection_result = SeqSearch.multidim_intersection_search(xyspace, [], ora1, ora2, epsilon, delta, max_step,
-                                                                     blocking, sleep, opt_level, logging)
+                                                                 blocking, sleep, opt_level, logging)
     if simplify:
         intersection_result.simplify(method=1)
         intersection_result.fusion()
