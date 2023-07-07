@@ -1232,6 +1232,54 @@ def bound_box_with_constraints(box, list_constraints):
     return min_bound, max_bound
 
 
+@cython.ccall
+@cython.returns(list)
+@cython.locals(incomp_pos=list, incomp_neg_down=list, incomp_neg_up=list, y_in=object, y_cover=object,
+               xrectangle=object, incomp1=list, incomp_list_down=list, incomp_list_up=list, yrect_mid=object,
+               y_rect_up=object, i_rect_down=object, i1=list, i2=list, i3=list, i_down=list, i_up=list, i=list)
+def pos_neg_box_gen(incomp_pos, incomp_neg_down, incomp_neg_up, y_in, y_cover, xrectangle):
+    # type: (list, list, list, Segment, Segment, Rectangle) -> list
+    incomp1 = incomp_pos[2:]
+    incomp_list_down = [incomp_pos[0]]
+    incomp_list_up = [incomp_pos[1]]
+    yrect_mid = Rectangle(y_in.low, y_in.high)
+    i1 = interirect(incomp1, yrect_mid, xrectangle)
+    i2 = interirect(incomp_list_down, yrect_mid, xrectangle)
+    i3 = interirect(incomp_list_up, yrect_mid, xrectangle)
+    i_down = []
+    i_up = []
+    for rect in i2:
+        y_rect_down = Rectangle(y_cover.low, rect.max_corner)
+        i_down += interirect(incomp_neg_down, y_rect_down, rect)
+    for rect in i3:
+        y_rect_up = Rectangle(y_cover.high, rect.max_corner)
+        i_up += interirect(incomp_neg_up, y_rect_up, rect)
+    i = i_down + i_up + i1
+    return i
+
+
+@cython.ccall
+@cython.returns(list)
+@cython.locals(incomparable=list, incomparable_segment=list, yIn=object, yCover=object, xrectangle=object,
+               y_rect_in=object, x_rect_up=object, x_rect_down=object, y_rect_up=object, y_rect_down=object,
+               i1=list, i2=list, i3=list, i=list)
+def pos_overlap_box_gen(incomparable, incomparable_segment, yIn, yCover, xrectangle):
+    # type: (list, list, Segment, Segment, Rectangle) -> list
+    y_rect_in = Rectangle(yIn.low, yIn.high)
+    i1 = interirect(incomparable_segment, y_rect_in, xrectangle)
+
+    y_rect_down = Rectangle(yCover.low, yIn.low)
+    x_rect_down = Rectangle(xrectangle.min_corner, yIn.high)
+    i2 = irect(incomparable, y_rect_down, x_rect_down)
+
+    y_rect_up = Rectangle(yIn.high, yCover.high)
+    x_rect_up = Rectangle(yIn.low, xrectangle.max_corner)
+    i3 = irect(incomparable, y_rect_up, x_rect_up)
+
+    i = i1 + i2 + i3
+
+    return i
+
 # @cython.ccall
 @cython.returns(object)
 @cython.locals(xspace=object, list_constraints=list, oracle1=object, oracle2=object, epsilon=cython.double,
@@ -1403,55 +1451,6 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
 
 
 @cython.ccall
-@cython.returns(list)
-@cython.locals(incomp_pos=list, incomp_neg_down=list, incomp_neg_up=list, y_in=object, y_cover=object,
-               xrectangle=object, incomp1=list, incomp_list_down=list, incomp_list_up=list, yrect_mid=object,
-               y_rect_up=object, i_rect_down=object, i1=list, i2=list, i3=list, i_down=list, i_up=list, i=list)
-def pos_neg_box_gen(incomp_pos, incomp_neg_down, incomp_neg_up, y_in, y_cover, xrectangle):
-    # type: (list, list, list, Segment, Segment, Rectangle) -> list
-    incomp1 = incomp_pos[2:]
-    incomp_list_down = [incomp_pos[0]]
-    incomp_list_up = [incomp_pos[1]]
-    yrect_mid = Rectangle(y_in.low, y_in.high)
-    i1 = interirect(incomp1, yrect_mid, xrectangle)
-    i2 = interirect(incomp_list_down, yrect_mid, xrectangle)
-    i3 = interirect(incomp_list_up, yrect_mid, xrectangle)
-    i_down = []
-    i_up = []
-    for rect in i2:
-        y_rect_down = Rectangle(y_cover.low, rect.max_corner)
-        i_down += interirect(incomp_neg_down, y_rect_down, rect)
-    for rect in i3:
-        y_rect_up = Rectangle(y_cover.high, rect.max_corner)
-        i_up += interirect(incomp_neg_up, y_rect_up, rect)
-    i = i_down + i_up + i1
-    return i
-
-
-@cython.ccall
-@cython.returns(list)
-@cython.locals(incomparable=list, incomparable_segment=list, yIn=object, yCover=object, xrectangle=object,
-               y_rect_in=object, x_rect_up=object, x_rect_down=object, y_rect_up=object, y_rect_down=object,
-               i1=list, i2=list, i3=list, i=list)
-def pos_overlap_box_gen(incomparable, incomparable_segment, yIn, yCover, xrectangle):
-    # type: (list, list, Segment, Segment, Rectangle) -> list
-    y_rect_in = Rectangle(yIn.low, yIn.high)
-    i1 = interirect(incomparable_segment, y_rect_in, xrectangle)
-
-    y_rect_down = Rectangle(yCover.low, yIn.low)
-    x_rect_down = Rectangle(xrectangle.min_corner, yIn.high)
-    i2 = irect(incomparable, y_rect_down, x_rect_down)
-
-    y_rect_up = Rectangle(yIn.high, yCover.high)
-    x_rect_up = Rectangle(yIn.low, xrectangle.max_corner)
-    i3 = irect(incomparable, y_rect_up, x_rect_up)
-
-    i = i1 + i2 + i3
-
-    return i
-
-
-@cython.ccall
 @cython.returns(object)
 @cython.locals(xspace=object, list_constraints=list, oracle1=object, oracle2=object, epsilon=cython.double,
                delta=cython.double, max_step=cython.ulonglong, blocking=cython.bint, sleep=cython.double,
@@ -1551,7 +1550,7 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
         RootSearch.logger.debug('y: {0}'.format(y))
 
         if intersect_indicator == INTERFULL:
-            intersect_box.append(Rectangle(y.low, y.high))
+            intersect_box.append(yrectangle)
             vol_xrest += xrectangle.volume()
             vol_border = vol_total - vol_xrest
             RootSearch.logger.info(
@@ -1719,11 +1718,12 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
             y = y_in
         else:
             y = y_cover
+
         yrectangle = Rectangle(y.low, y.high)
         RootSearch.logger.debug('y: {0}'.format(y))
 
         if intersect_indicator == INTERFULL:
-            intersect_box.append(Rectangle(y.low, y.high))
+            intersect_box.append(yrectangle)
             vol_xrest += xrectangle.volume()
             vol_border = vol_total - vol_xrest
             RootSearch.logger.info(
@@ -1975,47 +1975,44 @@ def divide_box_full_space(xrectangle,
                           vol_border, vol_total, error, step):
     # Search on the diagonal
     want_to_expand = True
-    y_in, y_cover, intersect_indicator, steps_binsearch = intersection_expansion_search(xrectangle.diag(), fcons1,
-                                                                                        fcons2,
+    y_in, y_cover, intersect_indicator, steps_binsearch = intersection_expansion_search(xrectangle.diag(),
+                                                                                        fcons1, fcons2,
                                                                                         error, want_to_expand)
     if intersect_indicator == NO_INTER:
         y = y_in
     else:
         y = y_cover
+
+    i = []
+
     yrectangle = Rectangle(y.low, y.high)
     RootSearch.logger.debug('y: {0}'.format(y))
 
     if intersect_indicator == INTERFULL:
-        qvalid.add(Rectangle(y.low, y.high))
-        # vol_xrest += xrectangle.volume()
-        # vol_border = vol_total - vol_xrest
-        RootSearch.logger.info(
-            '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_xrest + vol_boxes, len(qunknown) + len(qvalid),
-                                             steps_binsearch))
-        return (vol_boxes, vol_xrest, vol_border)
+        qvalid.add(yrectangle)
+        vol_xrest += xrectangle.volume()
+
+    elif intersect_indicator == INTERNULL:
+        vol_xrest += xrectangle.volume()
+
     elif intersect_indicator == INTER:
+        i = pos_overlap_box_gen(incomparable, incomparable_segment, y_in, y_cover, xrectangle)
         pos_box = Rectangle(y_in.low, y_in.high)
         neg_box1 = Rectangle(xrectangle.min_corner, y_cover.low)
         neg_box2 = Rectangle(y_cover.high, xrectangle.max_corner)
         qvalid.add(pos_box)
 
-        i = pos_overlap_box_gen(incomparable, incomparable_segment, y_in, y_cover, xrectangle)
-
         # vol_xrest += pos_box.volume() + neg_box1.volume() + neg_box2.volume()
         vol_xrest += neg_box1.volume() + neg_box2.volume()
+
     elif intersect_indicator == NO_INTER:
         i = interirect(incomparable_segment, yrectangle, xrectangle)
         lower_rect = Rectangle(xrectangle.min_corner, yrectangle.max_corner)
         upper_rect = Rectangle(yrectangle.min_corner, xrectangle.max_corner)
         vol_xrest += lower_rect.volume() + upper_rect.volume() - yrectangle.volume()
-    elif intersect_indicator == INTERNULL:
-        vol_xrest += xrectangle.volume()
-        vol_border = vol_total - vol_xrest
-        RootSearch.logger.info(
-            '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_xrest + vol_boxes, len(qunknown) + len(qvalid),
-                                             steps_binsearch))
-        return (vol_boxes, vol_xrest, vol_border)
+
     else:
+        i = irect(incomparable, yrectangle, xrectangle)
         b0 = Rectangle(xrectangle.min_corner, y.low)
         vol_xrest += b0.volume()
         RootSearch.logger.debug('b0: {0}'.format(b0))
@@ -2023,8 +2020,6 @@ def divide_box_full_space(xrectangle,
         b1 = Rectangle(y.high, xrectangle.max_corner)
         vol_xrest += b1.volume()
         RootSearch.logger.debug('b1: {0}'.format(b1))
-
-        i = irect(incomparable, yrectangle, xrectangle)
 
     for rect in i:
         if intersection_empty(rect.diag(), fcons1, fcons2):
@@ -2044,7 +2039,7 @@ def divide_box_full_space(xrectangle,
     RootSearch.logger.info(
         '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_xrest + vol_boxes, len(qunknown) + len(qvalid),
                                          steps_binsearch))
-    return (vol_boxes, vol_xrest, vol_border)
+    return vol_boxes, vol_xrest, vol_border
 
 
 def divide_box_valid(xrectangle,
@@ -2061,39 +2056,38 @@ def divide_box_valid(xrectangle,
         y = y_in
     else:
         y = y_cover
+
+    i = []
+
     yrectangle = Rectangle(y.low, y.high)
     RootSearch.logger.debug('y: {0}'.format(y))
 
     if intersect_indicator == INTERFULL:
-        intersect_box.append(Rectangle(y.low, y.high))
+        intersect_box.append(yrectangle)
         vol_xrest += xrectangle.volume()
-        vol_border = vol_total - vol_xrest
-        RootSearch.logger.info(
-            '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_xrest + vol_boxes, len(qunknown) + len(qvalid),
-                                             steps_binsearch))
-        return (vol_boxes, vol_xrest, vol_border)
+
+    elif intersect_indicator == INTERNULL:
+        vol_xrest += xrectangle.volume()
+
     elif intersect_indicator == INTER:
+        i = pos_overlap_box_gen(incomparable, incomparable_segment, y_in, y_cover, xrectangle)
         pos_box = Rectangle(y_in.low, y_in.high)
         neg_box1 = Rectangle(xrectangle.min_corner, y_cover.low)
         neg_box2 = Rectangle(y_cover.high, xrectangle.max_corner)
         intersect_box.append(pos_box)
 
-        i = pos_overlap_box_gen(incomparable, incomparable_segment, y_in, y_cover, xrectangle)
-
         vol_xrest += pos_box.volume() + neg_box1.volume() + neg_box2.volume()
+
     elif intersect_indicator == NO_INTER:
         i = interirect(incomparable_segment, yrectangle, xrectangle)
         lower_rect = Rectangle(xrectangle.min_corner, yrectangle.max_corner)
         upper_rect = Rectangle(yrectangle.min_corner, xrectangle.max_corner)
+
         vol_xrest += lower_rect.volume() + upper_rect.volume() - yrectangle.volume()
-    elif intersect_indicator == INTERNULL:
-        vol_xrest += xrectangle.volume()
-        vol_border = vol_total - vol_xrest
-        RootSearch.logger.info(
-            '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_xrest + vol_boxes, len(qunknown) + len(qvalid),
-                                             steps_binsearch))
-        return (vol_boxes, vol_xrest, vol_border)
+
     else:
+        i = irect(incomparable, yrectangle, xrectangle)
+
         b0 = Rectangle(xrectangle.min_corner, y.low)
         vol_xrest += b0.volume()
         RootSearch.logger.debug('b0: {0}'.format(b0))
@@ -2102,7 +2096,6 @@ def divide_box_valid(xrectangle,
         vol_xrest += b1.volume()
         RootSearch.logger.debug('b1: {0}'.format(b1))
 
-        i = irect(incomparable, yrectangle, xrectangle)
 
     for rect in i:
         if intersection_empty(rect.diag(), ffor1, ffor2):
@@ -2122,7 +2115,7 @@ def divide_box_valid(xrectangle,
     RootSearch.logger.info(
         '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_xrest + vol_boxes, len(qunknown) + len(qvalid),
                                          steps_binsearch))
-    return (vol_boxes, vol_xrest, vol_border)
+    return vol_boxes, vol_xrest, vol_border
 
 
 # Try to find a single box of intersection and then exit
@@ -2224,7 +2217,7 @@ def multidim_robust_intersection_search_opt_0(xspace,
                                                                       qunknown, qvalid, intersect_box,
                                                                       vol_boxes, vol_xrest,
                                                                       vol_border, vol_total, error, step)
-                if (len(intersect_box) > 0):
+                if len(intersect_box) > 0:
                     break
             else:
                 xrectangle = qunknown.pop()
