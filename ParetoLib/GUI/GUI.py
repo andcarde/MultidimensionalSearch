@@ -1,3 +1,4 @@
+import itertools
 import os
 import sys
 import tempfile
@@ -590,9 +591,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.solution = StandardSolutionWindow()
             if rs is not None:
                 if len(self.oracles) > 0:  # For an oracle list
-                    param_list = list()
-                    for ora in self.oracles:
-                        param_list = param_list + ora.get_var_names()
+                    ora_var_names = (ora.get_var_names() for ora in self.oracles)
+                    param_list = list(itertools.chain(*ora_var_names))
                     self.solution.set_resultset(rs, param_list)
                 else:  # For a single oracle
                     self.solution.set_resultset(rs, self.oracle.get_var_names())
