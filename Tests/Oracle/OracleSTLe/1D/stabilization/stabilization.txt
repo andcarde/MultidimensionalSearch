@@ -1,3 +1,0 @@
-./stabilization.stl
-./stabilization.csv
-./stabilization.param

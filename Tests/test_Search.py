@@ -5,10 +5,10 @@ import os
 import numpy as np
 import pytest
 
-from ParetoLib.Search.Search import Search2D, Search3D, SearchND
+from ParetoLib.Search.Search import Search2D, Search3D, SearchND, SearchIntersectionND, SearchND_BMNN22
 from ParetoLib.Search.ResultSet import ResultSet
 
-from ParetoLib.Oracle.OracleFunction import OracleFunction
+from ParetoLib.Oracle.OracleFunction import OracleFunction, Condition
 from ParetoLib.Oracle.OraclePoint import OraclePoint
 from ParetoLib.Oracle.OracleSTL import OracleSTL
 from ParetoLib.Oracle.OracleSTLe import OracleSTLe, OracleSTLeLib
@@ -18,6 +18,144 @@ if 'DISPLAY' not in os.environ:
     SLEEP_TIME = 0.0
 else:
     SLEEP_TIME = 0.1
+
+
+class SearchIntersectionTestCase(unittest.TestCase):
+
+    def setUp(self):
+        # type: (SearchIntersectionTestCase) -> None
+
+        # This test only considers Oracles (in *.txt format) that are located in the root
+        # of folders Oracle/OracleXXX/[1|2|3|N]D
+
+        self.oracle_1 = OracleFunction()
+        self.oracle_2 = OracleFunction()
+
+        cond_1 = Condition("(x-1)**2 + (y-1)**2", "<", "1")
+        cond_2 = Condition("x**2 + y**2", "<", "1")
+        self.oracle_1.add(cond_1)
+        self.oracle_2.add(cond_2)
+
+        # By default, use min_corner in 0.0 and max_corner in 1.0
+        self.min_c = 0.0
+        self.max_c = 1.0
+        # Use N sample points for verifying that the result of the Pareto search is correct.
+        # We compare the membership of a point to a ResultSet closure and the answer of the Oracle.
+        self.numpoints_verify = 10
+
+        # Configuring searching parameters
+        self.EPS = 1e-2
+        self.DELTA = 1e-2
+        self.STEPS = 20
+
+    #  Membership testing function used in verify2D, verify3D and verifyND
+    def closureMembershipTest(self, fora_1, fora_2, rs, xpoint):
+        # type: (SearchIntersectionTestCase, callable, callable, ResultSet, tuple) -> bool
+
+        test1 = fora_1(xpoint) and fora_2(xpoint) and (rs.member_yup(xpoint) or rs.member_border(xpoint))
+        test2 = not (fora_1(xpoint) and fora_2(xpoint)) and (rs.member_ylow(xpoint) or rs.member_border(xpoint))
+
+        print_string = 'Warning!\n'
+        print_string += 'Testing {0}\n'.format(str(xpoint))
+        print_string += '(inYup, inYlow, inBorder, inSpace): ({0}, {1}, {2}, {3})\n'.format(rs.member_yup(xpoint),
+                                                                                            rs.member_ylow(xpoint),
+                                                                                            rs.member_border(xpoint),
+                                                                                            rs.member_space(xpoint))
+        print_string += 'Expecting\n'
+        print_string += '(inYup, inYlow): ({0}, {1})\n'.format(rs.member_yup(xpoint), rs.member_ylow(xpoint))
+        print_string += '(fora_1, fora_2): ({0}, {1})\n'.format(fora_1(xpoint), fora_2(xpoint))
+        print_string += 'test1, test2: ({0}, {1})\n'.format(test1, test2)
+
+        self.assertTrue(test1 or test2, print_string)
+        return test1 or test2
+
+    # Auxiliar function for reporting ND results
+    def verifyND(self,
+                 fora_1,
+                 fora_2,
+                 rs,
+                 list_test_points):
+        # type: (SearchIntersectionTestCase, callable, callable, ResultSet, list) -> None
+
+        # The following tests requires rs.simplify(method=1)
+        # list_test_points = [(t1p, t2p, t3p) for t1p in t1 for t2p in t2 for t3p in t3]
+
+        start = time.time()
+        print('Membership query:')
+        if all(self.closureMembershipTest(fora_1, fora_2, rs, tuple(p)) for p in list_test_points):
+            print('Ok!\n')
+        else:
+            print('Not ok!\n')
+            raise ValueError
+
+        # If rs.simplify(method=1) has NOT been run, then:
+        #   - Ylow contains the green boxes that are simultaneously true for both oracles
+        #   - Yup contains a superset of the green region
+        #   - self.assertLessEqual(rs.volume_ylow(), rs.volume_yup())
+
+        # Volume is conserved
+        self.assertLessEqual(rs.volume_yup(), rs.volume_total())
+        self.assertLessEqual(rs.volume_ylow(), rs.volume_total())
+        self.assertLessEqual(rs.volume_border(), rs.volume_total())
+        self.assertLessEqual(rs.volume_yup() + rs.volume_ylow(), rs.volume_total())
+
+        end = time.time()
+        time0 = end - start
+        print(rs.volume_report())
+        print('Time tests: {0}'.format(str(time0)))
+
+    def search_verify_ND(self):
+        # type: (SearchIntersectionTestCase) -> None
+
+        for bool_val in (True, False):
+            fora_1 = self.oracle_1.membership()
+            fora_2 = self.oracle_2.membership()
+            d1 = self.oracle_1.dim()
+            d2 = self.oracle_2.dim()
+            self.assertEqual(d1, d2)
+            for opt_level in range(3):
+                print('\nTesting SearchIntersection')
+                print('Dimension {0}'.format(d1))
+                print('Optimisation level {0}'.format(opt_level))
+                print('Parallel search {0}'.format(bool_val))
+                print('Logging {0}'.format(bool_val))
+                print('Simplify {0}'.format(bool_val))
+
+                rs = SearchIntersectionND(ora1=self.oracle_1,
+                                          ora2=self.oracle_2,
+                                          min_corner=self.min_c,
+                                          max_corner=self.max_c,
+                                          epsilon=self.EPS,
+                                          delta=self.DELTA,
+                                          max_step=self.STEPS,
+                                          blocking=False,
+                                          sleep=SLEEP_TIME,
+                                          opt_level=opt_level,
+                                          parallel=bool_val,
+                                          logging=bool_val,
+                                          simplify=False)
+
+                # Create numpoints_verify vectors of dimension d
+                # Continuous uniform distribution over the stated interval.
+                # To sample Unif[a, b), b > a
+                # (b - a) * random_sample() + a
+                print('Dimension {0}'.format(d1))
+                list_test_points = (self.max_c - self.min_c) * np.random.random_sample((self.numpoints_verify, d1)) \
+                                   + self.min_c
+                print('Verifying SearchIntersection')
+                # rs.plot_2D_light()
+                if opt_level == 0:
+                    # opt_level == 0 computes a single intersection point between fora_1 and fora_2, and mark the rest
+                    # of the area in the xspace of ResultSet as rs.ylow.
+                    # In order to pass the tests, the unexplored area has to be moved from rs.ylow to rs.border
+                    rs.border = rs.ylow
+                    rs.ylow = []
+                rs.simplify(method=1)
+                self.verifyND(fora_1, fora_2, rs, list_test_points)
+
+    def test_ND(self):
+        # type: (SearchIntersectionTestCase) -> None
+        self.search_verify_ND()
 
 
 class SearchTestCase(unittest.TestCase):
@@ -44,6 +182,10 @@ class SearchTestCase(unittest.TestCase):
         self.EPS = 1e-5
         self.DELTA = 1e-5
         self.STEPS = 20
+        # Required for BMNN22
+        self.P0 = 1e-2
+        self.ALPHA = 5e-2
+        self.NUMCELLS = 25
 
     #  Membership testing function used in verify2D, verify3D and verifyND
     def closureMembershipTest(self, fora, rs, xpoint):
@@ -152,6 +294,53 @@ class SearchTestCase(unittest.TestCase):
                     print('Verifying {0}'.format(test))
                     self.verifyND(fora, rs, list_test_points)
 
+    def search_verify_ND_BMNN22(self, human_readable, list_test_files):
+        # type: (SearchTestCase, bool, list) -> None
+
+        for test in list_test_files:
+            self.assertTrue(os.path.isfile(test), test)
+            self.oracle.from_file(test, human_readable)
+            fora = self.oracle.membership()
+            d = self.oracle.dim()
+            for opt_level in range(2):
+                print('\nTesting {0}'.format(test))
+                print('Dimension {0}'.format(d))
+                print('Optimisation level {0}'.format(opt_level))
+                print('Parallel search {0}'.format(False))
+
+                rs = SearchND_BMNN22(ora_list=[self.oracle],
+                                     min_corner=self.min_c,
+                                     max_corner=self.max_c,
+                                     p0=self.P0,
+                                     alpha=self.ALPHA,
+                                     num_cells=self.NUMCELLS,
+                                     blocking=False,
+                                     sleep=SLEEP_TIME,
+                                     opt_level=opt_level,
+                                     parallel=False,
+                                     logging=False,
+                                     simplify=False)
+
+                print('Parallel search {0}'.format(True))
+
+                rs_par = SearchND_BMNN22(ora_list=[self.oracle],
+                                         min_corner=self.min_c,
+                                         max_corner=self.max_c,
+                                         p0=self.P0,
+                                         alpha=self.ALPHA,
+                                         num_cells=self.NUMCELLS,
+                                         blocking=False,
+                                         sleep=SLEEP_TIME,
+                                         opt_level=opt_level,
+                                         parallel=True,
+                                         logging=False,
+                                         simplify=False)
+
+                # set(rs.yup) == set(rs_par.yup) ...
+                self.assertSetEqual(set(rs.yup), set(rs_par.yup))
+                self.assertSetEqual(set(rs.ylow), set(rs_par.ylow))
+                self.assertSetEqual(set(rs.border), set(rs_par.border))
+
 
 class SearchOracleFunctionTestCase(SearchTestCase):
 
@@ -203,6 +392,7 @@ try:
 except ImportError:
     MATLAB_INSTALLED = False
 
+
 @pytest.mark.skipif(
     not MATLAB_INSTALLED,
     reason='Matlab is not installed'
@@ -235,39 +425,39 @@ class SearchOraclePointTestCase(SearchTestCase):
 
         test_dir = os.path.join(self.this_dir, '2D')
         files_path = os.listdir(test_dir)
-        list_test_files = [os.path.join(test_dir, x) for x in files_path if x.endswith('.bin')]
+        list_test_files = [os.path.join(test_dir, x) for x in files_path if x.endswith('.txt')]
         num_files_test = min(self.numfiles_test, len(list_test_files))
         list_test_files = sorted(list_test_files)[:num_files_test]
         # test-2d-12points provides the maximum interval: [-1024, 1024]
         self.min_c = -1024.0
         self.max_c = 1024.0
-        self.search_verify_ND(human_readable=False, list_test_files=list_test_files)
+        self.search_verify_ND(human_readable=True, list_test_files=list_test_files)
 
     def test_3D(self):
         # type: (SearchOraclePointTestCase) -> None
 
         test_dir = os.path.join(self.this_dir, '3D')
         files_path = os.listdir(test_dir)
-        list_test_files = [os.path.join(test_dir, x) for x in files_path if x.endswith('.bin')]
+        list_test_files = [os.path.join(test_dir, x) for x in files_path if x.endswith('.txt')]
         num_files_test = min(self.numfiles_test, len(list_test_files))
         list_test_files = sorted(list_test_files)[:num_files_test]
         # test-3d-[1000|2000] are LIDAR points between 0.0 and 600.0 approx.
         self.min_c = 0.0
         self.max_c = 600.0
-        self.search_verify_ND(human_readable=False, list_test_files=list_test_files)
+        self.search_verify_ND(human_readable=True, list_test_files=list_test_files)
 
     def test_ND(self):
         # type: (SearchOraclePointTestCase) -> None
 
         test_dir = os.path.join(self.this_dir, 'ND')
         files_path = os.listdir(test_dir)
-        list_test_files = [os.path.join(test_dir, x) for x in files_path if x.endswith('.bin')]
+        list_test_files = [os.path.join(test_dir, x) for x in files_path if x.endswith('.txt')]
         num_files_test = min(self.numfiles_test, len(list_test_files))
         list_test_files = sorted(list_test_files)[:num_files_test]
         # test-4d and test-5d are random points in the interval [1.0, 2.0]
         self.min_c = 1.0
         self.max_c = 2.0
-        self.search_verify_ND(human_readable=False, list_test_files=list_test_files)
+        self.search_verify_ND(human_readable=True, list_test_files=list_test_files)
 
 
 class SearchOracleSTLTestCase(SearchTestCase):
@@ -359,6 +549,8 @@ class SearchOracleSTLeTestCase(SearchTestCase):
         self.search_verify_ND(human_readable=True, list_test_files=list_test_files)
 
 
+# class SearchOracleEpsSTLeTestCase(SearchOracleSTLeLibTestCase):
+
 class SearchOracleSTLeLibTestCase(SearchTestCase):
 
     def setUp(self):
@@ -383,6 +575,16 @@ class SearchOracleSTLeLibTestCase(SearchTestCase):
         list_test_files = sorted(list_test_files)[:num_files_test]
         self.search_verify_ND(human_readable=True, list_test_files=list_test_files)
 
+    def test_1D_BMNN22(self):
+        # type: (SearchOracleSTLeLibTestCase) -> None
+
+        test_dir = os.path.join(self.this_dir, '1D')
+        files_path = os.listdir(test_dir)
+        list_test_files = [os.path.join(test_dir, x) for x in files_path if x.endswith('.txt')]
+        num_files_test = min(self.numfiles_test, len(list_test_files))
+        list_test_files = sorted(list_test_files)[:num_files_test]
+        self.search_verify_ND_BMNN22(human_readable=True, list_test_files=list_test_files)
+
     def test_2D(self):
         # type: (SearchOracleSTLeLibTestCase) -> None
 
@@ -392,6 +594,16 @@ class SearchOracleSTLeLibTestCase(SearchTestCase):
         num_files_test = min(self.numfiles_test, len(list_test_files))
         list_test_files = sorted(list_test_files)[:num_files_test]
         self.search_verify_ND(human_readable=True, list_test_files=list_test_files)
+
+    def test_2D_BMNN22(self):
+        # type: (SearchOracleSTLeLibTestCase) -> None
+
+        test_dir = os.path.join(self.this_dir, '2D')
+        files_path = os.listdir(test_dir)
+        list_test_files = [os.path.join(test_dir, x) for x in files_path if x.endswith('.txt')]
+        num_files_test = min(self.numfiles_test, len(list_test_files))
+        list_test_files = sorted(list_test_files)[:num_files_test]
+        self.search_verify_ND_BMNN22(human_readable=True, list_test_files=list_test_files)
 
 
 if __name__ == '__main__':

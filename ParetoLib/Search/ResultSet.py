@@ -29,6 +29,7 @@ import tempfile
 import cython
 # import shutil
 
+from scipy.spatial.distance import directed_hausdorff as dhf
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.figure import Figure
@@ -44,7 +45,7 @@ RootSearch = ParetoLib.Search
 # @cython.cclass
 class ResultSet(object):
     cython.declare(xspace=object, border=list, ylow=list, yup=list, filename_yup=str, filename_ylow=str,
-                   filename_boreder=str, filename_space=str, ylow_pareto=object, yup_pareto=object)
+                   filename_boreder=str, filename_space=str, ylow_pareto=object, yup_pareto=object, champion=object)
 
     def __init__(self, border=list(), ylow=list(), yup=list(), xspace=Rectangle()):
         # type: (ResultSet, iter, iter, iter, Rectangle) -> None
@@ -73,6 +74,7 @@ class ResultSet(object):
 
         self.ylow_pareto = NDTree()
         self.yup_pareto = NDTree()
+        self.champion = None
 
     def __setattr__(self, name, value):
         # type: (ResultSet, str, None) -> None
@@ -198,8 +200,8 @@ class ResultSet(object):
     # @cython.ccall
     @cython.locals(extended_ylow=list, extended_yup=list)
     @cython.returns(cython.void)
-    def simplify(self):
-        # type: (ResultSet) -> None
+    def simplify(self, method=0):
+        # type: (ResultSet, int) -> None
         # Remove single points from the yup and ylow closures, i.e., rectangles rect with:
         # rect.min_corner == rect.max_corner
         # These kind of rectangles appear when the dicothomic search cannot find an intersection of the diagonal
@@ -209,9 +211,19 @@ class ResultSet(object):
         # Single points may appear in the boundary, so we don't remove them
         # self.border = [li for li in self.border if li.norm() != 0]
 
-        # Get the highest (upper right) values of self.ylow; i.e., those points that are closer to self.yup
-        extended_ylow = [Rectangle(self.xspace.min_corner, r.max_corner) for r in self.ylow]
-        extended_yup = [Rectangle(r.min_corner, self.xspace.max_corner) for r in self.yup]
+        if method == 0:
+            # ResultSet has been computed using method BBMJ19
+            # Get the highest (upper right) values of self.ylow; i.e., those points that are closer to self.yup
+            extended_ylow = [Rectangle(self.xspace.min_corner, r.max_corner) for r in self.ylow]
+            extended_yup = [Rectangle(r.min_corner, self.xspace.max_corner) for r in self.yup]
+        else:
+            # ResultSet has been computed using method BDMJ20
+            # The area between the highest (upper right) corner of self.yup and the xspace.max_corner
+            # belongs to self.ylow. Similarly for the lowest (lower left) corners of self.yup and the xspace.min_corner
+            extended_yup = self.yup
+            extended_ylow = Rectangle.difference_rectangles(self.xspace, self.border + self.yup)
+            # extended_ylow = [Rectangle(self.xspace.min_corner, r.min_corner) for r in self.yup] + \
+            #                 [Rectangle(r.max_corner, self.xspace.max_corner) for r in self.yup]
 
         # Get the lowest (lower left) values of self.yup; i.e., those points that are closer to self.ylow
         # extended_ylow = [Rectangle(self.xspace.min_corner, ylow_point) for ylow_point in self.get_points_pareto_ylow()]
@@ -685,6 +697,15 @@ class ResultSet(object):
         return patch
 
     # @cython.ccall
+    @cython.locals(xaxe=cython.ushort, yaxe=cython.ushort, opacity=cython.double, patch=list)
+    @cython.returns(list)
+    def _plot_champion_2D(self, xaxe=0, yaxe=1, zaxe=2, opacity=1.0, clip_box=None):
+        assert self.champion is not None
+        faces = [rect.plot_2D('cyan', xaxe, yaxe, 1.0, clip_box) for rect in self.yup if
+                 self.champion in rect.vertices()]
+        return faces
+
+    # @cython.ccall
     @cython.locals(filename=str, xaxe=cython.ushort, yaxe=cython.ushort, var_names=list, blocking=cython.bint,
                    sec=cython.double, opacity=cython.double, fig_title=str, fig1=object, embedded_fig=cython.bint,
                    ax1_list=list, ax1=object, pathpatch_yup=list, pathpatch_ylow=list, pathpatch_border=list,
@@ -842,7 +863,8 @@ class ResultSet(object):
     # @cython.ccall
     @cython.locals(filename=str, xaxe=cython.ushort, yaxe=cython.ushort, var_names=list, blocking=cython.bint,
                    sec=cython.double, opacity=cython.double, fig_title=str, fig1=object, embedded_fig=cython.bint,
-                   ax1_list=list, ax1=object, pathpatch_yup=list, pathpatch_ylow=list, pathpatch_border=list, pathpatch=list)
+                   ax1_list=list, ax1=object, pathpatch_yup=list, pathpatch_ylow=list, pathpatch_border=list,
+                   pathpatch=list)
     @cython.returns(object)
     def plot_2D_light(self,
                       filename='',
@@ -1027,6 +1049,15 @@ class ResultSet(object):
     def _plot_border_3D(self, xaxe=0, yaxe=1, zaxe=2, opacity=1.0, clip_box=None):
         # type: (ResultSet, int, int, int, float, _) -> list
         faces = [rect.plot_3D('blue', xaxe, yaxe, zaxe, opacity, clip_box) for rect in self.border]
+        return faces
+
+    # @cython.ccall
+    @cython.locals(xaxe=cython.ushort, yaxe=cython.ushort, zaxe=cython.ushort, opacity=cython.double, faces=list)
+    @cython.returns(list)
+    def _plot_champion_3D(self, xaxe=0, yaxe=1, zaxe=2, opacity=1.0, clip_box=None):
+        assert self.champion is not None
+        faces = [rect.plot_3D('cyan', xaxe, yaxe, zaxe, 1.0, clip_box) for rect in self.yup if
+                 self.champion in rect.vertices()]
         return faces
 
     # @cython.ccall
@@ -1224,9 +1255,9 @@ class ResultSet(object):
         # If parameter names are not provided (var_names is empty or smaller than 2D), then we use
         # lexicographic characters by default.
         var_names = [chr(i) for i in range(ord('a'), ord('z') + 1)] if len(var_names) < 3 else var_names
-        ax1.set_xlabel(var_names[xaxe % len(var_names)])
-        ax1.set_ylabel(var_names[yaxe % len(var_names)])
-        ax1.set_zlabel(var_names[zaxe % len(var_names)])
+        ax1.set_xlabel(var_names[xaxe % len(var_names)], linespacing=3.2)
+        ax1.set_ylabel(var_names[yaxe % len(var_names)], linespacing=3.2)
+        ax1.set_zlabel(var_names[zaxe % len(var_names)], linespacing=3.5)
 
         faces_yup = self._plot_yup_3D(xaxe, yaxe, zaxe, opacity)
         faces_ylow = self._plot_ylow_3D(xaxe, yaxe, zaxe, opacity)
@@ -1244,11 +1275,159 @@ class ResultSet(object):
         ax1.set_ylim(self.xspace.min_corner[yaxe], self.xspace.max_corner[yaxe])
         ax1.set_zlim(self.xspace.min_corner[zaxe], self.xspace.max_corner[zaxe])
 
+        ax1.dist = 12
+
+        fig1.tight_layout()
+
+        ax1.set_xscale('linear')
+        ax1.set_yscale('linear')
+        #  ax1.set_zscale('linear')
+
+        if not embedded_fig:
+            if sec > 0.0 and not blocking:
+                plt.ion()
+                plt.show()
+                plt.pause(float(sec))
+            else:
+                plt.ioff()
+                plt.show()
+
+            plt.close()
+
+        if filename != '':
+            fig1.savefig(filename, dpi=90, bbox_inches='tight')
+
+        return fig1
+
+    # @cython.ccall
+    @cython.locals(filename=str, xaxe=cython.ushort, yaxe=cython.ushort, zaxe=cython.ushort, var_names=list,
+                   blocking=cython.bint, sec=cython.double, opacity=cython.double, fig_title=str, fig1=object,
+                   embedded_fig=cython.bint, ax1_list=list, ax1=object, faces_yup=list, faces_ylow=list,
+                   faces_border=list, faces=list)
+    @cython.returns(object)
+    def plot_3D_champion(self,
+                         filename='',
+                         xaxe=0,
+                         yaxe=1,
+                         zaxe=2,
+                         var_names=list(),
+                         blocking=False,
+                         sec=0.0,
+                         opacity=1.0,
+                         fig_title='Approximation of the Pareto front',
+                         fig1=None):
+        # type: (ResultSet, str, int, int, int, list, bool, float, float, str, Figure) -> Figure
+        assert self.champion is not None
+
+        embedded_fig = fig1 is not None
+        if fig1 is None:
+            fig1 = plt.figure()
+
+        ax1_list = fig1.axes
+        if ax1_list is None or len(ax1_list) == 0:
+            # ax1 = fig1.add_subplot(111, aspect='equal', projection='3d')
+            ax1 = fig1.add_subplot(111, projection='3d')
+        else:
+            ax1 = ax1_list[0]
+
+        ax1.set_title(fig_title)
+
+        # The name of the inferred parameters using Pareto search are written in the axes of the graphic.
+        # For instance, axe 0 represents parameter 'P0', axe 1 represents parameter 'P1', etc.
+        # If parameter names are not provided (var_names is empty or smaller than 2D), then we use
+        # lexicographic characters by default.
+        var_names = [chr(i) for i in range(ord('a'), ord('z') + 1)] if len(var_names) < 3 else var_names
+        ax1.set_xlabel(var_names[xaxe % len(var_names)])
+        ax1.set_ylabel(var_names[yaxe % len(var_names)])
+        ax1.set_zlabel(var_names[zaxe % len(var_names)])
+
+        faces = self._plot_champion_3D(xaxe, yaxe, zaxe, opacity)
+
+        for faces_i in faces:
+            ax1.add_collection3d(faces_i)
+
+        # Set limits in the axes
+        ax1.set_xlim(self.xspace.min_corner[xaxe], self.xspace.max_corner[xaxe])
+        ax1.set_ylim(self.xspace.min_corner[yaxe], self.xspace.max_corner[yaxe])
+        ax1.set_zlim(self.xspace.min_corner[zaxe], self.xspace.max_corner[zaxe])
+
         fig1.tight_layout()
 
         ax1.set_xscale('linear')
         ax1.set_yscale('linear')
         # ax1.set_zscale('linear')
+
+        ax1.dist = 12
+
+        if not embedded_fig:
+            if sec > 0.0 and not blocking:
+                plt.ion()
+                plt.show()
+                plt.pause(float(sec))
+            else:
+                plt.ioff()
+                plt.show()
+
+            plt.close()
+
+        if filename != '':
+            fig1.savefig(filename, dpi=90, bbox_inches='tight')
+
+        return fig1
+
+    @cython.returns(object)
+    def plot_2D_champion(self,
+                         filename='',
+                         xaxe=0,
+                         yaxe=1,
+                         var_names=list(),
+                         blocking=False,
+                         sec=0.0,
+                         opacity=1.0,
+                         fig_title='Approximation of the Pareto front',
+                         fig1=None):
+        # type: (ResultSet, str, int, int, list, bool, float, float, str, Figure) -> Figure
+        assert self.champion is not None
+
+        embedded_fig = fig1 is not None
+        if fig1 is None:
+            fig1 = plt.figure()
+
+        ax1_list = fig1.axes
+        if ax1_list is None or len(ax1_list) == 0:
+            # ax1 = fig1.add_subplot(111, aspect='equal', projection='3d')
+            ax1 = fig1.add_subplot(111)
+        else:
+            ax1 = ax1_list[0]
+
+        ax1.set_title(fig_title)
+
+        # The name of the inferred parameters using Pareto search are written in the axes of the graphic.
+        # For instance, axe 0 represents parameter 'P0', axe 1 represents parameter 'P1', etc.
+        # If parameter names are not provided (var_names is empty or smaller than 2D), then we use
+        # lexicographic characters by default.
+        var_names = [chr(i) for i in range(ord('a'), ord('z') + 1)] if len(var_names) < 3 else var_names
+        ax1.set_xlabel(var_names[xaxe % len(var_names)])
+        ax1.set_ylabel(var_names[yaxe % len(var_names)])
+        # ax1.set_zlabel(var_names[zaxe % len(var_names)])
+
+        faces = self._plot_champion_2D(xaxe, yaxe, opacity)
+
+        for faces_i in faces:
+            ax1.add_patch(faces_i)  
+
+        # Set limits in the axes
+        ax1.set_xlim(self.xspace.min_corner[xaxe], self.xspace.max_corner[xaxe])
+        ax1.set_ylim(self.xspace.min_corner[yaxe], self.xspace.max_corner[yaxe])
+        # ax1.set_zlim(self.xspace.min_corner[zaxe], self.xspace.max_corner[zaxe])
+
+        fig1.tight_layout()
+
+        ax1.set_xscale('linear')
+        ax1.set_yscale('linear')
+        # ax1.set_zscale('linear')
+
+        ax1.dist = 12
 
         if not embedded_fig:
             if sec > 0.0 and not blocking:
@@ -1510,3 +1689,105 @@ class ResultSet(object):
             os.rmdir(tempdir)
         except OSError:
             RootSearch.logger.error('Unexpected error when removing folder {0}: {1}'.format(tempdir, sys.exc_info()[0]))
+
+    @cython.locals(rs_list=list, yup_verts=set, yup_other=set)
+    @cython.returns(tuple)
+    def select_champion_no_intersection(self, rs_list):
+        # type: (ResultSet, list[ResultSet]) -> tuple
+
+        # Check that self or rs_list contains at least some boxes
+        if len(self.yup) == 0 or sum(len(rs.yup) for rs in rs_list) == 0:
+            return 0, None, None
+
+        # Remove green cells [min_corner, max_corner] that are exactly the same in self and for all rs in rs_list
+        current_class_green_cells = set(self.yup)
+        other_classes_green_cells = set()
+        other_classes_green_cells_generator = (set(rs.yup) for rs in rs_list)
+        other_classes_green_cells = other_classes_green_cells.union(*other_classes_green_cells_generator)
+        other_classes_green_cells = other_classes_green_cells - current_class_green_cells
+
+        # Exclude the remaining vertices
+        current_class = self.vertices_yup()
+        other_classes = set()
+        other_classes_generator = (yup.vertices() for yup in other_classes_green_cells)
+        other_classes_generator = (rs.vertices_yup() for rs in rs_list if rs != self)
+        other_classes = other_classes.union(*other_classes_generator)
+
+        # Adapt data type to directed_hausdorff format. Besides, lists allow indexing.
+        current_class_list = list(current_class)
+        other_classes_list = list(other_classes)
+        # Remove points in other classes that also belong to current class
+        other_classes_list = [point for point in other_classes if not self.member_yup(point)]
+        # Remove points in current class that also belong to other classes
+        current_class_list = [point for point in current_class for other_class in rs_list if
+                              not other_class.member_yup(point)]
+
+        # Removing current_class vertices from other_classes may raise errors when current_class
+        # is strictly included inside other_classes
+        if len(current_class_list) == 0 or len(other_classes_list) == 0:
+            return 0, None, None
+
+        # Checked: directed_haussdorf(self, rs_list)
+        distance, current_index, index_other_classes = dhf(current_class_list, other_classes_list)
+        otherdhf = dhf(other_classes_list, current_class_list)
+
+        if otherdhf[0] > distance:
+            distance, current_index, index_other_classes = otherdhf[0], otherdhf[2], otherdhf[1]
+
+        vertex_champion = current_class_list[current_index]
+
+        self.champion = vertex_champion
+
+        return distance, vertex_champion, other_classes_list[index_other_classes]
+
+    @cython.locals(rs_list=list, yup_verts=set, yup_other=set)
+    @cython.returns(tuple)
+    def select_champion_intersection(self, rs_list):
+        # type: (ResultSet, list[ResultSet]) -> tuple
+        # Check that self or rs_list contains at least some boxes
+        if len(self.yup) == 0 or sum([len(rs.yup) for rs in rs_list]) == 0:
+            return 0, None, None
+
+        # Remove green cells [min_corner, max_corner] that are exactly the same in self and for all rs in rs_list
+        current_class_green_cells = set(self.yup)
+        other_classes_green_cells = set()
+        other_classes_green_cells_generator = (set(rs.yup) for rs in rs_list)
+        other_classes_green_cells = other_classes_green_cells.union(*other_classes_green_cells_generator)
+
+        # Exclude the remaining vertices
+        current_class = self.vertices_yup()
+        other_classes = set()
+        other_classes_generator = (yup.vertices() for yup in other_classes_green_cells)
+        other_classes_generator = (rs.vertices_yup() for rs in rs_list if rs != self)
+        other_classes = other_classes.union(*other_classes_generator)
+
+        # Adapt data type to directed_hausdorff format. Besides, lists allow indexing.
+        current_class_list = list(current_class)
+        other_classes_list = list(other_classes)
+
+        # Removing current_class vertices from other_classes may raise errors when current_class
+        # is strictly included inside other_classes
+        if len(current_class_list) == 0 or len(other_classes_list) == 0:
+            return 0, None, None
+
+        # Checked: directed_haussdorf(self, rs_list)
+        distance, current_index, index_other_classes = dhf(current_class_list, other_classes_list)
+        otherdhf = dhf(other_classes_list, current_class_list)
+
+        if otherdhf[0] > distance:
+            distance, current_index, index_other_classes = otherdhf[0], otherdhf[2], otherdhf[1]
+
+        vertex_champion = current_class_list[current_index]
+
+        self.champion = vertex_champion
+
+        return distance, vertex_champion, other_classes_list[index_other_classes]
+
+
+@cython.locals(rs_list=list, intersection=int)
+@cython.returns(list)
+def champions_selection(rs_list, intersection=0):
+    # type: (list[ResultSet]) -> list[tuple]
+    if intersection == 0:
+        return [rs.select_champion_no_intersection(rs_list) for rs in rs_list]
+    return [rs.select_champion_intersection(rs_list) for rs in rs_list]

@@ -1,5 +1,11 @@
-pip install -r requirements.txt --user
-::pip uninstall ParetoLib
-python setup2.py clean --all
-python setup2.py build
-python setup2.py install --force --user
+pip install -r requirements.txt
+::pip3 uninstall ParetoLib
+pip3 install -r requirements.txt
+python3 setup.py bdist_wheel --universal
+pip3 install dis/*.whl
+::----------------------------
+:: pip3 install .
+:: ----------------------------
+:: python3 setup.py clean --all
+:: python3 setup.py build
+:: python3 setup.py install --force

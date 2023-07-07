@@ -1,6 +1,7 @@
 # ParetoLib
 [![pipeline status](https://gricad-gitlab.univ-grenoble-alpes.fr/verimag/tempo/multidimensional_search/badges/master/pipeline.svg)](https://gricad-gitlab.univ-grenoble-alpes.fr/verimag/tempo/multidimensional_search/commits/master)
 [![coverage report](https://gricad-gitlab.univ-grenoble-alpes.fr/verimag/tempo/multidimensional_search/badges/master/coverage.svg)](https://gricad-gitlab.univ-grenoble-alpes.fr/verimag/tempo/multidimensional_search/-/jobs/artifacts/master/file/Tests/coverage/index.html?job=test)
+[![Latest Release](https://gricad-gitlab.univ-grenoble-alpes.fr/verimag/tempo/multidimensional_search/-/badges/release.svg)](https://gricad-gitlab.univ-grenoble-alpes.fr/verimag/tempo/multidimensional_search/-/releases)
 
 ## Installation
 

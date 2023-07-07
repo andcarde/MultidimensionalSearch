@@ -1,230 +1,59 @@
-# -------------------------------------------------------------------------------
-#
-#   ParetoLib  Copyright (C) 2018  J. Ignacio Requeno
-#
-#   This program comes with ABSOLUTELY NO WARRANTY; for details type `show w'.
-#   This is free software, and you are welcome to redistribute it under certain
-#   conditions; type `show c' for details.
-#
-# -------------------------------------------------------------------------------
-# File :  setup.py
-# Last version :  v1.0 ( 23/Apr/2018 )
-# Description :  Distutils based setup script for ParetoLib.
-# -------------------------------------------------------------------------------
-# Historical report :
-#
-#   DATE :  23/Apr/2018
-#   VERSION :  v1.0
-#   AUTHOR(s) :  J. Ignacio Requeno
-#
-# -------------------------------------------------------------------------------
-# Note :  The content of this file has been created using "setup.py" from
-#   Biopython (http://www.biopython.org) as template.
-# -------------------------------------------------------------------------------
-
-from __future__ import print_function
-
-import sys
+from setuptools import find_packages, setup
 import os
-from distutils.core import setup
-from distutils.core import Command
-from distutils.command.install import install
-from distutils.command.build_py import build_py
 
-# -------------------------------------------------------------------------------
+if __name__ == '__main__':
+    with open("README.md", "r") as fh:
+        long_description = fh.read()
 
-_CHECKED = None
+    # We now define the ParetoLib version number in ParetoLib/__init__.py
+    __version__ = 'unknown'
+    for line in open('ParetoLib/__init__.py'):
+        if (line.startswith('__version__')):
+            exec (line.strip('. '))
 
-
-# -------------------------------------------------------------------------------
-
-def can_import(module_name):
-    """
-    Check whether the 'module_name' can be imported or not.
-    
-    Arguments :
-        module_name  ( string )
-            Name of the module to be imported.
-
-    Returns :
-        bool
-            True if 'module_name' can be imported, False otherwise.
-    """
-    try:
-        __import__(module_name)
-    except ImportError:
-        return (False)
-    else:
-        return (True)
-
-
-def check_dependencies():
-    """
-    Return whether the installation should continue.
-
-    Returns :
-        bool
-            True if it can continue, False otherwise.
-    """
-    # Check if matplotlib, NumPy, SortedContainers or Sympy are missing, as they are required for
-    # ParetoLib to work properly
-    if (not can_import('matplotlib')):
-        print('Matplotlib is not installed.\nThis package is required for ' \
-              'ParetoLib.\n\nYou can find Matplotlib at https://matplotlib.org/')
-        return (False)
-    if (not can_import('numpy')):
-        print('Numerical Python (NumPy) is not installed.\nThis package is required for ' \
-              'ParetoLib.\n\nYou can find NumPy at http://www.numpy.org')
-        return (False)
-    if (not can_import('pandas')):
-        print('Pandas is not installed.\nThis package is required for ' \
-              'ParetoLib.\n\nYou can find pandas at https://pandas.pydata.org/')
-        return (False)
-    if (not can_import('PyQt5')):
-        print('PyQt5 is not installed.\nThis package is required for ' \
-              'ParetoLib.\n\nYou can find PyQt5 at https://pypi.org/project/PyQt5/')
-        return (False)
-    if (not can_import('sortedcontainers')):
-        print('SortedContainers is not installed.\nThis package is required for ' \
-              'ParetoLib.\n\nYou can find SortedContainers at https://pypi.org/project/sortedcontainers/')
-        return (False)
-    if (not can_import('sympy')):
-        print('Symbolic Python (SymPy) is not installed.\nThis package is required for ' \
-              'ParetoLib.\n\nYou can find SymPy at http://www.sympy.org')
-        return (False)
-    if (not can_import('seaborn')):
-        print('Statistical Data Visualization (seaborn) is not installed.\nThis package is required for ' \
-              'ParetoLib.\n\nYou can find seaborn at https://seaborn.pydata.org/')
-        return (False)
-    if (not can_import('cython')):
-        print('Cython is not installed.\nThis package is required for ' \
-              'ParetoLib.\n\nYou can find Cython at https://cython.org/')
-        return (False)
-    # Exit automatically if running as part of some script
-    # if (not sys.stdout.isatty()):
-    #     sys.exit(-1)
-    return (True)
-
-
-def check_dependencies_once():
-    """
-    Call 'check_dependencies', caching the result to avoid subsequent calls.
-
-    Returns :
-        bool
-            True if all the dependencies have been satisfied, False otherwise.
-    """
-    global _CHECKED
-    if (_CHECKED is None):
-        _CHECKED = check_dependencies()
-    return (_CHECKED)
-
-
-class install_paretolib(install):
-    """
-    Override the standard install to check for dependencies.
-    """
-
-    def run(self):
-        if (check_dependencies_once()):
-            # Run the normal install
-            install.run(self)
-
-
-class build_py_paretolib(build_py):
-    """
-    Override the standard build to check for dependencies.
-    """
-
-    def run(self):
-        if (not check_dependencies_once()):
-            return
-        build_py.run(self)
-
-
-class test_paretolib(Command):
-    """
-    Run all of the tests for ParetoLib. This is a automatic test run class to make
-    distutils kind of act like perl. With this you can do:
-
-        python setup.py build
-        python setup.py install
-        python setup.py test
-
-    """
-    description = "Automatically run the test suite for ParetoLib."
-    user_options = []
-
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
-    def run(self):
-        this_dir = os.getcwd()
-        # Change to the test dir and run the tests
-        os.chdir('Tests')
-        sys.path.insert(0, '')
-        import run_tests
-        run_tests.main([])
-        # Change back to the current directory
-        os.chdir(this_dir)
-
-
-# -------------------------------------------------------------------------------
-
-# Check that we have the right Python version
-if (sys.version_info[:2] < (2, 7)):
-    print(
-        'ParetoLib requires Python 2.7.9 (or Python 3.4 or later). Python {0}.{1} detected'.format(sys.version_info[0],
-                                                                                                   sys.version_info[1]))
-    sys.exit(1)
-elif ((sys.version_info[0] == 3) and (sys.version_info[:2] < (3, 4))):
-    print(
-        'ParetoLib requires Python 3.4 or later (or Python 2.7). Python {0}.{1} detected'.format(sys.version_info[0],
-                                                                                                 sys.version_info[1]))
-    sys.exit(1)
-
-# We now define the ParetoLib version number in ParetoLib/__init__.py
-__version__ = 'unknown'
-for line in open('ParetoLib/__init__.py'):
-    if (line.startswith('__version__')):
-        exec(line.strip('. '))
-
-old_path = os.getcwd()
-src_path = os.path.dirname(os.path.abspath(sys.argv[0]))
-os.chdir(src_path)
-sys.path.insert(0, src_path)
-
-setup_args = {'name': 'ParetoLib',
-              'version': '{0}'.format(__version__),
-              'author': 'J. Ignacio Requeno',
-              'author_email': 'jrequeno@ucm.es',
-              'url': 'https://gricad-gitlab.univ-grenoble-alpes.fr/verimag/tempo/multidimensional_search/',
-              'license': 'GNU GPLv3',
-              'description': 'ParetoLib is a free multidimensional boundary learning library for ' \
-                             'tools for Python 2.7.9 and Python 3.4 or newer',
-              'download_url': 'https://gricad-gitlab.univ-grenoble-alpes.fr/verimag/tempo/multidimensional_search/repository/master/' \
-                              'archive.tar.gz',
-              'cmdclass': {'install': install_paretolib,
-                           'build_py': build_py_paretolib,
-                           'test': test_paretolib, },
-              'packages': ['ParetoLib',
-                           'ParetoLib.Geometry',
-                           'ParetoLib.JAMT',
-                           'ParetoLib.Oracle',
-                           'ParetoLib.Search',
-                           'ParetoLib.STLe',
-                           'ParetoLib.GUI',
-                           'ParetoLib._py3k'],
-              'package_data': {'ParetoLib.JAMT': ['*.jar'],
-                               'ParetoLib.STLe': ['*.bin', '*.exe', '*.so.1', '*.dll']},
-              'platforms': 'OS Independent',
-              }
-
-try:
-    setup(**setup_args)
-finally:
-    del sys.path[0]
-    os.chdir(old_path)
+    setup(
+        name="ParetoLib",
+        version=__version__,
+        author="J. Ignacio Requeno",
+        author_email='jrequeno@ucm.es',
+        description='ParetoLib is a free multidimensional boundary learning library for ' \
+                    'Python 2.7, 3.4 or newer',
+        long_description=long_description,
+        long_description_content_type="text/markdown",
+        url='https://gricad-gitlab.univ-grenoble-alpes.fr/verimag/tempo/multidimensional_search',
+        install_requires=[
+            'cython>=0.29',
+            'matplotlib>=2.0.2',
+            'numpy>=1.15',
+            'pandas>=1.3.0',
+            'PyQt5>=5.15.6',
+            'pytest>=2.0',
+            'scipy>=1.9.3',
+            'seaborn>=0.11.2',
+            'setuptools>=63.2.0',
+            'sortedcontainers>=1.5.10',
+            'typing >= 3.7.4.3',
+            'typing_extensions>=4.4.0',
+            'sympy>=1.1.1',
+            'wheel>=0.38.4'
+        ],
+        #packages_dir={'': 'ParetoLib'},
+        #packages=find_packages(exclude=['ParetoLib._py3k', 'Tests']),
+        packages=find_packages(),
+        package_data={
+            'ParetoLib.JAMT': ['*.jar'],
+            'ParetoLib.STLe': ['*.bin', '*.exe', '*.so.1', '*.dll']
+        },
+        classifiers=[
+            "Programming Language :: Python :: 2.7",
+            "Programming Language :: Python :: 3.4",
+            "License :: GNU GPL",
+            "Operating System :: OS Independent",
+        ],
+        #use_2to3=True,
+        test_suite=os.path.dirname(__file__) + '.Tests',
+        #convert_2to3_doctests=['src/your/module/README.txt'],
+        #use_2to3_fixers=['your.fixers'],
+        #use_2to3_exclude_fixers=['lib2to3.fixes.fix_import'],
+        #license='GPL',
+    )
