@@ -136,7 +136,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.opt_level = 0
         self.data = None
 
-    def clearLayout(self, layout):
+    def clear_layout(self, layout):
         # type: (_, QVBoxLayout) -> None
         while layout.count() > 0:
             child = layout.takeAt(0)
@@ -196,7 +196,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         else:
             RootGUI.logger.info("No champions were found")
 
-    def closeEvent(self, event):
+    def close_event(self, event):
         def is_non_zero_file(fpath):
             size_file = os.path.getsize(fpath)
             return os.path.isfile(fpath) and os.path.getsize(fpath) > 0
@@ -422,7 +422,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             ax.set(ylabel='Value')
             canvas.figure.tight_layout(pad=0)
 
-            self.clearLayout(self.signal_layout)
+            self.clear_layout(self.signal_layout)
             # self.signal_layout.layout().addWidget(canvas)
             self.signal_layout.addWidget(canvas)
             canvas.print_figure('./images/file.png', bbox_inches='tight')
@@ -504,7 +504,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             RootGUI.logger.debug(csv_signal_file)
             RootGUI.logger.debug(stl_param_file)
 
-            # Read parameter intervals --> Guarda los parámetros
+            # Read parameter intervals
             intervals = self.read_parameters_intervals()
             RootGUI.logger.debug('Intervals:')
             RootGUI.logger.debug(intervals)
