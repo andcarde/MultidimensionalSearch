@@ -12,7 +12,7 @@ composed of three elements: the upper closure (X1), the lower
 closure (X2), and the gap between X1 and X2 representing the
 precision error of the learning process.
 The size of this gap depends on the accuracy of the learning process,
-which can be tuned by the EPS and DELTA parametechars during the
+which can be tuned by the EPS and DELTA parameters during the
 invocation of the learning method.
 
 The ResultSet class provides functions for:
@@ -218,7 +218,7 @@ class ResultSet(object):
             extended_yup = [Rectangle(r.min_corner, self.xspace.max_corner) for r in self.yup]
         else:
             # ResultSet has been computed using method BDMJ20
-            # The area between the hightest (upper right) corner of self.yup and the xspace.max_corner
+            # The area between the highest (upper right) corner of self.yup and the xspace.max_corner
             # belongs to self.ylow. Similarly for the lowest (lower left) corners of self.yup and the xspace.min_corner
             extended_yup = self.yup
             extended_ylow = Rectangle.difference_rectangles(self.xspace, self.border + self.yup)
@@ -695,13 +695,14 @@ class ResultSet(object):
         # type: (ResultSet, int, int, float) -> list
         patch = [rect.plot_2D('blue', xaxe, yaxe, opacity) for rect in self.border]
         return patch
-    
+
     # @cython.ccall
     @cython.locals(xaxe=cython.ushort, yaxe=cython.ushort, opacity=cython.double, patch=list)
     @cython.returns(list)
     def _plot_champion_2D(self, xaxe=0, yaxe=1, zaxe=2, opacity=1.0, clip_box=None):
         assert self.champion is not None
-        faces = [rect.plot_2D('cyan', xaxe, yaxe, 1.0, clip_box) for rect in self.yup if self.champion in rect.vertices()]
+        faces = [rect.plot_2D('cyan', xaxe, yaxe, 1.0, clip_box) for rect in self.yup if
+                 self.champion in rect.vertices()]
         return faces
 
     # @cython.ccall
@@ -1049,13 +1050,14 @@ class ResultSet(object):
         # type: (ResultSet, int, int, int, float, _) -> list
         faces = [rect.plot_3D('blue', xaxe, yaxe, zaxe, opacity, clip_box) for rect in self.border]
         return faces
-    
+
     # @cython.ccall
     @cython.locals(xaxe=cython.ushort, yaxe=cython.ushort, zaxe=cython.ushort, opacity=cython.double, faces=list)
     @cython.returns(list)
     def _plot_champion_3D(self, xaxe=0, yaxe=1, zaxe=2, opacity=1.0, clip_box=None):
         assert self.champion is not None
-        faces = [rect.plot_3D('cyan', xaxe, yaxe, zaxe, 1.0, clip_box) for rect in self.yup if self.champion in rect.vertices()]
+        faces = [rect.plot_3D('cyan', xaxe, yaxe, zaxe, 1.0, clip_box) for rect in self.yup if
+                 self.champion in rect.vertices()]
         return faces
 
     # @cython.ccall
@@ -1272,14 +1274,14 @@ class ResultSet(object):
         ax1.set_xlim(self.xspace.min_corner[xaxe], self.xspace.max_corner[xaxe])
         ax1.set_ylim(self.xspace.min_corner[yaxe], self.xspace.max_corner[yaxe])
         ax1.set_zlim(self.xspace.min_corner[zaxe], self.xspace.max_corner[zaxe])
-        
+
         ax1.dist = 12
 
         fig1.tight_layout()
 
         ax1.set_xscale('linear')
         ax1.set_yscale('linear')
-        # ax1.set_zscale('linear')
+        #  ax1.set_zscale('linear')
 
         if not embedded_fig:
             if sec > 0.0 and not blocking:
@@ -1296,7 +1298,7 @@ class ResultSet(object):
             fig1.savefig(filename, dpi=90, bbox_inches='tight')
 
         return fig1
-    
+
     # @cython.ccall
     @cython.locals(filename=str, xaxe=cython.ushort, yaxe=cython.ushort, zaxe=cython.ushort, var_names=list,
                    blocking=cython.bint, sec=cython.double, opacity=cython.double, fig_title=str, fig1=object,
@@ -1304,16 +1306,16 @@ class ResultSet(object):
                    faces_border=list, faces=list)
     @cython.returns(object)
     def plot_3D_champion(self,
-                      filename='',
-                      xaxe=0,
-                      yaxe=1,
-                      zaxe=2,
-                      var_names=list(),
-                      blocking=False,
-                      sec=0.0,
-                      opacity=1.0,
-                      fig_title='Approximation of the Pareto front',
-                      fig1=None):
+                         filename='',
+                         xaxe=0,
+                         yaxe=1,
+                         zaxe=2,
+                         var_names=list(),
+                         blocking=False,
+                         sec=0.0,
+                         opacity=1.0,
+                         fig_title='Approximation of the Pareto front',
+                         fig1=None):
         # type: (ResultSet, str, int, int, int, list, bool, float, float, str, Figure) -> Figure
         assert self.champion is not None
 
@@ -1341,7 +1343,6 @@ class ResultSet(object):
 
         faces = self._plot_champion_3D(xaxe, yaxe, zaxe, opacity)
 
-
         for faces_i in faces:
             ax1.add_collection3d(faces_i)
 
@@ -1355,7 +1356,7 @@ class ResultSet(object):
         ax1.set_xscale('linear')
         ax1.set_yscale('linear')
         # ax1.set_zscale('linear')
-        
+
         ax1.dist = 12
 
         if not embedded_fig:
@@ -1376,15 +1377,15 @@ class ResultSet(object):
 
     @cython.returns(object)
     def plot_2D_champion(self,
-                      filename='',
-                      xaxe=0,
-                      yaxe=1,
-                      var_names=list(),
-                      blocking=False,
-                      sec=0.0,
-                      opacity=1.0,
-                      fig_title='Approximation of the Pareto front',
-                      fig1=None):
+                         filename='',
+                         xaxe=0,
+                         yaxe=1,
+                         var_names=list(),
+                         blocking=False,
+                         sec=0.0,
+                         opacity=1.0,
+                         fig_title='Approximation of the Pareto front',
+                         fig1=None):
         # type: (ResultSet, str, int, int, list, bool, float, float, str, Figure) -> Figure
         assert self.champion is not None
 
@@ -1408,24 +1409,24 @@ class ResultSet(object):
         var_names = [chr(i) for i in range(ord('a'), ord('z') + 1)] if len(var_names) < 3 else var_names
         ax1.set_xlabel(var_names[xaxe % len(var_names)])
         ax1.set_ylabel(var_names[yaxe % len(var_names)])
-        #ax1.set_zlabel(var_names[zaxe % len(var_names)])
+        # ax1.set_zlabel(var_names[zaxe % len(var_names)])
 
         faces = self._plot_champion_2D(xaxe, yaxe, opacity)
 
         for faces_i in faces:
-            ax1.add_patch(faces_i)      #TODO: Mirar que poner aqui
+            ax1.add_patch(faces_i)  
 
         # Set limits in the axes
         ax1.set_xlim(self.xspace.min_corner[xaxe], self.xspace.max_corner[xaxe])
         ax1.set_ylim(self.xspace.min_corner[yaxe], self.xspace.max_corner[yaxe])
-        #ax1.set_zlim(self.xspace.min_corner[zaxe], self.xspace.max_corner[zaxe])
+        # ax1.set_zlim(self.xspace.min_corner[zaxe], self.xspace.max_corner[zaxe])
 
         fig1.tight_layout()
 
         ax1.set_xscale('linear')
         ax1.set_yscale('linear')
         # ax1.set_zscale('linear')
-        
+
         ax1.dist = 12
 
         if not embedded_fig:
@@ -1443,7 +1444,7 @@ class ResultSet(object):
             fig1.savefig(filename, dpi=90, bbox_inches='tight')
 
         return fig1
-    
+
     # @cython.ccall
     @cython.locals(filename=str, xaxe=cython.ushort, yaxe=cython.ushort, zaxe=cython.ushort, var_names=list,
                    blocking=cython.bint, sec=cython.double, fig_title=str, fig1=object, embedded_fig=cython.bint,
@@ -1692,15 +1693,18 @@ class ResultSet(object):
     @cython.locals(rs_list=list, yup_verts=set, yup_other=set)
     @cython.returns(tuple)
     def select_champion_no_intersection(self, rs_list):
-        if len(self.yup) == 0 or sum([len(rs.yup) for rs in rs_list]) == 0:
-            return 0, None, None
         # type: (ResultSet, list[ResultSet]) -> tuple
+
+        # Check that self or rs_list contains at least some boxes
+        if len(self.yup) == 0 or sum(len(rs.yup) for rs in rs_list) == 0:
+            return 0, None, None
+
         # Remove green cells [min_corner, max_corner] that are exactly the same in self and for all rs in rs_list
         current_class_green_cells = set(self.yup)
         other_classes_green_cells = set()
         other_classes_green_cells_generator = (set(rs.yup) for rs in rs_list)
         other_classes_green_cells = other_classes_green_cells.union(*other_classes_green_cells_generator)
-        other_classes_green_cells = other_classes_green_cells -  current_class_green_cells
+        other_classes_green_cells = other_classes_green_cells - current_class_green_cells
 
         # Exclude the remaining vertices
         current_class = self.vertices_yup()
@@ -1715,7 +1719,8 @@ class ResultSet(object):
         # Remove points in other classes that also belong to current class
         other_classes_list = [point for point in other_classes if not self.member_yup(point)]
         # Remove points in current class that also belong to other classes
-        current_class_list = [point for point in current_class for other_class in rs_list if not other_class.member_yup(point)]
+        current_class_list = [point for point in current_class for other_class in rs_list if
+                              not other_class.member_yup(point)]
 
         # Removing current_class vertices from other_classes may raise errors when current_class
         # is strictly included inside other_classes
@@ -1725,24 +1730,24 @@ class ResultSet(object):
         # Checked: directed_haussdorf(self, rs_list)
         distance, current_index, index_other_classes = dhf(current_class_list, other_classes_list)
         otherdhf = dhf(other_classes_list, current_class_list)
-        
+
         if otherdhf[0] > distance:
             distance, current_index, index_other_classes = otherdhf[0], otherdhf[2], otherdhf[1]
-        
+
         vertex_champion = current_class_list[current_index]
-        
+
         self.champion = vertex_champion
-        
+
         return distance, vertex_champion, other_classes_list[index_other_classes]
-    
-    
-    
+
     @cython.locals(rs_list=list, yup_verts=set, yup_other=set)
     @cython.returns(tuple)
     def select_champion_intersection(self, rs_list):
+        # type: (ResultSet, list[ResultSet]) -> tuple
+        # Check that self or rs_list contains at least some boxes
         if len(self.yup) == 0 or sum([len(rs.yup) for rs in rs_list]) == 0:
             return 0, None, None
-        # type: (ResultSet, list[ResultSet]) -> tuple
+
         # Remove green cells [min_corner, max_corner] that are exactly the same in self and for all rs in rs_list
         current_class_green_cells = set(self.yup)
         other_classes_green_cells = set()
@@ -1768,21 +1773,20 @@ class ResultSet(object):
         # Checked: directed_haussdorf(self, rs_list)
         distance, current_index, index_other_classes = dhf(current_class_list, other_classes_list)
         otherdhf = dhf(other_classes_list, current_class_list)
-        
+
         if otherdhf[0] > distance:
             distance, current_index, index_other_classes = otherdhf[0], otherdhf[2], otherdhf[1]
-        
+
         vertex_champion = current_class_list[current_index]
-        
+
         self.champion = vertex_champion
-        
+
         return distance, vertex_champion, other_classes_list[index_other_classes]
 
 
-
-@cython.locals(rs_list=list,intersection=int)
+@cython.locals(rs_list=list, intersection=int)
 @cython.returns(list)
-def champions_selection(rs_list,intersection=0):
+def champions_selection(rs_list, intersection=0):
     # type: (list[ResultSet]) -> list[tuple]
     if intersection == 0:
         return [rs.select_champion_no_intersection(rs_list) for rs in rs_list]
