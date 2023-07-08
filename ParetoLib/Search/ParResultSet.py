@@ -243,7 +243,7 @@ class ParResultSet(ResultSet):
 
 @cython.locals(args=tuple, rs_list=list, rs=object, intersection=int)
 def par_haussdorf_distance(args):
-    # type: (Tuple[ResultSet, List[ResultSet]]) -> Tuple[float]
+    # type: (Tuple[ResultSet, List[ResultSet], int]) -> Tuple[float]
     current_rs, rs_list, intersection = args
     if intersection == 0:
         return current_rs.select_champion_no_intersection(rs_list)
@@ -253,7 +253,7 @@ def par_haussdorf_distance(args):
 @cython.locals(rs_list=list, intersection=bool, args=tuple, p=object, dist_list=list)
 @cython.returns(list)
 def champions_selection(rs_list, intersection=0):
-    # type: (list[ParResultSet]) -> List[Tuple]
+    # type: (list[ParResultSet], int) -> List[Tuple]
     args = ((rs, rs_list, intersection) for rs in rs_list)
     p = Pool(cpu_count())
     dist_list = p.map(par_haussdorf_distance, args)
