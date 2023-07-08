@@ -241,20 +241,18 @@ class ParResultSet(ResultSet):
         return self.member_space(xpoint) and not self.member_yup(xpoint) and not self.member_ylow(xpoint)
 
 
-@cython.locals(args=tuple, rs_list=list, rs=object, intersection=int)
+@cython.locals(args=tuple, rs_list=list, rs=object)
 def par_haussdorf_distance(args):
-    # type: (Tuple[ResultSet, List[ResultSet], int]) -> Tuple[float]
-    current_rs, rs_list, intersection = args
-    if intersection == 0:
-        return current_rs.select_champion_no_intersection(rs_list)
-    return current_rs.select_champion_intersection(rs_list)
+    # type: (Tuple[ResultSet, List[ResultSet]]) -> Tuple[float]
+    current_rs, rs_list = args
+    return current_rs.select_champion(rs_list)
 
 
-@cython.locals(rs_list=list, intersection=bool, args=tuple, p=object, dist_list=list)
+@cython.locals(rs_list=list, args=tuple, p=object, dist_list=list)
 @cython.returns(list)
-def champions_selection(rs_list, intersection=0):
-    # type: (list[ParResultSet], int) -> List[Tuple]
-    args = ((rs, rs_list, intersection) for rs in rs_list)
+def champions_selection(rs_list):
+    # type: (list[ParResultSet]) -> List[Tuple]
+    args = ((rs, rs_list) for rs in rs_list)
     p = Pool(cpu_count())
     dist_list = p.map(par_haussdorf_distance, args)
     p.close()

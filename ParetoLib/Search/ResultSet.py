@@ -1699,108 +1699,64 @@ class ResultSet(object):
         except OSError:
             RootSearch.logger.error('Unexpected error when removing folder {0}: {1}'.format(tempdir, sys.exc_info()[0]))
 
-    @cython.locals(rs_list=list, yup_verts=set, yup_other=set)
+    @cython.locals(rs_list=list, current_class_green_cells=set, other_classes_green_cells=set, current_class=set,
+                   other_classes=set, current_class_list=list, other_classes_list=list, distance_c_o=int, c_index_1=int,
+                   o_index_1=int, distance_o_c=int, c_index_2=int, o_index_2=int)
     @cython.returns(tuple)
-    def select_champion_no_intersection(self, rs_list):
+    def select_champion(self, rs_list):
         # type: (ResultSet, list[ResultSet]) -> tuple
 
-        # Check that self or rs_list contains at least some boxes
-        if len(self.yup) == 0 or sum(len(rs.yup) for rs in rs_list) == 0:
-            return 0, None, None
+        # self.select_champion(rs_list) == dH(self, rs_list)
+        # dH(X,Y) = max{d(X,Y), d(Y,X)} where
+        # d(X,Y) = sup{d(x,Y) | x in X} and
+        # d(x,Y) = inf{d(x,y) | y in Y}
 
-        # Remove green cells [min_corner, max_corner] that are exactly the same in self and for all rs in rs_list
+        # Use sets to prevent multiple occurrences of the same green cell
         current_class_green_cells = set(self.yup)
         other_classes_green_cells = set()
-        # Filter self from rs_list
+        # Filter self from rs_list:
+        # Remove green cells [min_corner, max_corner] that are exactly the same in self and for all rs in rs_list
         other_classes_green_cells_generator = (set(rs.yup) for rs in rs_list if rs != self)
         other_classes_green_cells = other_classes_green_cells.union(*other_classes_green_cells_generator)
-        other_classes_green_cells = other_classes_green_cells - current_class_green_cells
 
-        # Exclude the remaining vertices
+        # Use vertices of green boxes as sampling points
+        # Use sets to prevent multiple occurrences of the same point
         current_class = self.vertices_yup()
         other_classes = set()
         other_classes_generator = (yup.vertices() for yup in other_classes_green_cells)
         other_classes = other_classes.union(*other_classes_generator)
 
-        # Remove points in other classes that also belong to current class
-        other_classes_list = [point for point in other_classes if not self.member_yup(point)]
-        # Remove points in current class that also belong to other classes
-        current_class_list = [point for point in current_class for other_class in rs_list if
-                              not other_class.member_yup(point)]
+        current_class_list, other_classes_list = list(current_class), list(other_classes)
 
-        # Removing current_class vertices from other_classes may raise errors when current_class
-        # is strictly included inside other_classes
-        if len(current_class_list) == 0 or len(other_classes_list) == 0:
-            return 0, None, None
+        distance_c_o, c_index_1, o_index_1 = 0, None, None
+        distance_o_c, o_index_2, c_index_2 = 0, None, None
 
-        # Checked: directed_haussdorf(self, rs_list)
-        distance, current_index, index_other_classes = dhf(current_class_list, other_classes_list)
-        otherdhf = dhf(other_classes_list, current_class_list)
+        # Compute dH(X,Y) = max{d(X,Y), d(Y,X)}
 
-        if otherdhf[0] > distance:
-            distance, current_index, index_other_classes = otherdhf[0], otherdhf[2], otherdhf[1]
+        # If the points in current class are completely subsumed in the set of points in the other classes, then the
+        # distance is automatically zero. Compute dhf only when current class and other classes have mismatches
+        if len(current_class - other_classes) != 0 and len(other_classes) != 0:
+            # directed_haussdorf(self, rs_list)
+            distance_c_o, c_index_1, o_index_1 = dhf(current_class_list, other_classes_list)
 
-        vertex_champion = current_class_list[current_index]
+        if len(other_classes - current_class) != 0 and len(current_class) != 0:
+            # directed_haussdorf(rs_list, self)
+            distance_o_c, o_index_2, c_index_2 = dhf(other_classes_list, current_class_list)
 
-        self.champion = vertex_champion
+        # Return the points in c and o with the highest distance, if any
+        distance, current_class_index, other_classes_index = distance_c_o, c_index_1, o_index_1
+        if distance_o_c > distance_c_o:
+            distance, current_class_index, index_other_classes = distance_o_c, c_index_2, o_index_2
 
-        return distance, vertex_champion, other_classes_list[index_other_classes]
+        vertex_champion, other_champion = None, None
+        if distance != 0:
+            vertex_champion, other_champion = current_class_list[current_class_index], other_classes_list[other_classes_index]
+            self.champion = vertex_champion
 
-    @cython.locals(rs_list=list, yup_verts=set, yup_other=set)
-    @cython.returns(tuple)
-    def select_champion_intersection(self, rs_list):
-        # type: (ResultSet, list[ResultSet]) -> tuple
-        # Check that self or rs_list contains at least some boxes
-        if len(self.yup) == 0 or sum(len(rs.yup) for rs in rs_list) == 0:
-            return 0, None, None
+        return distance, vertex_champion, other_champion
 
-        # Remove green cells [min_corner, max_corner] that are exactly the same in self and for all rs in rs_list
-        current_class_green_cells = set(self.yup)
-        other_classes_green_cells = set()
-        # Filter self from rs_list
-        other_classes_green_cells_generator = (set(rs.yup) for rs in rs_list if rs != self)
-        other_classes_green_cells = other_classes_green_cells.union(*other_classes_green_cells_generator)
-        other_classes_green_cells = other_classes_green_cells - current_class_green_cells
-
-        # Exclude the remaining vertices
-        current_class = self.vertices_yup()
-        other_classes = set()
-        other_classes_generator = (yup.vertices() for yup in other_classes_green_cells)
-        other_classes = other_classes.union(*other_classes_generator)
-
-        # Adapt data type to directed_hausdorff format. Besides, lists allow indexing.
-        current_class_list = list(current_class)
-        other_classes_list = list(other_classes)
-
-        print("Current class: {0}".format(current_class_green_cells))
-        print("Other class: {0}".format(other_classes_green_cells))
-
-        print("Current class: {0}".format(len(current_class_green_cells)))
-        print("Other class: {0}".format(len(other_classes_green_cells)))
-
-        # Removing current_class vertices from other_classes may raise errors when current_class
-        # is strictly included inside other_classes
-        if len(current_class_list) == 0 or len(other_classes_list) == 0:
-            return 0, None, None
-
-        # Checked: directed_haussdorf(self, rs_list)
-        distance, current_index, index_other_classes = dhf(current_class_list, other_classes_list)
-        otherdhf = dhf(other_classes_list, current_class_list)
-
-        if otherdhf[0] > distance:
-            distance, current_index, index_other_classes = otherdhf[0], otherdhf[2], otherdhf[1]
-
-        vertex_champion = current_class_list[current_index]
-
-        self.champion = vertex_champion
-
-        return distance, vertex_champion, other_classes_list[index_other_classes]
-
-
-@cython.locals(rs_list=list, intersection=int)
+@cython.locals(rs_list=list)
 @cython.returns(list)
-def champions_selection(rs_list, intersection=0):
+def champions_selection(rs_list):
     # type: (list[ResultSet]) -> list[tuple]
-    if intersection == 0:
-        return [rs.select_champion_no_intersection(rs_list) for rs in rs_list]
-    return [rs.select_champion_intersection(rs_list) for rs in rs_list]
+    return [rs.select_champion(rs_list) for rs in rs_list]

@@ -551,7 +551,7 @@ class ResultSetTestCase(unittest.TestCase):
         # os.unlink(nfile)
         self.add_file_to_clean(nfile)
 
-    def test_champions_2D_not_null_distance(self):
+    def test_champions_2D_not_null_distance_1(self):
         # type: (ResultSetTestCase) -> None
         oracle_1 = OracleFunction()
         oracle_2 = OracleFunction()
@@ -563,7 +563,7 @@ class ResultSetTestCase(unittest.TestCase):
 
         # By default, use min_corner in 0.0 and max_corner in 1.0
         min_c = 0.0
-        max_c = 2.0
+        max_c = 1.0
 
         rs_1 = SearchND_BMNN22(ora_list=[oracle_1],
                                min_corner=min_c,
@@ -595,18 +595,73 @@ class ResultSetTestCase(unittest.TestCase):
 
         # rs_2.plot_2D_light(blocking=True, var_names=oracle_2.get_var_names())
 
-        # Distance must be greater than zero because rs_2 interstects partially rs_1
-        dist, rs1_champion, rs2_champion = rs_1.select_champion_intersection([rs_2])
-        self.assertAlmostEqual(dist,  math.sqrt(0.25**2 + 0.25**2))
-        self.assertEqual(rs1_champion, (0.0, 0.0))
-        self.assertEqual(rs2_champion, (0.25, 0.25))
+        # rs_1.select_champion(rs_2) == dH(rs_1, rs_2)
+        # dH(X,Y) = max{d(X,Y), d(Y,X)}
+        # In this case, d(rs_1, rs_2) != 0 and d(rs_2, rs_1) != 0 because rs_1 and rs_2 partially intersect.
+        # Then, dH(X,Y) > 0
+        dist, rs1_champion, rs2_champion = rs_1.select_champion([rs_2])
+        self.assertAlmostEqual(dist, math.sqrt(2))
+        self.assertEqual(rs1_champion, (0.75, 0.875))
+        self.assertEqual(rs2_champion, (0.25, 0.125))
 
         # Result must be similar to previous call because the computation of the champion already considers
         # bidirectional distances
-        dist, rs2_champion, rs1_champion = rs_2.select_champion_intersection([rs_1])
-        self.assertAlmostEqual(dist,  math.sqrt(0.25**2 + 0.25**2))
-        self.assertEqual(rs1_champion, (0.75, 0.75))
-        self.assertEqual(rs2_champion, (1.0, 1.0))
+        dist, rs2_champion, rs1_champion = rs_2.select_champion([rs_1])
+        self.assertAlmostEqual(dist, math.sqrt(2))
+        self.assertEqual(rs1_champion, (0.75, 0.875))
+        self.assertEqual(rs2_champion, (1.75, 1.875))
+
+    def test_champions_2D_not_null_distance_2(self):
+        # type: (ResultSetTestCase) -> None
+        oracle_1 = OracleFunction()
+        oracle_2 = OracleFunction()
+
+        cond_1 = Condition('x + y', '>', '1')
+        cond_2 = Condition('x + y', '>', '2')
+        oracle_1.add(cond_1)
+        oracle_2.add(cond_2)
+
+        # By default, use min_corner in 0.0 and max_corner in 1.0
+        min_c = 0.0
+        max_c = 2.0
+
+        rs_1 = SearchND_BMNN22(ora_list=[oracle_1],
+                               min_corner=min_c,
+                               max_corner=max_c,
+                               p0=P0,
+                               alpha=ALPHA,
+                               num_cells=50,
+                               blocking=False,
+                               sleep=0.0,
+                               opt_level=1,
+                               parallel=True,
+                               logging=False,
+                               simplify=False)
+
+        # rs_1.plot_2D_light(blocking=True, var_names=oracle_1.get_var_names())
+
+        rs_2 = SearchND_BMNN22(ora_list=[oracle_2],
+                               min_corner=min_c,
+                               max_corner=max_c,
+                               p0=P0,
+                               alpha=ALPHA,
+                               num_cells=50,
+                               blocking=False,
+                               sleep=0.0,
+                               opt_level=1,
+                               parallel=True,
+                               logging=False,
+                               simplify=False)
+
+        # rs_2.plot_2D_light(blocking=True, var_names=oracle_2.get_var_names())
+
+        # rs_1.select_champion(rs_2) == dH(rs_1, rs_2)
+        # dH(X,Y) = max{d(X,Y), d(Y,X)}
+        # In this case, d(rs_2, rs_1) = 0 and dH(X,Y) = d(rs_1, rs_2) because rs_2 is completely subsumed by rs_1
+        dist, rs1_champion, rs2_champion = rs_1.select_champion([rs_2])
+        self.assertAlmostEqual(dist, math.sqrt(0.5**2 + 0.5**2))
+        # self.assertEqual(rs1_champion, (0.0, 0.875))
+        # self.assertEqual(rs2_champion, (0.5, 1.375))
 
     def test_champions_2D_null_distance(self):
         # type: (ResultSetTestCase) -> None
@@ -652,62 +707,12 @@ class ResultSetTestCase(unittest.TestCase):
         # rs_2.plot_2D_light(blocking=True, var_names=oracle_2.get_var_names())
 
         # Distance must be zero because rs_2 is completely subsumed by rs_1
-        dist, rs1_champion, rs2_champion = rs_1.select_champion_intersection([rs_2])
+        dist, rs1_champion, rs2_champion = rs_1.select_champion([rs_2])
         self.assertEqual(dist, 0.0)
         self.assertEqual(rs1_champion, None)
         self.assertEqual(rs2_champion, None)
 
-        dist, rs2_champion, rs1_champion = rs_2.select_champion_intersection([rs_1])
-        self.assertEqual(dist, 0.0)
-        self.assertEqual(rs1_champion, None)
-        self.assertEqual(rs2_champion, None)
-
-    def test_champions_2D_null_because_intersection(self):
-        # type: (ResultSetTestCase) -> None
-        oracle_1 = OracleFunction()
-        oracle_2 = OracleFunction()
-
-        cond_1 = Condition('x + y', '>', '1')
-        cond_2 = Condition('x + y', '>', '2')
-        oracle_1.add(cond_1)
-        oracle_2.add(cond_2)
-
-        # By default, use min_corner in 0.0 and max_corner in 1.0
-        min_c = 0.0
-        max_c = 2.0
-
-        rs_1 = SearchND_BMNN22(ora_list=[oracle_1],
-                               min_corner=min_c,
-                               max_corner=max_c,
-                               p0=P0,
-                               alpha=ALPHA,
-                               num_cells=50,
-                               blocking=False,
-                               sleep=0.0,
-                               opt_level=1,
-                               parallel=True,
-                               logging=False,
-                               simplify=False)
-
-        # rs_1.plot_2D_light(blocking=True, var_names=oracle_1.get_var_names())
-
-        rs_2 = SearchND_BMNN22(ora_list=[oracle_2],
-                               min_corner=min_c,
-                               max_corner=max_c,
-                               p0=P0,
-                               alpha=ALPHA,
-                               num_cells=50,
-                               blocking=False,
-                               sleep=0.0,
-                               opt_level=1,
-                               parallel=True,
-                               logging=False,
-                               simplify=False)
-
-        # rs_2.plot_2D_light(blocking=True, var_names=oracle_2.get_var_names())
-
-        # Distance must be zero because rs_2 is completely subsumed by rs_1
-        dist, rs1_champion, rs2_champion = rs_1.select_champion_intersection([rs_2])
+        dist, rs2_champion, rs1_champion = rs_2.select_champion([rs_1])
         self.assertEqual(dist, 0.0)
         self.assertEqual(rs1_champion, None)
         self.assertEqual(rs2_champion, None)
