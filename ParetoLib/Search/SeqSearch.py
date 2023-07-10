@@ -1990,7 +1990,7 @@ def divide_box_full_space(xrectangle,
 
     if intersect_indicator == INTERFULL:
         qvalid.add(yrectangle)
-        vol_xrest += xrectangle.volume()
+        vol_boxes += yrectangle.volume()
 
     elif intersect_indicator == INTERNULL:
         vol_xrest += xrectangle.volume()
@@ -2004,6 +2004,7 @@ def divide_box_full_space(xrectangle,
 
         # vol_xrest += pos_box.volume() + neg_box1.volume() + neg_box2.volume()
         vol_xrest += neg_box1.volume() + neg_box2.volume()
+        vol_boxes += pos_box.volume()
 
     elif intersect_indicator == NO_INTER:
         i = interirect(incomparable_segment, yrectangle, xrectangle)
