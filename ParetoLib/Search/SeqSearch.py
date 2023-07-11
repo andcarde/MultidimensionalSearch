@@ -2398,8 +2398,11 @@ def multidim_robust_intersection_search_opt_2(xspace,
 
     error = (epsilon,) * n
     vol_total = xspace.volume()
+    # vol_xrest is the volume of the boxes that need to be processed again and either discarded or added
+    # to the approximation of intersection
     vol_xrest = 0.0
     vol_border = vol_total
+    # vol_boxes is the sum of volume of boxes yet to be processed
     vol_boxes = vol_border
     step = 0
 
