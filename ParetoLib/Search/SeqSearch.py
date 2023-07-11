@@ -1919,8 +1919,11 @@ def multidim_robust_intersection_search_opt_0(xspace,
 
     error = (epsilon,) * n
     vol_total = xspace.volume()
+    # vol_xrest is the volume of the boxes that need to be processed again and either discarded or added
+    # to the approximation of intersection
     vol_xrest = 0.0
     vol_border = vol_total
+    # vol_boxes is the sum of volume of boxes yet to be processed
     vol_boxes = vol_border
     step = 0
 
@@ -1939,10 +1942,7 @@ def multidim_robust_intersection_search_opt_0(xspace,
     while (vol_border >= vol_total * delta) and (step <= max_step) and ((len(qunknown) > 0) or (len(qvalid) > 0)):
         step = step + 1
 
-        # TODO: Pop and call the divide functions here!
-        if (len(qunknown) == 0) and (len(qvalid) == 0):
-            break
-        elif (len(qunknown) == 0) and (len(qvalid) != 0):
+        if (len(qunknown) == 0) and (len(qvalid) != 0):
             xrectangle = qvalid.pop()
             vol_boxes -= xrectangle.volume()
             (vol_boxes, vol_xrest, vol_border) = divide_box_valid(xrectangle,
@@ -1962,7 +1962,7 @@ def multidim_robust_intersection_search_opt_0(xspace,
                                                                        qunknown, qvalid,
                                                                        vol_boxes, vol_xrest,
                                                                        vol_border, vol_total, error, step)
-        else:
+        elif (len(qunknown) != 0) and (len(qvalid) != 0):
             # TODO: Heuristic in the if condition to select from qvalid
             if qvalid[-1].volume() >= qunknown[-1].volume():
                 xrectangle = qvalid.pop()
@@ -2111,8 +2111,11 @@ def multidim_robust_intersection_search_opt_2(xspace,
 
     error = (epsilon,) * n
     vol_total = xspace.volume()
+    # vol_xrest is the volume of the boxes that need to be processed again and either discarded or added
+    # to the approximation of intersection
     vol_xrest = 0.0
     vol_border = vol_total
+    # vol_boxes is the sum of volume of boxes yet to be processed
     vol_boxes = vol_border
     step = 0
 
@@ -2132,10 +2135,7 @@ def multidim_robust_intersection_search_opt_2(xspace,
     while (vol_border >= vol_total * delta) and (step <= max_step) and ((len(qunknown) > 0) or (len(qvalid) > 0)):
         step = step + 1
 
-        # TODO: Pop and call the divide functions here!
-        if (len(qunknown) == 0) and (len(qvalid) == 0):
-            break
-        elif (len(qunknown) == 0) and (len(qvalid) != 0):
+        if (len(qunknown) == 0) and (len(qvalid) != 0):
             xrectangle = qvalid.pop()
             vol_boxes -= xrectangle.volume()
             (vol_boxes, vol_xrest, vol_border) = divide_box_valid(xrectangle,
@@ -2153,7 +2153,7 @@ def multidim_robust_intersection_search_opt_2(xspace,
                                                                        qunknown, qvalid,
                                                                        vol_boxes, vol_xrest,
                                                                        vol_border, vol_total, error, step)
-        else:
+        elif (len(qunknown) != 0) and (len(qvalid) != 0):
             if qunknown[-1].volume() > qvalid[-1].volume():
                 xrectangle = qunknown.pop()
                 vol_boxes -= xrectangle.volume()
