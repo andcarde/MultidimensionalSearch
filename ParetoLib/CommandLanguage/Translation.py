@@ -1,3 +1,4 @@
+
 from ParetoLib.CommandLanguage.Parser import parser, id_dict
 
 '''
@@ -12,7 +13,7 @@ from ParetoLib.CommandLanguage.Parser import parser, id_dict
 <ARITHMETIC> ::= min | max | + | - | / | * | abs
 <COMPARATION> ::= < | <= | > | >=
 <LOGICAL_OP> ::= and |or | not | ->
-<TERNARY> ::= ite <FUNCTION> <VALUE> <VALUE>
+<TERNARY> ::= ite <FUNCTION> <VALUE> <VALUE> // Omitido
 <FUNCTION> ::= <ARITHMETIC> | <COMPARATION> | <LOGICAL_OP> | <BOOLEAN>
 <FORMULA> ::= <VARIABLE> |
               <NUMBER> |
@@ -23,11 +24,12 @@ from ParetoLib.CommandLanguage.Parser import parser, id_dict
               ( StlUntil <INTERVAL> <FORMULA> <FORMULA> ) |
               ( On <INTERVAL> <AGGREGATE> ) |
               ( Until <INTERVAL> <NUMBER> <AGGREGATE> <FORMULA> ) |
-              ( Until <INTERVAL> <NUMBER> ( Get <FORMULA> ) <FORMULA> ) |
+              ( Until <INTERVAL> <NUMBER> ( Get <FORMULA> ) <FORMULA> ) | // Omitido
               ( Lookup <NUMBER> <NUMBER> <FORMULA> )
-^<FORMULA>
-              
+^ ::= <FORMULA>
+
 · Sintaxis del lenguaje STLe2 aplicada
+^ ::= <SPEC_FILE>
 <PARAM_LIST> ::= <ID_LIST>
 <SIGNAL_LIST> ::= <ID_LIST>
 <PROBSIGNAL_LIST> ::= <ID_LIST>
@@ -83,9 +85,6 @@ from ParetoLib.CommandLanguage.Parser import parser, id_dict
 '''
 
 '''
-'''
-
-'''
 Funciones
 - Se traducirá el lenguaje CPN a STLE
 - Encargarse de que sale una variable una solo vez
@@ -105,12 +104,25 @@ Output:
 # Diccionario de preposiciones atomicas
 ap = {}
 
+# Parameters that has been declared
+parameters = {}
+
 # To count how many variables has been declared
 global variable_counter
 variable_counter = 0
 
 # To map variable names into variable 'x<NUMBER' format
-global dic
+global variables
+variables = {}
+
+global propiedades
+propiedades = {}
+
+
+def translate_param_list(tree):
+    for param in tree:
+        parameters.append(param)
+
 
 def translate_interval(interval):
     if len(interval) == 3:
@@ -136,8 +148,10 @@ def translate_operator(op):
     }
     return operators[op]
 
+
 def translate_function(func):
     return f"({func[0]} {' '.join(map(translate, func[1:]))})"
+
 
 def translate_signal(sig):
     if len(sig) == 1:
@@ -145,7 +159,8 @@ def translate_signal(sig):
     else:
         return f"({translate_operator(sig[1])} {translate_signal(sig[0])} {translate_signal(sig[2])})"
 
-def translate(tree):
+
+def basic_translate(tree):
     if isinstance(tree, list):
         if tree[0] in ["AND", "OR", "NOT", "IMPLY", "LEQ", "LESS", "GEQ", "GREATER", "NEQ", "PLUS", "MINUS", "TIMES", "DIVIDE"]:
             return translate_function(tree)
@@ -162,21 +177,11 @@ def translate(tree):
     else:
         return str(tree)
 
+
 import os
 
-def createParams(params):
-    # Crear la carpeta temp si no existe
-    if not os.path.exists('temp'):
-        os.makedirs('temp')
-
-    # Crear el archivo param.txt en la carpeta temp
-    with open('temp/param.txt', 'w') as f:
-        for param in params:
-            # Escribir cada parámetro en una línea diferente
-            f.write(f"{param}\n")
-
-
-def translate(stle2_array):
+'''
+def recursive(stle2_array):
     if stle2_array[0] == "PARAM_LIST":
         pass
     elif stle2_array[0] == "SIGNAL_LIST":
@@ -286,26 +291,42 @@ def translate(stle2_array):
                 return elem[1]
             else:
                 return 0
+'''
 
 
+# <SPEC_FILE> definition
+# <SPEC_FILE> ::= <DEFINITIONS> <PROP_LIST> <EVAL_LIST>
 # STLCommand
-def translate2(cpn_tree):
+def translate(cpn_tree):
     assert cpn_tree[0] == 'SPEC_FILE'
-    # DEFINITIONS
+    # <DEFINITIONS>
     # cpn_tree[1] == ('DEF', t[1])
     _, defs = cpn_tree[1]
     translate_defs(defs)
 
-    # PROP_LIST
+    # <PROP_LIST>
     # cpn_tree[2] == ('PROP_LIST', t[2])
     _, prop_list = cpn_tree[2]
     translate_prop_list(prop_list)
 
-    # EVAL_LIST
+    # <EVAL_LIST>
     # cpn_tree[3] == ('EVAL_LIST', t[3])
     _, eval_list = cpn_tree[3]
     translate_eval_list(eval_list)
 
+    create_params()
+
+# <DEF> ::= <PARAM_DEF> | <SIGNAL_DEF> | <PROBSIGNAL_DEF>
+# <DEFINITIONS> ::= <DEF> | <DEF> <DEFINITIONS>
+# <PARAM_DEF> ::= <LET> <PARAM> <PARAM_LIST> <SEMICOLON>
+# <SIGNAL_DEF> ::= <LET> <SIGNAL> <SIGNAL_LIST> <SEMICOLON>
+# <PROBSIGNAL_DEF> : <LET> <PROBABILISTIC> <SIGNAL> <PROBSIGNAL_LIST> <SEMICOLON>
+# <PARAM_LIST> ::= <ID_LIST>
+# <SIGNAL_LIST> ::= <ID_LIST>
+# <PROBSIGNAL_LIST> ::= <ID_LIST>
+# <ID_LIST> ::= ID | ID COMMA ID_LIST
+
+param_file_name = None
 
 def translate_defs(defs):
     # defs == (('SIGNAL_LIST', [...]), ('PROBSIGNAL_LIST', [...]), ('PARAM_LIST', [...]))
@@ -317,7 +338,31 @@ def translate_defs(defs):
         elif keyword == 'PARAM_LIST':
             # Save 'signal_or_param_list' into temporary file and save record
             param_list = ["p1", "p2"]
-            return param_list
+            param_file_name = create_params_file(param_list)
+
+import tempfile
+
+def create_params_file(self):
+    stl_param = tempfile.NamedTemporaryFile(delete=False)
+    stl_param_file = stl_param.name
+    stl_param.close()
+    return stl_param_file
+
+def create_params():
+    # Crear la carpeta temp si no existe
+    if not os.path.exists(param_file_name):
+        os.makedirs(param_file_name)
+
+    # Crear el archivo param.txt en la carpeta temp
+    with open(param_file_name.join('/param.txt'), 'w') as f:
+        for param in parameters:
+            # Escribir cada parámetro en una línea diferente
+            f.write(f"{param.name}\n")
+            if (param.below_limit != "0"):
+                f.write(f" {param.below_limit}")
+            if (param.upper_limit != "inf"):
+                f.write(f" {param.upper_limit}")
+            f.write(f"\n")
 
 wrappers = [
     'BIN_BOOL_OP',
@@ -360,12 +405,85 @@ def translate_prop_list(prop_list):
         generate_property(prop)
         # Each property will be stored in a 'temporary.stl' file
         # STL 1.0 format
-        prop_list = ["(F ())", "(G ())"]
-        return prop_list
+        stl_prop_file = create_prop_file()
+        propiedad = None
+        if prop[2][0] == "PSI":
+            propiedad = translate_psi(prop[2][1])
+        else:
+            propiedad = translate_phi(prop[2][1])
+        propiedades.pop(propiedades, prop[1], propiedad)
+
+'''
+<PHI> : <SIG>
+        | <FUNC>
+        | <NOT> <PHI>
+        | <PROB> <PHI>
+        | <PHI> <BIN_BOOL_OP> <PHI>
+        | F <INTVL> <PHI>
+        | F <PHI>
+        | G <INTVL> <PHI>
+        | G <PHI>
+        | <PHI> <UNTIL> <INTVL> <PHI>
+        | <ON> <INTVL> <PSI>
+        | <LPAREN> <PHI> <RPAREN>
+        | <PHI> <UNTIL> <PHI>
+'''
+def translate_phi(phi):
+    if phi[1][0] == "SIG":
+        return phi[1]
+    elif phi[1][0] == "ID":
+        return phi[1]
+    elif phi[1][0] == "FUNC":
+        return translate_function(phi[1])
+    elif phi[1][0] == "NOT":
+        return "not".join(translate_phi(phi[2]))
+    elif phi[1][0] == "PROB":
+        return "prob".join(translate_phi(phi[2]))
+    elif phi[1][0] == "BIN_BOOL_OP":
+        return "(" + translate_bool_op(phi[1]).join(translate_phi(phi[2])).join(translate_phi(phi[3])) + ")"
+    elif phi[1][0] == "F":
+        return generate_f(phi)
+    elif phi[1][0] == "G":
+        return generate_g(phi)
+    elif phi[1][0] == "UNTIL":
+        return generate_u(phi)
+    elif phi[1][0] == "ON":
+        return generate_on(phi)
+'''
+<PSI> : <MIN> <PHI>
+            | <MAX> <PHI>
+            | <INT> <PHI>
+            | <DER> <PHI>
+'''
+def create_prop_file(self):
+    stl_prop = tempfile.NamedTemporaryFile(delete=False)
+    stl_prop_file = stl_prop.name
+    stl_prop.close()
+    return stl_prop_file
 
 
+def translate_bool_op(bool_op):
+    return bool_op[1]
+
+
+def generate_on(on_phi):
+    interval = translate_interval(on_phi[1])
+    psi = translate_psi(on_phi[2])
+    return "(" + "ON" + " " + interval + " " + psi + ")"
+
+# <EVAL_EXPR> ::= <EVAL> <ID> <ON> <ID_LIST> <WITH> <INTVL_LIST>
 def translate_eval_list(eval_list):
-    None
+    for eval_expr in eval_list:
+        prop = eval_expr[1]
+        param_list =  eval_expr[2]
+        interval_list = eval_expr[3]
+        index = 0
+        for param in param_list:
+            parameter = {}
+            parameter.name = param
+            parameter.below_limit = interval_list[index][0]
+            parameter.upper_limit = interval_list[index][1]
+            parameters.pop(parameters, parameter)
 
 
 def translate_psi(cpn_tree):
@@ -392,7 +510,7 @@ def generate_interval(tree_cpn):
 # <VARIABLE> ::= x<INTEGER>
 def generate_variable(tree_cpn):
     variable_counter += 1
-    dic[tree_cpn[1]] = variable_counter
+    variables[tree_cpn[1]] = variable_counter
     return 'x' + str(variable_counter)
 
 
