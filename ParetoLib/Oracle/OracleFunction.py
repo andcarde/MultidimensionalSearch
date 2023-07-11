@@ -523,7 +523,7 @@ class Condition(object):
     @cython.locals(point=tuple, di=dict)
     @cython.returns(object)
     def member(self, point):
-        # type: (Condition, tuple) -> Expr
+        # type: (Condition, tuple) -> Expr # bool
         """
         Function answering whether a point satisfies the inequality
         defined by Condition or not.
