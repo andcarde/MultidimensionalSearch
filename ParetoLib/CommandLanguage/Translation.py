@@ -292,13 +292,24 @@ def recursive(stle2_array):
 def translate(tree_com_lang):
     assert tree_com_lang[0] == 'SPEC_FILE'
     # <DEFINITIONS>
-    # cpn_tree[1] == ('DEF', t[1])
+    # tree_com_lang[1] == ('DEF', t[1])
     _, defs = tree_com_lang[1]
     signal_variables, prob_signal_variables, parameters = translate_defs(defs)
 
+    # TODO: Todas las prop de prop_list usan todos los parametros de parameters?
+    #  -> Se pueden crear ficheros temporales "personalizados" por propiedad.
+    #  Es decir, se crearia un fichero temporal de parametros con un subconjunto de parametros del conjuto inicial
+    # Save parameters into temporary file and save record
+    param_file_name = create_params_file()
+    create_params(param_file_name, parameters)
+
     # <PROP_LIST>
-    # cpn_tree[2] == ('PROP_LIST', t[2])
+    # tree_com_lang[2] == ('PROP_LIST', t[2])
     _, prop_list = tree_com_lang[2]
+    # TODO: make "translate_prop_list" return the list of properties "prop_list" in new format ("new_prop_list")
+    # Warning: cuidado con propiedades anidadas! E.g.:
+    # prop_1 := (s1 > 0)
+    # prop_2 := F prop_1
     new_prop_list = translate_prop_list(prop_list)
 
     # TODO: Create one file per property?, Or use a single file for storing all the properties?
@@ -307,13 +318,16 @@ def translate(tree_com_lang):
     create_prop(prop_file_name, new_prop_list)
 
     # <EVAL_LIST>
-    # cpn_tree[3] == ('EVAL_LIST', t[3])
+    # tree_com_lang[3] == ('EVAL_LIST', t[3])
     _, eval_list = tree_com_lang[3]
     translate_eval_list(eval_list)
 
-    # Save parameters into temporary file and save record
-    param_file_name = create_params_file()
-    create_params(param_file_name, parameters)
+    # TODO:
+    #  1) desenrollar las propiedades anidadas y
+    #  2) recuperar los enlaces a las rutas temporales de los ficheros de prop y param correspondientes
+    #  --> devolver una estructura de datos tipo diccionario como resultado de translate_eval_list?
+
+
 
 # <DEF> ::= <PARAM_DEF> | <SIGNAL_DEF> | <PROBSIGNAL_DEF>
 # <DEFINITIONS> ::= <DEF> | <DEF> <DEFINITIONS>
@@ -539,6 +553,7 @@ def generate_boolean(tree_com_lang):
 def generate_interval(tree_com_lang):
     return '({0} {1})'.format(tree_com_lang[1], tree_com_lang[2])
 
+# TODO: Fix generate_variable
 # <VARIABLE> ::= x<INTEGER>
 def generate_variable(tree_com_lang):
     # To map variable names into variable 'x<NUMBER' format
