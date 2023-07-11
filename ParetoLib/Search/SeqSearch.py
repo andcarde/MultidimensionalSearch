@@ -1280,6 +1280,7 @@ def pos_overlap_box_gen(incomparable, incomparable_segment, yIn, yCover, xrectan
 
     return i
 
+
 # @cython.ccall
 @cython.returns(object)
 @cython.locals(xspace=object, list_constraints=list, oracle1=object, oracle2=object, epsilon=cython.double,
@@ -1966,16 +1967,26 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
 
     return ResultSet(yup=list(green), ylow=list(red), border=list(border), xspace=xspace)
 
+
 ########################################
 ###### ADVANCED METHOD: ROBUSTNESS #####
 ########################################
 
+@cython.ccall
+@cython.returns(tuple)
+@cython.locals(xrectangle=object, incomparable=list, incomparable_segment=list, fcons1=callable, fcons2=callable,
+               qunknown=object, qvalid=object, vol_boxes=cython.double, vol_xrest=cython.double,
+               vol_border=cython.double, vol_total=cython.double, error=tuple, step=cython.ulonglong,
+               want_to_expand=cython.bint, y_in=object, y_cover=object, intersect_indicator=cython.short,
+               steps_binsearch=cython.ushort, y=object, i=list, yrectangle=object, pos_box=object, neg_box1=object,
+               neg_box2=object, lower_rect=object, upper_rect=object, b0=object, b1=object, rect=object)
 def divide_box_full_space(xrectangle,
                           incomparable, incomparable_segment,
                           fcons1, fcons2,
                           qunknown, qvalid,
                           vol_boxes, vol_xrest,
                           vol_border, vol_total, error, step):
+    # type: (Rectangle, list, list, callable, callable, SortedListWithKey, SortedListWithKey, int, int, int, int, tuple, int) -> (int, int, int)
     # Search on the diagonal
     want_to_expand = True
     y_in, y_cover, intersect_indicator, steps_binsearch = intersection_expansion_search(xrectangle.diag(),
@@ -2046,12 +2057,21 @@ def divide_box_full_space(xrectangle,
     return vol_boxes, vol_xrest, vol_border
 
 
+@cython.ccall
+@cython.returns(tuple)
+@cython.locals(xrectangle=object, incomparable=list, incomparable_segment=list, fcons1=callable, fcons2=callable,
+               qunknown=object, qvalid=object, vol_boxes=cython.double, vol_xrest=cython.double,
+               vol_border=cython.double, vol_total=cython.double, error=tuple, step=cython.ulonglong,
+               want_to_expand=cython.bint, y_in=object, y_cover=object, intersect_indicator=cython.short,
+               steps_binsearch=cython.ushort, y=object, i=list, yrectangle=object, pos_box=object, neg_box1=object,
+               neg_box2=object, lower_rect=object, upper_rect=object, b0=object, b1=object, rect=object)
 def divide_box_valid(xrectangle,
                      incomparable, incomparable_segment,
                      ffor1, ffor2,
                      qunknown, qvalid, intersect_box,
                      vol_boxes, vol_xrest,
                      vol_border, vol_total, error, step):
+    # type: (Rectangle, list, list, callable, callable, SortedListWithKey, SortedListWithKey, int, int, int, int, tuple, int) -> (int, int, int)
     # Search on the diagonal
     want_to_expand = True
     y_in, y_cover, intersect_indicator, steps_binsearch = intersection_expansion_search(xrectangle.diag(), ffor1, ffor2,
@@ -2068,7 +2088,7 @@ def divide_box_valid(xrectangle,
 
     if intersect_indicator == INTERFULL:
         intersect_box.append(yrectangle)
-        vol_xrest += xrectangle.volume()
+        vol_xrest += yrectangle.volume()
 
     elif intersect_indicator == INTERNULL:
         vol_xrest += xrectangle.volume()
@@ -2100,7 +2120,6 @@ def divide_box_valid(xrectangle,
         vol_xrest += b1.volume()
         RootSearch.logger.debug('b1: {0}'.format(b1))
 
-
     for rect in i:
         if intersection_empty(rect.diag(), ffor1, ffor2):
             vol_xrest += rect.volume()
@@ -2122,7 +2141,14 @@ def divide_box_valid(xrectangle,
     return vol_boxes, vol_xrest, vol_border
 
 
-# Try to find a single box of intersection and then exit
+@cython.ccall
+@cython.returns(tuple)
+@cython.locals(xspace=object, oracle1=object, oracle2=object, oracle3=object, oracle4=object, epsilon=cython.double,
+               delta=cython.double, max_step=cython.ulonglong, blocking=cython.bint, slep=cython.double,
+               logging=cython.bint, n=cython.ushort, incomparable=list, incomparable_segment=list, qunknown=object,
+               qvalid=object, fcons1=callable, fcons2=callable, ffor1=callable, ffor2=callable, error=tuple,
+               vol_total=cython.double, vol_xrest=cython.double, vol_border=cython.double, vol_boxes=cython.double,
+               step=cython.ulonglong, intersect_box=list, tempdir=str, xrectangle=object, rs=object)
 def multidim_robust_intersection_search_opt_0(xspace,
                                               oracle1, oracle2,
                                               oracle3, oracle4,
@@ -2132,7 +2158,7 @@ def multidim_robust_intersection_search_opt_0(xspace,
                                               blocking=False,
                                               sleep=0.0,
                                               logging=True):
-    # type: (Rectangle, Oracle, Oracle, Oracle, Oracle, float, float, float, bool, float, bool) -> ResultSet
+    # type: (Rectangle, Oracle, Oracle, Oracle, Oracle, float, float, int, bool, float, bool) -> ResultSet
 
     # Xspace is a particular case of maximal rectangle
     # Xspace = [min_corner, max_corner]^n = [0, 1]^n
@@ -2186,8 +2212,10 @@ def multidim_robust_intersection_search_opt_0(xspace,
     # Create temporary directory for storing the result of each step
     tempdir = tempfile.mkdtemp()
 
+    # Try to find a single box of intersection and then exit
     RootSearch.logger.info('Report\nStep, Border, Total, nBorder, BinSearch')
-    while (vol_border >= vol_total * delta) and (step <= max_step) and ((len(qunknown) > 0) or (len(qvalid) > 0)):
+    while (vol_border >= vol_total * delta) and (step <= max_step) and ((len(qunknown) > 0) or (len(qvalid) > 0)) \
+            and len(intersect_box) == 0:
         step = step + 1
 
         if (len(qunknown) == 0) and (len(qvalid) != 0):
@@ -2199,8 +2227,7 @@ def multidim_robust_intersection_search_opt_0(xspace,
                                                                   qunknown, qvalid, intersect_box,
                                                                   vol_boxes, vol_xrest,
                                                                   vol_border, vol_total, error, step)
-            if len(intersect_box) > 0:
-                break
+
         elif (len(qunknown) != 0) and (len(qvalid) == 0):
             xrectangle = qunknown.pop()
             vol_boxes -= xrectangle.volume()
@@ -2221,8 +2248,6 @@ def multidim_robust_intersection_search_opt_0(xspace,
                                                                       qunknown, qvalid, intersect_box,
                                                                       vol_boxes, vol_xrest,
                                                                       vol_border, vol_total, error, step)
-                if len(intersect_box) > 0:
-                    break
             else:
                 xrectangle = qunknown.pop()
                 vol_boxes -= xrectangle.volume()
@@ -2238,14 +2263,14 @@ def multidim_robust_intersection_search_opt_0(xspace,
         RootSearch.logger.debug('xrectangle.norm: {0}'.format(xrectangle.norm()))
 
         if sleep > 0.0:
-            rs = ResultSet(qvalid, qunknown, [], xspace)
+            rs = ResultSet(qvalid, qunknown, intersect_box, xspace)
             if n == 2:
                 rs.plot_2D_light(blocking=blocking, sec=sleep, opacity=0.7)
             elif n == 3:
                 rs.plot_3D_light(blocking=blocking, sec=sleep, opacity=0.7)
 
         if logging:
-            rs = ResultSet(qvalid, qunknown, [], xspace)
+            rs = ResultSet(qvalid, qunknown, intersect_box, xspace)
             name = os.path.join(tempdir, str(step))
             rs.to_file(name)
 
@@ -2267,7 +2292,7 @@ def multidim_robust_intersection_search_opt_1(xspace,
                                               blocking=False,
                                               sleep=0.0,
                                               logging=True):
-    # type: (Rectangle, Oracle, Oracle, Oracle, Oracle, float, float, float, bool, float, bool) -> ResultSet
+    # type: (Rectangle, Oracle, Oracle, Oracle, Oracle, float, float, int, bool, float, bool) -> ResultSet
 
     # Xspace is a particular case of maximal rectangle
     # Xspace = [min_corner, max_corner]^n = [0, 1]^n
@@ -2314,7 +2339,14 @@ def multidim_robust_intersection_search_opt_1(xspace,
     return ResultSet(qvalid, qunknown, intersect_box, xspace)
 
 
-# Find the whole intersection space upto some accuracy
+@cython.ccall
+@cython.returns(tuple)
+@cython.locals(xspace=object, oracle1=object, oracle2=object, oracle3=object, oracle4=object, epsilon=cython.double,
+               delta=cython.double, max_step=cython.ulonglong, blocking=cython.bint, slep=cython.double,
+               logging=cython.bint, n=cython.ushort, incomparable=list, incomparable_segment=list, qunknown=object,
+               qvalid=object, fcons1=callable, fcons2=callable, ffor1=callable, ffor2=callable, error=tuple,
+               vol_total=cython.double, vol_xrest=cython.double, vol_border=cython.double, vol_boxes=cython.double,
+               step=cython.ulonglong, intersect_box=list, tempdir=str, xrectangle=object, rs=object)
 def multidim_robust_intersection_search_opt_2(xspace,
                                               oracle1, oracle2,
                                               oracle3, oracle4,
@@ -2324,7 +2356,7 @@ def multidim_robust_intersection_search_opt_2(xspace,
                                               blocking=False,
                                               sleep=0.0,
                                               logging=True):
-    # type: (Rectangle, Oracle, Oracle, Oracle, Oracle, float, float, float, bool, float, bool) -> ResultSet
+    # type: (Rectangle, Oracle, Oracle, Oracle, Oracle, float, float, int, bool, float, bool) -> ResultSet
 
     # Xspace is a particular case of maximal rectangle
     # Xspace = [min_corner, max_corner]^n = [0, 1]^n
@@ -2376,6 +2408,7 @@ def multidim_robust_intersection_search_opt_2(xspace,
     # Create temporary directory for storing the result of each step
     tempdir = tempfile.mkdtemp()
 
+    # Find the whole intersection space upto some accuracy
     RootSearch.logger.info('Report\nStep, Border, Total, nBorder, BinSearch')
     while (vol_border >= vol_total * delta) and (step <= max_step) and ((len(qunknown) > 0) or (len(qvalid) > 0)):
         step = step + 1
