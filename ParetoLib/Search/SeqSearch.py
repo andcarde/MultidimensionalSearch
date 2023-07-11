@@ -1766,7 +1766,6 @@ def divide_box_full_space(xrectangle,
         neg_box2 = Rectangle(y_cover.high, xrectangle.max_corner)
         qvalid.add(pos_box)
 
-        # vol_xrest += pos_box.volume() + neg_box1.volume() + neg_box2.volume()
         vol_xrest += neg_box1.volume() + neg_box2.volume()
         vol_boxes += pos_box.volume()
 
@@ -1810,7 +1809,7 @@ def divide_box_full_space(xrectangle,
 @cython.ccall
 @cython.returns(tuple)
 @cython.locals(xrectangle=object, incomparable=list, incomparable_segment=list, fcons1=callable, fcons2=callable,
-               qunknown=object, qvalid=object, vol_boxes=cython.double, vol_xrest=cython.double,
+               qunknown=object, qvalid=object, intersect_box=list, vol_boxes=cython.double, vol_xrest=cython.double,
                vol_border=cython.double, vol_total=cython.double, error=tuple, step=cython.ulonglong,
                want_to_expand=cython.bint, y_in=object, y_cover=object, intersect_indicator=cython.short,
                steps_binsearch=cython.ushort, y=object, i=list, yrectangle=object, pos_box=object, neg_box1=object,
@@ -1821,7 +1820,7 @@ def divide_box_valid(xrectangle,
                      qunknown, qvalid, intersect_box,
                      vol_boxes, vol_xrest,
                      vol_border, vol_total, error, step):
-    # type: (Rectangle, list, list, callable, callable, SortedListWithKey, SortedListWithKey, int, int, int, int, tuple, int) -> (int, int, int)
+    # type: (Rectangle, list, list, callable, callable, SortedListWithKey, SortedListWithKey, list, int, int, int, int, tuple, int) -> (int, int, int)
     # Search on the diagonal
     want_to_expand = True
     y_in, y_cover, intersect_indicator, steps_binsearch = intersection_expansion_search(xrectangle.diag(), ffor1, ffor2,
@@ -1894,7 +1893,7 @@ def divide_box_valid(xrectangle,
 @cython.ccall
 @cython.returns(tuple)
 @cython.locals(xspace=object, oracle1=object, oracle2=object, oracle3=object, oracle4=object, epsilon=cython.double,
-               delta=cython.double, max_step=cython.ulonglong, blocking=cython.bint, slep=cython.double,
+               delta=cython.double, max_step=cython.ulonglong, blocking=cython.bint, sleep=cython.double,
                logging=cython.bint, n=cython.ushort, incomparable=list, incomparable_segment=list, qunknown=object,
                qvalid=object, fcons1=callable, fcons2=callable, ffor1=callable, ffor2=callable, error=tuple,
                vol_total=cython.double, vol_xrest=cython.double, vol_border=cython.double, vol_boxes=cython.double, 
@@ -2032,7 +2031,14 @@ def multidim_robust_intersection_search_opt_0(xspace,
     return ResultSet(qvalid, qunknown, intersect_box, xspace)
 
 
-# Some other heuristic
+@cython.ccall
+@cython.returns(tuple)
+@cython.locals(xspace=object, oracle1=object, oracle2=object, oracle3=object, oracle4=object, epsilon=cython.double,
+               delta=cython.double, max_step=cython.ulonglong, blocking=cython.bint, sleep=cython.double,
+               logging=cython.bint, n=cython.ushort, incomparable=list, incomparable_segment=list, qunknown=object,
+               qvalid=object, fcons1=callable, fcons2=callable, ffor1=callable, ffor2=callable, error=tuple,
+               vol_total=cython.double, vol_xrest=cython.double, vol_border=cython.double, vol_boxes=cython.double,
+               step=cython.ulonglong, intersect_box=list)
 def multidim_robust_intersection_search_opt_1(xspace,
                                               oracle1, oracle2,
                                               oracle3, oracle4,
@@ -2085,6 +2091,7 @@ def multidim_robust_intersection_search_opt_1(xspace,
     # intersection
     intersect_box = []
 
+    # Some other heuristic
     # TODO: Not implemented
     return ResultSet(qvalid, qunknown, intersect_box, xspace)
 
@@ -2092,7 +2099,7 @@ def multidim_robust_intersection_search_opt_1(xspace,
 @cython.ccall
 @cython.returns(tuple)
 @cython.locals(xspace=object, oracle1=object, oracle2=object, oracle3=object, oracle4=object, epsilon=cython.double,
-               delta=cython.double, max_step=cython.ulonglong, blocking=cython.bint, slep=cython.double,
+               delta=cython.double, max_step=cython.ulonglong, blocking=cython.bint, sleep=cython.double,
                logging=cython.bint, n=cython.ushort, incomparable=list, incomparable_segment=list, qunknown=object,
                qvalid=object, fcons1=callable, fcons2=callable, ffor1=callable, ffor2=callable, error=tuple,
                vol_total=cython.double, vol_xrest=cython.double, vol_border=cython.double, vol_boxes=cython.double, 
