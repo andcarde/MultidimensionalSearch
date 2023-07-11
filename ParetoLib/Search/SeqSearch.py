@@ -134,6 +134,12 @@ def multidim_intersection_search(xspace, list_constraints,
 ###### ADVANCED METHOD: ROBUSTNESS #####
 ########################################
 
+@cython.ccall
+@cython.returns(object)
+@cython.locals(xspace=object, oracle1=object, oracle2=object, oracle3=object, oracle4=object, epsilon=cython.double,
+               delta=cython.double, max_step=cython.ulonglong, blocking=cython.bint, sleep=cython.double,
+               opt_level=cython.uint, logging=cython.bint, md_search=list, start=cython.double, end=cython.double,
+               time0=cython.double, intersect_result=object)
 def multidim_robust_intersection_search(xspace,
                                         oracle1, oracle2,
                                         oracle3, oracle4,
@@ -144,7 +150,7 @@ def multidim_robust_intersection_search(xspace,
                                         sleep=0.0,
                                         opt_level=2,
                                         logging=True):
-    # type: (Rectangle, Oracle, Oracle, Oracle, Oracle, float, float, int, bool, float, int, bool) -> ParResultSet
+    # type: (Rectangle, Oracle, Oracle, Oracle, Oracle, float, float, int, bool, float, int, bool) -> ResultSet
     md_search = [multidim_robust_intersection_search_opt_0,
                  multidim_robust_intersection_search_opt_1,
                  multidim_robust_intersection_search_opt_2]
