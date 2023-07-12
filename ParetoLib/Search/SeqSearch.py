@@ -191,7 +191,6 @@ def multidim_search_BMNN22(xspace: Rectangle,
                            sleep: float = 0.0,
                            opt_level: int = 0,
                            logging: bool = True) -> ResultSet:
-    # type: (Rectangle, list[Oracle], int, int, bool, float, int, bool) -> ResultSet
 
     RootSearch.logger.info('Starting multidimensional search (BMNN22)')
     start = time.time()

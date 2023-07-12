@@ -1378,16 +1378,16 @@ class Rectangle(object):
         return faces
 
     @cython.ccall
-    @cython.locals(n=cython.uint, verts=list, half=cython.uint, ver_dist=list, i=cython.uint)
+    @cython.locals(n=cython.uint, vertical=cython.bint, verts=list, half=cython.uint, ver_dist=list, i=cython.uint)
     @cython.returns(list)
-    def cell_partition(self, n=50, vertical=True):
-        # type: (Rectangle, int, bool) -> list
+    def cell_partition(self, n: int = 50, vertical: bool = True) -> list:
         """
           Given a rectangle, it 'slices' it in n smaller rectangles of equal sizes
 
           Args:
               self (Rectangle): The Rectangle.
               n (int): Number of equal sized rectangles we want to have as a result
+              vertical (bool): Direction of the partitioning
 
           Returns:
               rect_list (list): the result of 'slicing' self into n smaller rectangles
@@ -1405,6 +1405,10 @@ class Rectangle(object):
 
         return rect_list
 
+    @cython.ccall
+    @cython.locals(n=cython.uint, d=cython.uint, k=cython.double, step=tuple, indices_min_corners=list, rect_list=list,
+                   index=tuple, min_corner=tuple)
+    @cython.returns(list)
     def cell_partition_bin(self, n: int) -> list:
         """
           Given a rectangle, it divides it in n <= k^d smaller rectangles of equal sizes, with d the dimension of the
