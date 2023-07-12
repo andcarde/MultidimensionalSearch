@@ -2748,6 +2748,11 @@ def multidim_search_BMNN22(xspace: Rectangle,
 
 ########################################################################################################################
 
+#TODO Complete
+@cython.ccall
+@cython.returns(tuple)
+@cython.locals(args=tuple, cell=object, oracles=list, num_samples=cython.uint, d=cython.uint, ps=cython.double, g=tuple,
+               fs=list, samples=list, counter=cython.uint)
 # Fixed size cell method
 def process_fix(args: Tuple[Rectangle,
                             List[Oracle],
@@ -2768,11 +2773,10 @@ def process_fix(args: Tuple[Rectangle,
 @cython.ccall
 @cython.returns(object)
 @cython.locals(xspace=object, oracles=list, num_samples=cython.uint, num_cells=cython.uint,
-               blocking=cython.bint, sleep=cython.double, logging=cython.bint, cells=list,
-               border=list, green=list, red=list, d=cython.uint, p=object, args=tuple, green_cells=list,
-               step=cython.uint, vol_green=cython.uint, vol_red=cython.uint, vol_border=cython.uint,
-               tempdir=cython.basestring,
-               rs=object)
+               blocking=cython.bint, sleep=cython.double, logging=cython.bint, border=list, n_border=cython.ulonglong,
+               green=list, red=list, d=cython.uint, step=cython.uint, p=object, args=tuple, green_cells=list,
+               vol_green=cython.double, vol_red=cython.double, vol_border=cython.double, i=cython.uint, cell=object,
+               tempdir=str, name=str, rs=object)
 def multidim_search_BMNN22_opt_0(xspace: Rectangle,
                                  oracles: List[Oracle],
                                  num_samples: int,
@@ -2780,9 +2784,8 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
                                  blocking: bool = False,
                                  sleep: float = 0.0,
                                  logging: bool = True) -> ParResultSet:
-    # type: (Rectangle, list[Oracle], int, int, bool, float, bool) -> ParResultSet
     border = xspace.cell_partition_bin(num_cells)
-    nBorder = len(border)  # Number of rectangles inside the border
+    n_border = len(border)  # Number of rectangles inside the border
     green = list()
     red = list()
     d = xspace.dim()
@@ -2803,7 +2806,7 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
             red.append(cell)
             vol_red = vol_red + cell.volume()
             vol_border = vol_border - cell.volume()
-        nBorder = nBorder - 1
+        n_border = n_border - 1
         step = step + 1
 
         # RootSearch.logger.info(
@@ -2841,6 +2844,10 @@ def divide_to_min(cell: Rectangle, g: Tuple[float]) -> List[Rectangle]:
     return cut_list
 
 
+@cython.ccall
+@cython.returns(tuple)
+@cython.locals(args=tuple, cell=object, oracles=list, num_samples=cython.uint, d=cython.uint, ps=cython.double, g=tuple,
+               fs=list, samples=list, counter=cython.uint)
 # Dynamic size cell method
 def process_dyn(args: Tuple[Rectangle,
                             List[Oracle],
@@ -2865,10 +2872,11 @@ def process_dyn(args: Tuple[Rectangle,
 
 @cython.ccall
 @cython.returns(object)
-@cython.locals(xspace=object, oracles=list, num_samples=cython.uint, num_cells=cython.uint, g=tuple,
-               blocking=cython.bint, sleep=cython.double, logging=cython.bint, ps=cython.double, m=cython.uint,
-               args=tuple, cols_list=list, green=list, red=list, border=list, step=cython.uint,
-               tempdir=cython.basestring)
+@cython.locals(xspace=object, oracles=list, num_samples=cython.uint, g=tuple, blocking=cython.bint, sleep=cython.double,
+               logging=cython.bint, ps=cython.double, green=list, red=list, border=list, n_border=cython.ulonglong,
+               vol_green=cython.double, vol_red=cython.double, vol_border=cython.double, step=cython.uint,
+               d=cython.uint, n=cython.uint, p=object, tempdir=str, args=tuple, cols_list=list, cell=object,
+               is_green=cython.bint, list_cell=list, name=str)
 def multidim_search_BMNN22_opt_1(xspace: Rectangle,
                                  oracles: List[Oracle],
                                  num_samples: int,
@@ -2877,11 +2885,10 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
                                  sleep: float = 0.0,
                                  logging: bool = True,
                                  ps: float = 0.95) -> ParResultSet:
-    # type: (Rectangle, list[Oracle], int, tuple[float], bool, float, bool, float) -> ParResultSet
     green = list()
     red = list()
     border = [xspace]
-    nBorder = 1
+    n_border = 1
     vol_green, vol_red, vol_border = 0.0, 0.0, xspace.volume()
     step = 0
     d = xspace.dim()
@@ -2898,19 +2905,19 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
         for (cell, is_green) in cols_list:
             if is_green is None:
                 border = border + cell.cell_partition_bin(n)
-                nBorder = nBorder + n - 1
+                n_border = n_border + n - 1
             elif is_green:
                 list_cell = divide_to_min(cell, g)
                 green.extend(list_cell)
                 vol_green = vol_green + cell.volume()
                 vol_border = vol_border - cell.volume()
-                nBorder = nBorder - 1
+                n_border = n_border - 1
             else:
                 list_cell = divide_to_min(cell, g)
                 red.extend(list_cell)
                 vol_red = vol_red + cell.volume()
                 vol_border = vol_border - cell.volume()
-                nBorder = nBorder - 1
+                n_border = n_border - 1
             step = step + 1
             # RootSearch.logger.info('{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(step, vol_red, vol_green,
             # vol_border, xspace.volume(), len(red), len(green), nBorder))
