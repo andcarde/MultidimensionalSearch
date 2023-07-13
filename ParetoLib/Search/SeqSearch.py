@@ -191,8 +191,12 @@ def multidim_search_BMNN22(xspace: Rectangle,
                            sleep: float = 0.0,
                            opt_level: int = 0,
                            logging: bool = True) -> ResultSet:
+    border = xspace.volume()
 
     RootSearch.logger.info('Starting multidimensional search (BMNN22)')
+    RootSearch.logger.info('Report\nStep, Red, Green, Border, Total, nRed, nGreen, nBorder')
+    RootSearch.logger.info('{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(0, 0.0, 0.0, border, border, 0, 0, 1))
+
     start = time.time()
     if opt_level == 0:
         # Fixed cell creation
@@ -203,14 +207,10 @@ def multidim_search_BMNN22(xspace: Rectangle,
                                           blocking=blocking,
                                           sleep=sleep,
                                           logging=logging)
-    else: 
-        # Dinamyc cell creation
+    else:
+        # Dynamic cell creation
         ps = 0.95
         g = mult(xspace.diag_vector(), 1.0 / 10.0)
-        border = xspace.volume()
-        RootSearch.logger.info('Report\nStep, Red, Green, Border, Total, nRed, nGreen, nBorder')
-        RootSearch.logger.info(
-            '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(0, 0.0, 0.0, border, border, 0, 0, 1))
         rs = multidim_search_BMNN22_opt_1(xspace,
                                           oracles,
                                           num_samples=num_samples,
@@ -219,7 +219,7 @@ def multidim_search_BMNN22(xspace: Rectangle,
                                           logging=logging,
                                           ps=ps,
                                           g=g,
-                                          vol_border=border) 
+                                          vol_border=border)
     end = time.time()
     time0 = end - start
     RootSearch.logger.info('Time multidim search (Pareto front): ' + str(time0))
@@ -1848,7 +1848,7 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
     red = list()
     border = list()
     # Area of all the regions for debugging purposes
-    vol_green, vol_red, vol_border = 0.0, 0.0, xspace.volume() 
+    vol_green, vol_red, vol_border = 0.0, 0.0, xspace.volume()
     mems = [ora.membership() for ora in oracles]
 
     step = 0
@@ -1856,13 +1856,7 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
     # Create temporary directory for storing the result of each step
     tempdir = tempfile.mkdtemp()
 
-    RootSearch.logger.info('Report\nStep, Red, Green, Border, Total, nRed, nGreen, nBorder')
-
     for cell in rect_list:
-        RootSearch.logger.info(
-            '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(step, vol_red, vol_green, vol_border, xspace.volume(),
-                                                            len(red), len(green), len(border)))
-
         step = step + 1
 
         samples = cell.uniform_sampling(num_samples)
@@ -1873,6 +1867,10 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
         else:
             red.append(cell)
             vol_red = vol_red + cell.volume()
+
+        RootSearch.logger.info(
+            '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(step, vol_red, vol_green, vol_border, xspace.volume(),
+                                                            len(red), len(green), len(border)))
 
         # Visualization
         if sleep > 0.0:
@@ -1911,7 +1909,6 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
                                  vol_green: float = 0.0,
                                  vol_red: float = 0.0,
                                  vol_border: float = 0.0) -> ResultSet:
-
     # Dimension
     d = xspace.dim()
 
@@ -1954,9 +1951,9 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
             border = border.union(set(temp_rs.border))
             curr_vol_border = sum((x.volume() for x in list(temp_rs.border)))
 
-    # RootSearch.logger.info(
-    #   '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(curr_step, curr_vol_red, curr_vol_green, curr_vol_border, xspace.volume(), len(red),
-    #                                                  len(green), len(border)))
+    RootSearch.logger.info(
+        '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(curr_step, curr_vol_red, curr_vol_green, curr_vol_border,
+                                                        xspace.volume(), len(red), len(green), len(border)))
 
     # Visualization
     if sleep > 0.0:

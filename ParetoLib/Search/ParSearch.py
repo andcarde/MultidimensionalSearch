@@ -2712,12 +2712,14 @@ def multidim_search_BMNN22(xspace: Rectangle,
                            sleep: float = 0.0,
                            opt_level: int = 0,
                            logging: bool = True) -> ParResultSet:
+    border = xspace.volume()
+
     RootSearch.logger.info('Starting multidimensional search (BMNN22)')
+    RootSearch.logger.info('Report\nStep, Red, Green, Border, Total, nRed, nGreen, nBorder')
+    RootSearch.logger.info(
+        '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(0, 0.0, 0.0, border, border, 0, 0, 1))
+
     start = time.time()
-    # RootSearch.logger.info('Report\nStep, Red, Green, Border, Total, nRed, nGreen, nBorder')
-    # RootSearch.logger.info(
-    #   '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(0, 0.0, 0.0, xspace.volume(), xspace.volume(), 0,
-    #                                                  0, 1))  # 0th step
     if opt_level == 0:
         # Fixed cell creation
         rs = multidim_search_BMNN22_opt_0(xspace,
@@ -2783,7 +2785,6 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
                                  blocking: bool = False,
                                  sleep: float = 0.0,
                                  logging: bool = True) -> ParResultSet:
-
     green = list()
     red = list()
     border = xspace.cell_partition_bin(num_cells)
@@ -2813,9 +2814,9 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
         n_border = n_border - 1
         step = step + 1
 
-        # RootSearch.logger.info(
-        #       '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(step, vol_red, vol_green, vol_border, xspace.volume(),
-        #                                                  len(red), len(green), nBorder))
+        RootSearch.logger.info(
+            '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(step, vol_red, vol_green, vol_border, xspace.volume(),
+                                                            len(red), len(green), n_border))
 
         # Visualization
         if sleep > 0.0:
@@ -2929,8 +2930,10 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
                 vol_border = vol_border - cell.volume()
                 n_border = n_border - 1
             step = step + 1
-            # RootSearch.logger.info('{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(step, vol_red, vol_green,
-            # vol_border, xspace.volume(), len(red), len(green), nBorder))
+
+            RootSearch.logger.info('{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(step, vol_red, vol_green,
+                                                                                   vol_border, xspace.volume(),
+                                                                                   len(red), len(green), n_border))
 
         # Visualization
         if sleep > 0.0:
