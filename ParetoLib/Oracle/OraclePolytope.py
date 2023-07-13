@@ -1,17 +1,24 @@
-# -*- coding: utf-8 -*-
-# This file is part of the ParetoLib software tool and governed by the
-# 'GNU License v3'. Please see the LICENSE file that should have been
-# included as part of this software.
+import cython
+
+# import ParetoLib.Oracle as RootOracle
+import ParetoLib.Oracle
 from ParetoLib.Oracle.Oracle import Oracle
 
-"""
-A generic class for expressing a monotonic (increasing or decreasing) polytope.
-"""
-class OracleMonotonicPolytope(Oracle):
-    def __init__(self, constraints):
-        # type: (OraclePolytope, list) -> None
+RootOracle = ParetoLib.Oracle
 
-        # super(OracleDpoly, self).__init__()
+
+# @cython.cclass
+class OracleMonotonicPolytope(Oracle):
+    """
+    A generic class for expressing a monotonic (increasing or decreasing) polytope.
+    """
+    cython.declare(constraints=list)
+
+    @cython.locals(constraints=list, cons=tuple, d=cython.uint)
+    @cython.returns(cython.void)
+    def __init__(self, constraints):
+        # type: (OracleMonotonicPolytope, list) -> None
+
         Oracle.__init__(self)
 
         # Constraints is a list of tuples with the same dimension:
@@ -30,29 +37,31 @@ class OracleMonotonicPolytope(Oracle):
 
         self.constraints = constraints
 
+    @cython.returns(cython.int)
     def dim(self):
-        # type: (OraclePolytope) -> int
+        # type: (OracleMonotonicPolytope) -> int
         """
         See Oracle.dim().
         """
         if len(self.constraints) != 0:
-            return len(self.constraints[0])-1
+            return len(self.constraints[0]) - 1
         else:
             return -1
 
-"""
-This function checks if a given point is located inside an increasing
-polytope.
-Example:
-constraints = [(1,2,3,8),(5,4,7,10)]
-point is p.
-Checks if: (1*p[0]+2*p[1]+3*p[2]>=8) and (5*p[0]+4*p[1]+7*p[2]>=10)
-"""
+
+# @cython.cclass
 class OracleIncreasingPolytope(OracleMonotonicPolytope):
+    @cython.locals(point=tuple, res=bool, addition=cython.int)
+    @cython.returns(cython.bint)
     def member(self, point):
         # type: (OracleIncreasingPolytope, tuple) -> bool
         """
-        See Oracle.member().
+        Checks if a given point is located inside an increasing polytope.
+        Example:
+        >>> constraints = [(1,2,3,8),(5,4,7,10)]
+        >>> # point is p.
+        >>> p = (1,1,2)
+        >>> return (1*p[0] + 2*p[1] + 3*p[2] >= 8) and (5*p[0] + 4*p[1] + 7*p[2] >= 10)
         """
 
         # d = len(point)
@@ -67,19 +76,20 @@ class OracleIncreasingPolytope(OracleMonotonicPolytope):
             res = res and (addition >= cons[-1])
         return res
 
-"""
-This function checks if a given point is located inside a decreasing
-polytope.
-Example:
-constraints = [(1,2,3,8),(5,4,7,10)]
-point is p.
-Checks if: (1*p[0]+2*p[1]+3*p[2]<=8) and (5*p[0]+4*p[1]+7*p[2]<=10)
-"""
+
+# @cython.cclass
 class OracleDecreasingPolytope(OracleMonotonicPolytope):
+    @cython.locals(point=tuple, res=bool, addition=cython.int)
+    @cython.returns(cython.bint)
     def member(self, point):
         # type: (OracleDecreasingPolytope, tuple) -> bool
         """
-        See Oracle.member().
+        Checks if a given point is located inside an increasing polytope.
+        Example:
+        >>> constraints = [(1,2,3,8),(5,4,7,10)]
+        >>> # point is p.
+        >>> p = (1,1,2)
+        >>> return (1*p[0] + 2*p[1] + 3*p[2] <= 8) and (5*p[0] + 4*p[1] + 7*p[2] <= 10)
         """
 
         # d = len(point)
