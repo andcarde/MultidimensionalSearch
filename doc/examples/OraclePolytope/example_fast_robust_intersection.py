@@ -1,6 +1,6 @@
 from ParetoLib.Oracle.OracleSTLe import OracleSTLeLib
 from ParetoLib.Oracle.OraclePolytope import OracleIncreasingPolytope, OracleDecreasingPolytope
-from ParetoLib.Search.Search import SearchRobustIntersectionND_2, EPS, DELTA, STEPS
+from ParetoLib.Search.Search import SearchRobustIntersectionND_2, EPS, STEPS
 
 """
 This is a toy example for robust intersection of STL formulae. 
@@ -9,8 +9,8 @@ The formulae are valid only in the intersection of these polytopes.
 """
 
 # Files containing the definitions of the Oracles
-nfile1 = './forinc.txt'
-nfile2 = './fordec.txt'
+nfile1 = './stl/forinc.txt'
+nfile2 = './stl/fordec.txt'
 human_readable = True
 
 # Definition of the n-dimensional space

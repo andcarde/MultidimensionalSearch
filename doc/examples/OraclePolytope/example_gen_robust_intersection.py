@@ -1,6 +1,6 @@
 from ParetoLib.Oracle.OracleSTLe import OracleSTLeLib
 from ParetoLib.Oracle.OracleFunction import OracleFunction
-from ParetoLib.Search.Search import SearchRobustIntersectionND_2, EPS, DELTA, STEPS
+from ParetoLib.Search.Search import SearchRobustIntersectionND_2, EPS, STEPS
 
 """
 This is a toy example for robust intersection of STL formulae. 
@@ -9,10 +9,10 @@ The formulae are valid only in the intersection of these sets.
 """
 
 # Files containing the definitions of the Oracles
-nfile1 = './icons.txt'
-nfile2 = './dcons.txt'
-nfile3 = './forinc.txt'
-nfile4 = './fordec.txt'
+nfile1 = './stl/icons.txt'
+nfile2 = './stl/dcons.txt'
+nfile3 = './stl/forinc.txt'
+nfile4 = './stl/fordec.txt'
 human_readable = True
 
 # Definition of the n-dimensional space
