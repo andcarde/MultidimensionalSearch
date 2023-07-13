@@ -600,16 +600,16 @@ class ResultSetTestCase(unittest.TestCase):
         # In this case, d(rs_1, rs_2) != 0 and d(rs_2, rs_1) != 0 because rs_1 and rs_2 partially intersect.
         # Then, dH(X,Y) > 0
         dist, rs1_champion, rs2_champion = rs_1.select_champion([rs_2])
-        self.assertAlmostEqual(dist, math.sqrt(2))
-        self.assertEqual(rs1_champion, (0.75, 0.875))
-        self.assertEqual(rs2_champion, (0.25, 0.125))
+        self.assertAlmostEqual(dist, math.sqrt(0.125))
+        self.assertEqual(rs1_champion, (0.0, 0.0))
+        self.assertEqual(rs2_champion, (0.25, 0.25))
 
         # Result must be similar to previous call because the computation of the champion already considers
         # bidirectional distances
         dist, rs2_champion, rs1_champion = rs_2.select_champion([rs_1])
-        self.assertAlmostEqual(dist, math.sqrt(2))
-        self.assertEqual(rs1_champion, (0.75, 0.875))
-        self.assertEqual(rs2_champion, (1.75, 1.875))
+        self.assertAlmostEqual(dist, math.sqrt(0.125))
+        self.assertEqual(rs1_champion, (0.75, 0.75))
+        self.assertEqual(rs2_champion, (1.0, 1.0))
 
     def test_champions_2D_not_null_distance_2(self):
         # type: (ResultSetTestCase) -> None
