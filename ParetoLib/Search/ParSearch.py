@@ -2712,15 +2712,14 @@ def multidim_search_BMNN22(xspace: Rectangle,
                            sleep: float = 0.0,
                            opt_level: int = 0,
                            logging: bool = True) -> ParResultSet:
-    # type: (Rectangle, list, int, int, bool, float, int, bool) -> ParResultSet
-
     RootSearch.logger.info('Starting multidimensional search (BMNN22)')
     start = time.time()
     # RootSearch.logger.info('Report\nStep, Red, Green, Border, Total, nRed, nGreen, nBorder')
     # RootSearch.logger.info(
     #   '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(0, 0.0, 0.0, xspace.volume(), xspace.volume(), 0,
     #                                                  0, 1))  # 0th step
-    if opt_level == 0:  # Fixed cell creation
+    if opt_level == 0:
+        # Fixed cell creation
         rs = multidim_search_BMNN22_opt_0(xspace,
                                           oracles,
                                           num_samples=num_samples,
@@ -2728,7 +2727,8 @@ def multidim_search_BMNN22(xspace: Rectangle,
                                           blocking=blocking,
                                           sleep=sleep,
                                           logging=logging)
-    else:  # Dinamyc cell creation
+    else:
+        # Dynamic cell creation
         ps = 0.95
         g = mult(xspace.diag_vector(), 1.0 / 10.0)
         rs = multidim_search_BMNN22_opt_1(xspace,
@@ -2748,11 +2748,10 @@ def multidim_search_BMNN22(xspace: Rectangle,
 
 ########################################################################################################################
 
-#TODO Complete
 @cython.ccall
 @cython.returns(tuple)
-@cython.locals(args=tuple, cell=object, oracles=list, num_samples=cython.uint, d=cython.uint, ps=cython.double, g=tuple,
-               fs=list, samples=list, counter=cython.uint)
+@cython.locals(args=tuple, cell=object, oracles=list, num_samples=cython.uint, d=cython.uint, fs=list, samples=list,
+               res=cython.bint)
 # Fixed size cell method
 def process_fix(args: Tuple[Rectangle,
                             List[Oracle],
@@ -2784,18 +2783,23 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
                                  blocking: bool = False,
                                  sleep: float = 0.0,
                                  logging: bool = True) -> ParResultSet:
-    border = xspace.cell_partition_bin(num_cells)
-    n_border = len(border)  # Number of rectangles inside the border
+
     green = list()
     red = list()
-    d = xspace.dim()
+    border = xspace.cell_partition_bin(num_cells)
+    n_border = len(border)
+    vol_green, vol_red, vol_border = 0.0, 0.0, xspace.volume()
+
     step = 0
+
+    d = xspace.dim()
+
+    # Create temporary directory for storing the result of each step
+    tempdir = tempfile.mkdtemp()
 
     p = Pool(cpu_count())
     args = ((cell, copy.deepcopy(oracles), num_samples, d) for cell in border)
     green_cells = p.map(process_fix, args)
-    vol_green, vol_red, vol_border = 0.0, 0.0, xspace.volume()  # Area of all the regions for debugging purposess
-    tempdir = tempfile.mkdtemp()
 
     for i, cell in enumerate(border):
         if green_cells[i]:
@@ -2831,6 +2835,9 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
     return ParResultSet(border=border, ylow=red, yup=green, xspace=xspace)
 
 
+@cython.ccall
+@cython.returns(list)
+@cython.locals(cell=object, g=tuple, n=cython.uint, cut_list=list, new_list=list)
 # Function that divides a cell into the minimum resolution possible, set by g
 def divide_to_min(cell: Rectangle, g: Tuple[float]) -> List[Rectangle]:
     n = pow(2, cell.dim())
@@ -2890,13 +2897,16 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
     border = [xspace]
     n_border = 1
     vol_green, vol_red, vol_border = 0.0, 0.0, xspace.volume()
+
     step = 0
+
     d = xspace.dim()
     n = pow(2, d)
-    p = Pool(cpu_count())
 
     # Create temporary directory for storing the result of each step
     tempdir = tempfile.mkdtemp()
+
+    p = Pool(cpu_count())
 
     while len(border) > 0:
         args = ((cell, copy.deepcopy(oracles), num_samples, d, ps, g) for cell in border)

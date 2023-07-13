@@ -194,7 +194,8 @@ def multidim_search_BMNN22(xspace: Rectangle,
 
     RootSearch.logger.info('Starting multidimensional search (BMNN22)')
     start = time.time()
-    if opt_level == 0:  # Fixed cell creation
+    if opt_level == 0:
+        # Fixed cell creation
         rs = multidim_search_BMNN22_opt_0(xspace,
                                           oracles,
                                           num_samples=num_samples,
@@ -202,14 +203,14 @@ def multidim_search_BMNN22(xspace: Rectangle,
                                           blocking=blocking,
                                           sleep=sleep,
                                           logging=logging)
-    else:  # Dinamyc cell creation
+    else: 
+        # Dinamyc cell creation
         ps = 0.95
         g = mult(xspace.diag_vector(), 1.0 / 10.0)
         border = xspace.volume()
         RootSearch.logger.info('Report\nStep, Red, Green, Border, Total, nRed, nGreen, nBorder')
         RootSearch.logger.info(
-            '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(0, 0.0, 0.0, border, border, 0,
-                                                            0, 1))  # 0th step
+            '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(0, 0.0, 0.0, border, border, 0, 0, 1))
         rs = multidim_search_BMNN22_opt_1(xspace,
                                           oracles,
                                           num_samples=num_samples,
@@ -218,7 +219,7 @@ def multidim_search_BMNN22(xspace: Rectangle,
                                           logging=logging,
                                           ps=ps,
                                           g=g,
-                                          vol_border=border)  # ,n_border=1
+                                          vol_border=border) 
     end = time.time()
     time0 = end - start
     RootSearch.logger.info('Time multidim search (Pareto front): ' + str(time0))
@@ -1837,7 +1838,6 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
                                  blocking: bool = False,
                                  sleep: float = 0.0,
                                  logging: bool = True) -> ResultSet:
-    # type: (Rectangle, list[Oracle], int, int, bool, float, bool) -> ResultSet
     # - Write asserts and logger info (useful for debugging and defensive programming)
 
     # Dimension
@@ -1847,7 +1847,8 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
     green = list()
     red = list()
     border = list()
-    vol_green, vol_red, vol_border = 0.0, 0.0, xspace.volume()  # Area of all the regions for debugging purposes
+    # Area of all the regions for debugging purposes
+    vol_green, vol_red, vol_border = 0.0, 0.0, xspace.volume() 
     mems = [ora.membership() for ora in oracles]
 
     step = 0
@@ -1898,10 +1899,11 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
 @cython.ccall
 @cython.returns(object)
 @cython.locals(xpace=object, oracles=list, num_samples=cython.uint, num_cells=cython.uint, g=tuple,
-               blocking=cython.bint, sleep=cython.double, logging=cython.bint, ps=cython.double, m=cython.uint,
-               n=cython.uint, rect_list=list, new_rect_list=list, green=set, red=set, border=set, mems=list,
-               counter=cython.uint,
-               tempdir=cython.basestring, cell=object, samples=list, rs=object)
+               blocking=cython.bint, sleep=cython.double, logging=cython.bint, ps=cython.double, step=cython.uint,
+               vol_green=cython.double, vol_red=cython.double, vol_border=cython.double, d=cython.uint, green=set,
+               red=set, border=set, mems=list, samples=list, tempdir=str, counter=cython.uint, current_step=cython.uint,
+               current_vol_green=cython.double, current_vol_red=cython.double, current_vol_border=cython.double,
+               n=cython.uint, rect_list=list, rs=object)
 def multidim_search_BMNN22_opt_1(xspace: Rectangle,
                                  oracles: List[Oracle],
                                  num_samples: int,
@@ -1914,15 +1916,17 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
                                  vol_green: float = 0.0,
                                  vol_red: float = 0.0,
                                  vol_border: float = 0.0) -> ResultSet:
-    # type: (Rectangle, list[Oracle], int, tuple, bool, float, bool, float) -> ResultSet
+
+    # Dimension
+    d = xspace.dim()
 
     green = set()
     red = set()
     border = set()
-    d = xspace.dim()
+
     mems = [ora.membership() for ora in oracles]
+
     samples = xspace.uniform_sampling(num_samples)
-    step = 0
 
     # Create temporary directory for storing the result of each step
     tempdir = tempfile.mkdtemp()
