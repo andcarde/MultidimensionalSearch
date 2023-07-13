@@ -1867,6 +1867,8 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
             red.append(cell)
             vol_red = vol_red + cell.volume()
 
+        vol_border -= cell.volume()
+
         RootSearch.logger.info(
             '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(step, vol_red, vol_green, vol_border, xspace.volume(),
                                                             len(red), len(green), len(border)))

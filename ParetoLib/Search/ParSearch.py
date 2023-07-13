@@ -2831,6 +2831,9 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
             name = os.path.join(tempdir, str(step))
             rs.to_file(name)
 
+    # All the cells in the boundary are processed
+    border = []
+
     p.close()
     p.join()
     return ParResultSet(border=border, ylow=red, yup=green, xspace=xspace)
