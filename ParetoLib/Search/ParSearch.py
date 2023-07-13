@@ -2844,10 +2844,13 @@ def divide_to_min(cell: Rectangle, g: Tuple[float]) -> List[Rectangle]:
     n = pow(2, cell.dim())
     cut_list = [cell]
     while not all(less_equal(rect.diag_vector(), g) for rect in cut_list):
-        new_list = list()
-        for rect in cut_list:
-            new_list.extend(rect.cell_partition_bin(n))
-        cut_list = new_list
+        new_list = itertools.chain.from_iterable(rect.cell_partition_bin(n) for rect in cut_list)
+        cut_list = list(new_list)
+        # Alternatively:
+        # new_list = list()
+        # for rect in cut_list:
+        #     new_list.extend(rect.cell_partition_bin(n))
+        # cut_list = new_list
 
     return cut_list
 
