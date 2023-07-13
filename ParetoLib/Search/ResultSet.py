@@ -1066,7 +1066,7 @@ class ResultSet(object):
     @cython.returns(list)
     def _plot_champion_3D(self, xaxe=0, yaxe=1, zaxe=2, opacity=1.0, clip_box=None):
         assert self.champion is not None
-        faces = [rect.plot_3D('cyan', xaxe, yaxe, zaxe, 1.0, clip_box) for rect in self.yup if
+        faces = [rect.plot_3D('cyan', xaxe, yaxe, zaxe, opacity, clip_box) for rect in self.yup if
                  self.champion in rect.vertices()]
         return faces
 
@@ -1385,6 +1385,10 @@ class ResultSet(object):
 
         return fig1
 
+    # @cython.ccall
+    @cython.locals(filename=str, xaxe=cython.ushort, yaxe=cython.ushort, var_names=list, blocking=cython.bint,
+                   sec=cython.double, opacity=cython.double, fig_title=str, fig1=object, embedded_fig=cython.bint,
+                   ax1_list=list, ax1=object, faces_yup=list, faces_ylow=list, faces_border=list, faces=list)
     @cython.returns(object)
     def plot_2D_champion(self,
                          filename='',
@@ -1760,6 +1764,7 @@ class ResultSet(object):
             self.champion = vertex_champion
 
         return distance, vertex_champion, other_champion
+
 
 @cython.locals(rs_list=list)
 @cython.returns(list)

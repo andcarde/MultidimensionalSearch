@@ -1856,15 +1856,14 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
     # Create temporary directory for storing the result of each step
     tempdir = tempfile.mkdtemp()
 
-    # RootSearch.logger.info('Report\nStep, Red, Green, Border, Total, nRed, nGreen, nBorder')
-    # RootSearch.logger.info(
-    #   '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(step, vol_red, vol_green, vol_border, xspace.volume(), len(red),
-    #                                                  len(green), len(border)))  # 0th step
+    RootSearch.logger.info('Report\nStep, Red, Green, Border, Total, nRed, nGreen, nBorder')
 
     for cell in rect_list:
+        RootSearch.logger.info(
+            '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(step, vol_red, vol_green, vol_border, xspace.volume(),
+                                                            len(red), len(green), len(border)))
+
         step = step + 1
-        # Write some Logg info here: step, red area size, green area size, ... total area (xspace), number of rectangles
-        # in each region, etc.
 
         samples = cell.uniform_sampling(num_samples)
 
@@ -1874,10 +1873,6 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
         else:
             red.append(cell)
             vol_red = vol_red + cell.volume()
-
-        RootSearch.logger.info(
-            '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(step, vol_red, vol_green, vol_border, xspace.volume(),
-                                                            len(red), len(green), len(border)))
 
         # Visualization
         if sleep > 0.0:
@@ -1961,7 +1956,7 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
 
     # RootSearch.logger.info(
     #   '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(curr_step, curr_vol_red, curr_vol_green, curr_vol_border, xspace.volume(), len(red),
-    #                                                  len(green), len(border)))  # Current step
+    #                                                  len(green), len(border)))
 
     # Visualization
     if sleep > 0.0:
