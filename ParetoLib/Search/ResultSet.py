@@ -1065,6 +1065,7 @@ class ResultSet(object):
     @cython.locals(xaxe=cython.ushort, yaxe=cython.ushort, zaxe=cython.ushort, opacity=cython.double, faces=list)
     @cython.returns(list)
     def _plot_champion_3D(self, xaxe=0, yaxe=1, zaxe=2, opacity=1.0, clip_box=None):
+        # type: (ResultSet, int, int, int, float, _) -> list
         assert self.champion is not None
         faces = [rect.plot_3D('cyan', xaxe, yaxe, zaxe, opacity, clip_box) for rect in self.yup if
                  self.champion in rect.vertices()]

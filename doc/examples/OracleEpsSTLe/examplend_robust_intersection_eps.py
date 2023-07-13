@@ -6,8 +6,9 @@ from ParetoLib.Search.ResultSet import ResultSet
 from example3d_intersection_eps import create_project_file, create_param_file
 from ParetoLib.Oracle.OraclePolytope import OracleIncreasingPolytope, OracleDecreasingPolytope
 
+
 def pareto_ND_Robust_Intersection_eps(ecg_name, num_params, stl_template1, stl_template2,
-                               list_intervals, list_constraints, bound1, bound2, delta, opt_level):
+                                      list_intervals, list_constraints, bound1, bound2, delta, opt_level):
     # type: (str, int, str, str, list, list, int, int, float, int) -> ResultSet
 
     param_name = "ecgLearn"
@@ -20,7 +21,7 @@ def pareto_ND_Robust_Intersection_eps(ecg_name, num_params, stl_template1, stl_t
 
     human_readable = True
 
-    orac1 = OracleIncreasingPolytope([(0,0,0,0,0,0,0,0)])
+    orac1 = OracleIncreasingPolytope([(0, 0, 0, 0, 0, 0, 0, 0)])
     orac2 = OracleDecreasingPolytope(list_constraints)
 
     orac3 = OracleEpsSTLe(bound_on_count=bound1, intvl_epsilon=1)
@@ -30,17 +31,17 @@ def pareto_ND_Robust_Intersection_eps(ecg_name, num_params, stl_template1, stl_t
     orac4.from_file(nfile2, human_readable)
 
     output_intersect = SearchRobustIntersectionND_2(orac1, orac2,
-                                              orac3, orac4,
-                                              list_intervals,
-                                              epsilon=EPS,
-                                              delta=delta,
-                                              max_step=STEPS,
-                                              blocking=False,
-                                              sleep=0,
-                                              opt_level=opt_level,
-                                              parallel=False,
-                                              logging=False,
-                                              simplify=False)
+                                                    orac3, orac4,
+                                                    list_intervals,
+                                                    epsilon=EPS,
+                                                    delta=delta,
+                                                    max_step=STEPS,
+                                                    blocking=False,
+                                                    sleep=0,
+                                                    opt_level=opt_level,
+                                                    parallel=False,
+                                                    logging=False,
+                                                    simplify=False)
     return output_intersect
 
 
@@ -58,7 +59,7 @@ if __name__ == "__main__":
     # Work without constraints on parameters.
     list_intervals = [(0, 60), (0, 60), (-10, 10), (-10, 10), (-10, 10), (0, 100), (0, 100)]
     # The below should be interpreted as decreasing constraint
-    list_constraints = [(1,1,0,0,0,0,0,60)]
+    list_constraints = [(1, 1, 0, 0, 0, 0, 0, 60)]
     num_params = 7
     ecg_name = str(sys.argv[1])
     opt_level = int(sys.argv[2])
@@ -66,7 +67,7 @@ if __name__ == "__main__":
     bound1 = 0
     bound2 = 0
     rs = pareto_ND_Robust_Intersection_eps(ecg_name, num_params, 'ecgInterTemplateEpsFnND', 'ecgInterTemplateEpsFpND',
-                                    list_intervals, list_constraints, bound1, bound2, delta, opt_level)
+                                           list_intervals, list_constraints, bound1, bound2, delta, opt_level)
     intersection = rs.yup
     print('intersection number:', len(intersection))
     print('intersection box:', intersection)

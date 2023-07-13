@@ -1838,7 +1838,6 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
                                  blocking: bool = False,
                                  sleep: float = 0.0,
                                  logging: bool = True) -> ResultSet:
-    # - Write asserts and logger info (useful for debugging and defensive programming)
 
     # Dimension
     n = xspace.dim()
