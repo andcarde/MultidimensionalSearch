@@ -708,9 +708,10 @@ class ResultSet(object):
     # @cython.ccall
     @cython.locals(xaxe=cython.ushort, yaxe=cython.ushort, opacity=cython.double, patch=list)
     @cython.returns(list)
-    def _plot_champion_2D(self, xaxe=0, yaxe=1, zaxe=2, opacity=1.0, clip_box=None):
+    def _plot_champion_2D(self, xaxe=0, yaxe=1, opacity=1.0, clip_box=None):
+        # type: (ResultSet, int, int, float, _) -> list
         assert self.champion is not None
-        faces = [rect.plot_2D('cyan', xaxe, yaxe, 1.0, clip_box) for rect in self.yup if
+        faces = [rect.plot_2D('cyan', xaxe, yaxe, opacity, clip_box) for rect in self.yup if
                  self.champion in rect.vertices()]
         return faces
 
@@ -1064,8 +1065,9 @@ class ResultSet(object):
     @cython.locals(xaxe=cython.ushort, yaxe=cython.ushort, zaxe=cython.ushort, opacity=cython.double, faces=list)
     @cython.returns(list)
     def _plot_champion_3D(self, xaxe=0, yaxe=1, zaxe=2, opacity=1.0, clip_box=None):
+        # type: (ResultSet, int, int, int, float, _) -> list
         assert self.champion is not None
-        faces = [rect.plot_3D('cyan', xaxe, yaxe, zaxe, 1.0, clip_box) for rect in self.yup if
+        faces = [rect.plot_3D('cyan', xaxe, yaxe, zaxe, opacity, clip_box) for rect in self.yup if
                  self.champion in rect.vertices()]
         return faces
 
@@ -1384,6 +1386,10 @@ class ResultSet(object):
 
         return fig1
 
+    # @cython.ccall
+    @cython.locals(filename=str, xaxe=cython.ushort, yaxe=cython.ushort, var_names=list, blocking=cython.bint,
+                   sec=cython.double, opacity=cython.double, fig_title=str, fig1=object, embedded_fig=cython.bint,
+                   ax1_list=list, ax1=object, faces_yup=list, faces_ylow=list, faces_border=list, faces=list)
     @cython.returns(object)
     def plot_2D_champion(self,
                          filename='',
@@ -1577,6 +1583,9 @@ class ResultSet(object):
         with open(f, 'wb') as output:
             pickle.dump(self.xspace, output, pickle.HIGHEST_PROTOCOL)
 
+    # @cython.ccall
+    @cython.locals(f=str, tempdir=str, yup_name=str, ylow_name=str, border_name=str, space_name=str)
+    @cython.returns(cython.void)
     def to_file(self, f):
         # type: (ResultSet, str) -> None
         # fname = os.path.basename(f)
@@ -1700,8 +1709,10 @@ class ResultSet(object):
             RootSearch.logger.error('Unexpected error when removing folder {0}: {1}'.format(tempdir, sys.exc_info()[0]))
 
     @cython.locals(rs_list=list, current_class_green_cells=set, other_classes_green_cells=set, current_class=set,
-                   other_classes=set, current_class_list=list, other_classes_list=list, distance_c_o=int, c_index_1=int,
-                   o_index_1=int, distance_o_c=int, c_index_2=int, o_index_2=int)
+                   other_classes=set, current_class_list=list, other_classes_list=list, distance_c_o=cython.double,
+                   c_index_1=int, o_index_1=int, distance_o_c=cython.double, c_index_2=int, o_index_2=int,
+                   distance=cython.double, current_class_index=int, other_classes_index=int, vertex_champion=tuple,
+                   other_champion=tuple)
     @cython.returns(tuple)
     def select_champion(self, rs_list):
         # type: (ResultSet, list[ResultSet]) -> tuple
@@ -1749,11 +1760,12 @@ class ResultSet(object):
             distance, current_class_index, index_other_classes = distance_o_c, c_index_2, o_index_2
 
         vertex_champion, other_champion = None, None
-        if distance != 0:
+        if distance != 0.0:
             vertex_champion, other_champion = current_class_list[current_class_index], other_classes_list[other_classes_index]
             self.champion = vertex_champion
 
         return distance, vertex_champion, other_champion
+
 
 @cython.locals(rs_list=list)
 @cython.returns(list)
