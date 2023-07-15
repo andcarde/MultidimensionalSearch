@@ -195,7 +195,7 @@ def multidim_search_BMNN22(xspace: Rectangle,
 
     RootSearch.logger.info('Starting multidimensional search (BMNN22)')
     RootSearch.logger.info('Report\nStep, Red, Green, Border, Total, nRed, nGreen, nBorder')
-    RootSearch.logger.info('{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(0, 0.0, 0.0, border, border, 0, 0, 1))
+    # RootSearch.logger.info('{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(0, 0.0, 0.0, border, border, 0, 0, 1))
 
     start = time.time()
     if opt_level == 0:
@@ -1856,6 +1856,10 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
     tempdir = tempfile.mkdtemp()
 
     for cell in rect_list:
+        RootSearch.logger.info(
+            '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(step, vol_red, vol_green, vol_border, xspace.volume(),
+                                                            len(red), len(green), len(border)))
+
         step = step + 1
 
         samples = cell.uniform_sampling(num_samples)
@@ -1868,10 +1872,6 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
             vol_red = vol_red + cell.volume()
 
         vol_border -= cell.volume()
-
-        RootSearch.logger.info(
-            '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(step, vol_red, vol_green, vol_border, xspace.volume(),
-                                                            len(red), len(green), len(border)))
 
         # Visualization
         if sleep > 0.0:
@@ -1929,6 +1929,10 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
     curr_step = step
     curr_vol_green, curr_vol_red, curr_vol_border = vol_green, vol_red, vol_border
 
+    RootSearch.logger.info(
+        '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(curr_step, curr_vol_red, curr_vol_green, curr_vol_border,
+                                                        xspace.volume(), len(red), len(green), len(border)))
+
     if counter == 0:
         red.add(xspace)
         curr_vol_red = curr_vol_red + xspace.volume()
@@ -1951,10 +1955,6 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
             curr_vol_red = curr_vol_red + sum((x.volume() for x in list(temp_rs.ylow)))
             border = border.union(set(temp_rs.border))
             curr_vol_border = sum((x.volume() for x in list(temp_rs.border)))
-
-    RootSearch.logger.info(
-        '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(curr_step, curr_vol_red, curr_vol_green, curr_vol_border,
-                                                        xspace.volume(), len(red), len(green), len(border)))
 
     # Visualization
     if sleep > 0.0:
