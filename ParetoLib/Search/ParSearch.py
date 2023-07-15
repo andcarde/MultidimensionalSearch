@@ -2840,25 +2840,6 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
 
 
 @cython.ccall
-@cython.returns(list)
-@cython.locals(cell=object, g=tuple, n=cython.uint, cut_list=list, new_list=list)
-# Function that divides a cell into the minimum resolution possible, set by g
-def divide_to_min(cell: Rectangle, g: Tuple[float]) -> List[Rectangle]:
-    n = pow(2, cell.dim())
-    cut_list = [cell]
-    while not all(less_equal(rect.diag_vector(), g) for rect in cut_list):
-        new_list = itertools.chain.from_iterable(rect.cell_partition_bin(n) for rect in cut_list)
-        cut_list = list(new_list)
-        # Alternatively:
-        # new_list = list()
-        # for rect in cut_list:
-        #     new_list.extend(rect.cell_partition_bin(n))
-        # cut_list = new_list
-
-    return cut_list
-
-
-@cython.ccall
 @cython.returns(tuple)
 @cython.locals(args=tuple, cell=object, oracles=list, num_samples=cython.uint, d=cython.uint, ps=cython.double, g=tuple,
                fs=list, samples=list, counter=cython.uint)
@@ -2924,13 +2905,13 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
                 border = border + cell.cell_partition_bin(n)
                 n_border = n_border + n - 1
             elif is_green:
-                list_cell = divide_to_min(cell, g)
+                list_cell = cell.divide_to_min_resolution(g)
                 green.extend(list_cell)
                 vol_green = vol_green + cell.volume()
                 vol_border = vol_border - cell.volume()
                 n_border = n_border - 1
             else:
-                list_cell = divide_to_min(cell, g)
+                list_cell = cell.divide_to_min_resolution(g)
                 red.extend(list_cell)
                 vol_red = vol_red + cell.volume()
                 vol_border = vol_border - cell.volume()

@@ -77,7 +77,10 @@ import math
 import numpy as np
 import matplotlib.patches as patches
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-from itertools import product, tee
+from itertools import product, tee, chain
+from typing import List, Tuple
+from typing_extensions import Self
+
 import cython
 
 # import ParetoLib.Geometry as RootGeom
@@ -1434,6 +1437,24 @@ class Rectangle(object):
         list_min_corners = (np.add(self.min_corner, np.multiply(index, step)) for index in indices_min_corners)
         rect_list = [Rectangle(min_corner, np.add(min_corner, step)) for min_corner in list_min_corners]
         return rect_list
+
+    @cython.ccall
+    @cython.returns(list)
+    @cython.locals(cell=object, g=tuple, n=cython.uint, cut_list=list, new_list=list)
+    def divide_to_min_resolution(self, g: Tuple[float]) -> List[Self]:
+        # Divide a cell into the minimum resolution possible, set by g
+        n = pow(2, self.dim())
+        cut_list = [Rectangle(self.min_corner, self.max_corner)]
+        while not all(less_equal(rect.diag_vector(), g) for rect in cut_list):
+            new_list = chain.from_iterable(rect.cell_partition_bin(n) for rect in cut_list)
+            cut_list = list(new_list)
+            # Alternatively:
+            # new_list = list()
+            # for rect in cut_list:
+            #     new_list.extend(rect.cell_partition_bin(n))
+            # cut_list = new_list
+
+        return cut_list
 
     #####################
     # Auxiliary functions
