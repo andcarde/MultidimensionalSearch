@@ -277,32 +277,26 @@ def translate_defs(defs):
     # It is checked in the Parser.
     return signal_variables, prob_signal_variables, parameters
 
-def create_params_file(self):
+def create_params_file():
     stl_param = tempfile.NamedTemporaryFile(delete=False)
     stl_param_file = stl_param.name
     stl_param.close()
     return stl_param_file
 
-def create_params(memory):
-    # Crear la carpeta temp si no existe
-    if not os.path.exists(memory.param_file_name):
-        os.makedirs(memory.param_file_name)
-
-    # Crear el archivo param.txt en la carpeta temp
-    with open(memory.param_file_name.join('/param.txt'), 'w') as f:
-        for param in memory.parameters:
-            # Escribir cada parámetro en una línea diferente
-            f.write(f"{param.name}\n")
-            if (param.below_limit != "0"):
-                f.write(f" {param.below_limit}")
-            if (param.upper_limit != "inf"):
-                f.write(f" {param.upper_limit}")
-            f.write(f"\n")
-
+def write_params(file_name, parameters):
+    with open(file_name, 'w') as file:
+        for param in parameters:
+            line = param.name
+            if hasattr(param, 'inferior'):
+                line += ' ' + str(param.below_limit)
+            if hasattr(param, 'superior'):
+                line += ' ' + str(param.upper_limit)
+            file.write(line + '\n')
 
 
 def translate_prop_list(memory, prop_list):
     for prop in prop_list:
+        memory.actual_property_param = []
         # Translate prop into STLe format
         generate_property(memory, prop)
         # Each property will be stored in a 'temporary.stl' file
@@ -314,6 +308,9 @@ def translate_prop_list(memory, prop_list):
         else:
             propiedad = translate_phi(memory, prop[2][1])
         memory.propiedades.pop(memory.propiedades, prop[1], propiedad)
+        param_file_name = create_params_file()
+        memory.properties.push(param_file_name)
+        write_params(param_file_name, memory.actual_property_param)
 
 # Information required in translate_phi(memory, phi):
 '''
