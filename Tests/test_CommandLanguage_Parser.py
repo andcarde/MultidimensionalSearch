@@ -1,6 +1,6 @@
 import numpy
 import pytest
-from ParetoLib.CommandLenguage.scf_parser import parser
+from ParetoLib.CommandLanguage.Parser import parser
 
 
 class ParserTree:
