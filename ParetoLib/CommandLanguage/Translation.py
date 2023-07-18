@@ -4,6 +4,9 @@ import tempfile
 
 # TODO:
 #  - Use id_dict for checking id names
+#       - Problema asociado: id_dict no diferencia entre los nombre de las variables declaradas en la sección de <PROP_LIST>,
+#       los nombres de los parámetros declarados en la sección de <DEFINITIONS>, ni de las componentes de señal declarados, ni de
+#       componentes de señal probabilística declarados.
 #  - import and use tokens (keywords) from ParetoLib.CommandLanguage.Parser
 from ParetoLib.CommandLanguage.Parser import parser, id_dict
 
@@ -92,35 +95,87 @@ from ParetoLib.CommandLanguage.Parser import parser, id_dict
 
 '''
 Funciones
-- Se traducirá el lenguaje CPN a STLE
+- Se traducirá el lenguaje STLE3 a STLE1
 - Encargarse de que sale una variable una solo vez
 - Asegurarse de que tengan sentido las expresiones
     - Si asignamos un valor Tipo1 (ej: Entero) un valor Tipo2 (ej: Boolean) será incorrecto.
-- Contruir la string en lenguage STL
+- Contruir la string en lenguage STL1
 '''
 
 '''
-Input: AST
-Output: 
+Input: AST (árbol (estructura de datos) con el análisis sintáctico de STLE3).
+Output:
     - STL file
     - Param file
-    - (optionally) CSV file (e.g, signal)
 '''
 
-# Memoria
-memory = {}
+# Function in charge of translating: <SPEC_FILE>
+# -- <SPEC_FILE> ::= <DEFINITIONS> <PROP_LIST> <EVAL_LIST>
+def translate(tree_com_lang):
+    # Auxiliary memory as a solution to poor class and interface design
+    memory = init_memory()
 
-# Parameters that has been declared
-memory.parameters = {}
+    assert tree_com_lang[0] == 'SPEC_FILE'
 
-# To count how many variables has been declared
-memory.variable_counter = 0
+    # <DEFINITION> Node: tree_com_lang[1] == ('DEF', t[1])
+    _, defs = tree_com_lang[1]
+    signal_variables, prob_signal_variables, parameters = translate_defs(defs)
 
-# To map variable names into variable 'x<NUMBER' format
-memory.variables = {}
+    # TODO: Todas las prop de prop_list usan todos los parametros de parameters?
+    #  -> Se pueden crear ficheros temporales "personalizados" por propiedad.
+    #  Es decir, se crearia un fichero temporal de parametros con un subconjunto de parametros del conjuto inicial
+    # Save parameters into temporary file and save record
+    param_file_name = create_params_file(memory)
+    create_params(memory, param_file_name, parameters)
 
-# Lista de propiedades
-memory.propiedades = {}
+    # <PROP_LIST>
+    # tree_com_lang[2] == ('PROP_LIST', t[2])
+    _, prop_list = tree_com_lang[2]
+    # TODO: make "translate_prop_list" return the list of properties "prop_list" in new format ("new_prop_list")
+    # Warning: cuidado con propiedades anidadas! E.g.:
+    # prop_1 := (s1 > 0)
+    # prop_2 := F prop_1
+    new_prop_list = translate_prop_list(memory, prop_list)
+
+    # TODO: Create one file per property?, Or use a single file for storing all the properties?
+    #  I prefer the first option. --> @Andres: please, manage this issue.
+    prop_file_name = create_prop_file()
+    create_prop(memory, prop_file_name, new_prop_list)
+
+    # <EVAL_LIST>
+    # cpn_tree[3] == ('EVAL_LIST', t[3])
+    _, eval_list = tree_com_lang[3]
+    translate_eval_list(eval_list)
+
+    # TODO:
+    #  1) desenrollar las propiedades anidadas y
+    #  2) recuperar los enlaces a las rutas temporales de los ficheros de prop y param correspondientes
+    #  --> devolver una estructura de datos tipo diccionario como resultado de translate_eval_list?
+
+
+def init_memory():
+    # Memoria
+    memory = {}
+
+    # Parameters that has been declared
+    memory.parameters = {}
+
+    # To count how many variables has been declared
+    memory.components_counter = 0
+
+    # To map components (signals) names into variable 'x<NUMBER' format
+    memory.components = {}
+
+    # Properties list
+    memory.properties = {}
+
+    # Keep the name of the file of params that has to be return
+    memory.param_file_name = None
+
+    # Indicates is the actual signal is probabilistic or not
+    memory.is_probsignal = False
+
+    return memory
 
 
 def translate_param_list(memory, tree):
@@ -168,7 +223,7 @@ def basic_translate(tree):
     if isinstance(tree, list):
         if tree[0] in ["AND", "OR", "NOT", "IMPLY", "LEQ", "LESS", "GEQ", "GREATER", "NEQ", "PLUS", "MINUS", "TIMES",
                        "DIVIDE"]:
-            return translate_function(memory, tree)
+            return translate_function(tree)
         elif tree[0] == "ID":
             return tree[1]
         elif tree[0] == "NUMBER":
@@ -183,177 +238,17 @@ def basic_translate(tree):
         return str(tree)
 
 
-'''
-def recursive(stle2_array):
-    if stle2_array[0] == "PARAM_LIST":
-        pass
-    elif stle2_array[0] == "SIGNAL_LIST":
-        pass
-    elif stle2_array[0] == "PROBSIGNAL_LIST":
-        pass
-    elif stle2_array[0] == "ID_LIST":
-        pass
-    elif stle2_array[0] == "ID":
-        pass
-    elif stle2_array[0] == "PARAM_DEF":
-        pass
-    elif stle2_array[0] == "PARAM_LIST":
-        createParams(stle2_array[1])
-        return ""
-    elif stle2_array[0] == "SIGNAL_DEF":
-        pass
-    elif stle2_array[0] == "PROBSIGNAL_LIST":
-        pass
-    elif stle2_array[0] == "EVAL_LIST":
-        pass
-    elif stle2_array[0] == "EVAL_EXPR":
-        pass
-    elif stle2_array[0] == "INTVL_LIST":
-        pass
-    elif stle2_array[0] == "NUMBER_ID":
-        pass
-    elif stle2_array[0] == "INTVL":
-        pass
-    elif stle2_array[0] == "DEF":
-        for elem in stle2_array[1]:
-            return " ".join(map(translate, elem))
-    elif stle2_array[0] == "PROBSIGNAL_DEF":
-        pass
-    elif stle2_array[0] == "DEFINITIONS":
-        for elem in stle2_array[1]:
-            return " ".join(map(translate, elem))
-    elif stle2_array[0] == "SPEC_FILE":
-        for elem in stle2_array[1]:
-            return " ".join(map(translate, elem))
-    elif stle2_array[0] == "PROP_LIST":
-        pass
-    elif stle2_array[0] == "PROP":
-        pass
-    elif stle2_array[0] == "PHI":
-        pass
-    elif stle2_array[0] == "PSI":
-        pass
-    elif stle2_array[0] == "SIG":
-        pass
-    elif stle2_array[0] == "FUNC":
-        pass
-    elif stle2_array[0] == "NOT":
-        pass
-    elif stle2_array[0] == "PROB":
-        pass
-    elif stle2_array[0] == "BIN_BOOL_OP":
-        pass
-    elif stle2_array[0] == "MIN":
-        pass
-    elif stle2_array[0] == "MAX":
-        pass
-    elif stle2_array[0] == "INT":
-        pass
-    elif stle2_array[0] == "DER":
-        pass
-    elif stle2_array[0] == "BIN_COND":
-        pass
-    elif stle2_array[0] == "AND":
-        pass
-    elif stle2_array[0] == "OR":
-        pass
-    elif stle2_array[0] == "IMPLY":
-        pass
-    elif stle2_array[0] == "LEQ":
-        pass
-    elif stle2_array[0] == "LESS":
-        pass
-    elif stle2_array[0] == "GEQ":
-        pass
-    elif stle2_array[0] == "GREATER":
-        pass
-    elif stle2_array[0] == "NEQ":
-        pass
-    elif stle2_array[0] == "BIN_OP":
-        pass
-    elif stle2_array[0] == "PLUS":
-        pass
-    elif stle2_array[0] == "MINUS":
-        pass
-    elif stle2_array[0] == "TIMES":
-        pass
-    elif stle2_array[0] == "DIVIDE":
-        pass
-    elif stle2_array[0] == "":
-        pass
-    elif stle2_array[0] == "":
-        pass
-    elif stle2_array[0] == "":
-        pass
-
-    else:
-        pass
-    if stle2_array[0] == "":
-        for elem in stle2_array:
-            if elem[0] == "INTVL":
-                return elem[1]
-            else:
-                return 0
-'''
-
-
-# <SPEC_FILE> definition
-# <SPEC_FILE> ::= <DEFINITIONS> <PROP_LIST> <EVAL_LIST>
-# STLCommand
-def translate(tree_com_lang):
-    assert tree_com_lang[0] == 'SPEC_FILE'
-    # <DEFINITIONS>
-    # tree_com_lang[1] == ('DEF', t[1])
-    _, defs = tree_com_lang[1]
-    signal_variables, prob_signal_variables, parameters = translate_defs(defs)
-
-    # TODO: Todas las prop de prop_list usan todos los parametros de parameters?
-    #  -> Se pueden crear ficheros temporales "personalizados" por propiedad.
-    #  Es decir, se crearia un fichero temporal de parametros con un subconjunto de parametros del conjuto inicial
-    # Save parameters into temporary file and save record
-    param_file_name = create_params_file(memory)
-    create_params(memory, param_file_name, parameters)
-
-    # <PROP_LIST>
-    # tree_com_lang[2] == ('PROP_LIST', t[2])
-    _, prop_list = tree_com_lang[2]
-    # TODO: make "translate_prop_list" return the list of properties "prop_list" in new format ("new_prop_list")
-    # Warning: cuidado con propiedades anidadas! E.g.:
-    # prop_1 := (s1 > 0)
-    # prop_2 := F prop_1
-    new_prop_list = translate_prop_list(memory, prop_list)
-
-    # TODO: Create one file per property?, Or use a single file for storing all the properties?
-    #  I prefer the first option. --> @Andres: please, manage this issue.
-    prop_file_name = create_prop_file()
-    create_prop(memory, prop_file_name, new_prop_list)
-
-    # <EVAL_LIST>
-    # cpn_tree[3] == ('EVAL_LIST', t[3])
-    _, eval_list = tree_com_lang[3]
-    translate_eval_list(eval_list)
-
-    # TODO:
-    #  1) desenrollar las propiedades anidadas y
-    #  2) recuperar los enlaces a las rutas temporales de los ficheros de prop y param correspondientes
-    #  --> devolver una estructura de datos tipo diccionario como resultado de translate_eval_list?
-
-
-
-# <DEF> ::= <PARAM_DEF> | <SIGNAL_DEF> | <PROBSIGNAL_DEF>
-# <DEFINITIONS> ::= <DEF> | <DEF> <DEFINITIONS>
-# <PARAM_DEF> ::= <LET> <PARAM> <PARAM_LIST> <SEMICOLON>
-# <SIGNAL_DEF> ::= <LET> <SIGNAL> <SIGNAL_LIST> <SEMICOLON>
-# <PROBSIGNAL_DEF> : <LET> <PROBABILISTIC> <SIGNAL> <PROBSIGNAL_LIST> <SEMICOLON>
-# <PARAM_LIST> ::= <ID_LIST>
-# <SIGNAL_LIST> ::= <ID_LIST>
-# <PROBSIGNAL_LIST> ::= <ID_LIST>
-# <ID_LIST> ::= ID | ID COMMA ID_LIST
-
-memory.param_file_name = None
-memory.is_probsignal = False
-memory.component_number = 0
-memory.component_map = {}
+# Preocondition of translate_defs(defs):
+# defs are defined by:
+# -- <DEF> ::= <PARAM_DEF> | <SIGNAL_DEF> | <PROBSIGNAL_DEF>
+# -- <DEFINITIONS> ::= <DEF> | <DEF> <DEFINITIONS>
+# -- <PARAM_DEF> ::= <LET> <PARAM> <PARAM_LIST> <SEMICOLON>
+# -- <SIGNAL_DEF> ::= <LET> <SIGNAL> <SIGNAL_LIST> <SEMICOLON>
+# -- <PROBSIGNAL_DEF> : <LET> <PROBABILISTIC> <SIGNAL> <PROBSIGNAL_LIST> <SEMICOLON>
+# -- <PARAM_LIST> ::= <ID_LIST>
+# -- <SIGNAL_LIST> ::= <ID_LIST>
+# -- <PROBSIGNAL_LIST> ::= <ID_LIST>
+# -- <ID_LIST> ::= ID | ID COMMA ID_LIST
 
 def translate_defs(defs):
     # Signal components
@@ -364,7 +259,8 @@ def translate_defs(defs):
 
     # Parameters that have been declared
     parameters = []
-    # defs == (('SIGNAL_LIST', [...]), ('PROBSIGNAL_LIST', [...]), ('PARAM_LIST', [...]))
+
+    # <DEFINITIONS> == (('SIGNAL_LIST', [...]), ('PROBSIGNAL_LIST', [...]), ('PARAM_LIST', [...]))
     for (keyword, signal_or_param_list) in defs:
         if keyword == 'SIGNAL_LIST':
             # signal_variables == ["s1", "s2", ...]
@@ -378,6 +274,7 @@ def translate_defs(defs):
 
     # TODO: Check that signal_variables \intersection prob_signal_variables \intersection parameters == 0
     #  --> Identifiers must be different
+    # It is checked in the Parser.
     return signal_variables, prob_signal_variables, parameters
 
 def create_params_file(self):
@@ -402,39 +299,6 @@ def create_params(memory):
                 f.write(f" {param.upper_limit}")
             f.write(f"\n")
 
-memory.wrappers = [
-    'BIN_BOOL_OP',
-    'PROBSIGNAL_LIST',
-    'SIGNAL_LIST',
-    'PARAM_LIST',
-    'DEFINITIONS',
-    'PROP_LIST',
-    'EVAL_LIST'
-]
-
-memory.indicators = [
-    'PSI',
-    'FUNC',
-    'SPEC_FILE',
-    'INTVL',
-    'EVAL_EXPR',
-    'PHI',
-]
-
-
-def remove_wrappers(memory, tree):
-    if isinstance(tree, (list, tuple)):
-        for indicator in memory.indicators:
-            if tree[0] == indicator:
-                tree.pop(0)
-                break
-        for wrapper in memory.wrappers:
-            if tree[0] == wrapper:
-                tree = tree[1]
-                break
-        if isinstance(tree, (list, tuple)):
-            for node in tree:
-                remove_wrappers(node)
 
 
 def translate_prop_list(memory, prop_list):
@@ -451,6 +315,7 @@ def translate_prop_list(memory, prop_list):
             propiedad = translate_phi(memory, prop[2][1])
         memory.propiedades.pop(memory.propiedades, prop[1], propiedad)
 
+# Information required in translate_phi(memory, phi):
 '''
 <PHI> : <SIG>
         | <FUNC>
@@ -465,9 +330,11 @@ def translate_prop_list(memory, prop_list):
         | <ON> <INTVL> <PSI>
         | <LPAREN> <PHI> <RPAREN>
         | <PHI> <UNTIL> <PHI>
+<PSI> : <MIN> <PHI>
+            | <MAX> <PHI>
+            | <INT> <PHI>
+            | <DER> <PHI>
 '''
-
-
 def translate_phi(memory, phi):
     if phi[1][0] == "SIG":
         return phi[1]
@@ -491,14 +358,6 @@ def translate_phi(memory, phi):
         return generate_on(phi)
 
 
-'''
-<PSI> : <MIN> <PHI>
-            | <MAX> <PHI>
-            | <INT> <PHI>
-            | <DER> <PHI>
-'''
-
-
 def create_prop_file():
     stl_prop = tempfile.NamedTemporaryFile(delete=False)
     stl_prop_file = stl_prop.name
@@ -516,6 +375,7 @@ def create_prop(prop_file_name, prop_list):
         for prop in prop_list:
             # Escribir cada parámetro en una línea diferente
             f.write(f"{prop}\n")
+
 
 
 def translate_bool_op(bool_op):
@@ -645,3 +505,38 @@ def generate_u(memory, tree_com_lang):
                                           generate_property(tree_com_lang),
                                           generate_property(tree_com_lang))
     return sol
+
+''' NOT USED
+wrappers = [
+    'BIN_BOOL_OP',
+    'PROBSIGNAL_LIST',
+    'SIGNAL_LIST',
+    'PARAM_LIST',
+    'DEFINITIONS',
+    'PROP_LIST',
+    'EVAL_LIST'
+]
+
+indicators = [
+    'PSI',
+    'FUNC',
+    'SPEC_FILE',
+    'INTVL',
+    'EVAL_EXPR',
+    'PHI',
+]
+
+def remove_wrappers(memory, tree):
+    if isinstance(tree, (list, tuple)):
+        for indicator in memory.indicators:
+            if tree[0] == indicator:
+                tree.pop(0)
+                break
+        for wrapper in memory.wrappers:
+            if tree[0] == wrapper:
+                tree = tree[1]
+                break
+        if isinstance(tree, (list, tuple)):
+            for node in tree:
+                remove_wrappers(node)
+'''
