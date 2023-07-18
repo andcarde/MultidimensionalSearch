@@ -1,0 +1,3 @@
+
+[tmp_var1] ( - ( < x1 p1 ) 10 )
+[tmp_var2] ( Max ( F ( 0 8 ) [tmp_var1] ) )

@@ -1,0 +1,8 @@
+let param p1, p2;
+let signal s1;
+
+v1 ::= (s1 < p1) - 10;
+v2 ::= max (F [0, p2] s1);
+
+eval v1 with p1 in [1, 2]
+eval v2 with p2 in [0, inf]
