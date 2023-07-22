@@ -1,20 +1,23 @@
-import numpy
+import pytest
 from ParetoLib.CommandLanguage.Parser import parser
 from ParetoLib.CommandLanguage.Translation import translate
 
-class TestController :
+
+class TestController:
     tests = []
-    def addTest(self, entrada, function, salida) :
-        self.tests[1] = [entrada, function, salida]
-    def run(self) :
-        for i in numpy.size(self.tests) :
-            salidaReal = self. tests[i][1](self.tests[0])
-            print('Test nº' + i)
-            if self.tests[i][2] == salidaReal :
+
+    def add_test(self, my_input, function, output):
+        self.tests[1] = [my_input, function, output]
+
+    def run(self):
+        for i in range(len(self.tests)):
+            real_output = self. tests[i][1](self.tests[0])
+            print('Test nº' + str(i))
+            if self.tests[i][2] == real_output:
                 print(' passed')
-            else :
+            else:
                 print(' FAILED')
-                print('\n Obtained Output: ' + salidaReal)
+                print('\n Obtained Output: ' + real_output)
                 print('\n Waited Output: ' + self.tests[i][2])
                 print('\n Tests have been abort!')
                 break
@@ -49,39 +52,34 @@ interval2[1] = number3
 interval3 = []
 interval3[0] = number5
 interval3[1] = number6
+interval4 = (1, 2)
+interval5 = (5, 7)
 
 
 # Test U
+def test_u():
+    pass
+
+
 # Test F
+def test_f():
+    pass
+
+
 # Test G
-def test_g():
+@pytest.mark.parametrize('interval', [interval4, interval5])
+def test_parametric_g(interval):
+    a, b = interval
+
     # G [a,b] X
-    input = "G[1,4] x > 0"
-    input_tree = parser.parse(input)
+    my_input = 'G [{0},{1}] x > 0'.format(a, b)
+
     # input_tree == (G, (1, 4), (<, x, 0))
-    output_tree = translate(input_tree)
+    input_tree = parser.parse(my_input)
+
     # output_tree == "(G <INTERVAL> <FORMULA>)"
     # output_tree == "(G [1, 4] (< x 0))"
-    input_tree[0] = ["G"]
-    self.assertEqual(output_tree, "(G [1, 4] (< x 0))")
-    assert output_tree == "(G [1, 4] (< x 0))", "Mensaje de error"
-
-
-intvl1 = (1, 2)
-intvl2 = (5, 7)
-@pytest.mark.parametrize("intvl", [intvl1, intvl2])
-def test_g_parametrico(intvl):
-    # G [a,b] X
-    a, b = intvl
-    input = "G [{0},{1}] x > 0".format(a, b)
-    input_tree = parser.parse(input)
-    # input_tree == (G, (1, 4), (<, x, 0))
     output_tree = translate(input_tree)
-    # output_tree == "(G <INTERVAL> <FORMULA>)"
-    # output_tree == "(G [1, 4] (< x 0))"
+
     input_tree[0] = ["G"]
-    self.assertEqual(output_tree, "(G [1, 4] (< x 0))")
-    assert output_tree == "(G [1, 4] (< x 0))", "Mensaje de error"
-
-
-
+    assert output_tree == "(G [1, 4] (< x 0))", "The expected output do not correspond with the obtained."

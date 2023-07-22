@@ -195,7 +195,6 @@ def p_prop_list(t):
         t[0] = [t[1]] + t[2]
 
 
-# TODO Debo asegurarme que prob2, solo se evalue si ha sido definida
 def p_prop(t):
     '''
     PROP : ID ASSIGNMENT PHI SEMICOLON
