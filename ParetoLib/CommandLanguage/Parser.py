@@ -226,7 +226,7 @@ def p_phi(t):
         | LPAREN PHI RPAREN
         | PHI UNTIL PHI
     '''
-    # Case of ID, FUNC
+    # Case of SIG, FUNC
     if len(t) == 2:
         t[0] = ('PHI', t[1])
     # Case of NOT PHI, PROB PHI

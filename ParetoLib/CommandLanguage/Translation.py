@@ -2,100 +2,6 @@ import os
 import tempfile
 
 '''
-· Language STLE1 syntax
-
--- Extra, not treated
-[Omitted] <TERNARY> ::= ite <FUNCTION> <VALUE> <VALUE>
-[Omitted] <VALUE> ::= <NUMBER> | <VARIABLE>
-
-^ ::= <FORMULA>
-<FORMULA> ::= <VARIABLE> |
-              <NUMBER> |
-              <BOOLEAN> |
-              ( <FUNCTION> <FORMULA>* ) |
-              ( F <INTERVAL> <FORMULA> ) |
-              ( G <INTERVAL> <FORMULA> ) |
-              ( StlUntil <INTERVAL> <FORMULA> <FORMULA> ) |
-              ( On <INTERVAL> <AGGREGATE> ) |
-              ( Until <INTERVAL> <NUMBER> <AGGREGATE> <FORMULA> ) |
-              [Omitted] -- ( Until <INTERVAL> <NUMBER> ( Get <FORMULA> ) <FORMULA> ) | --
-              ( Lookup <NUMBER> <NUMBER> <FORMULA> )
-<VARIABLE> ::= x<INTEGER>
-<NUMBER> ::= <FLOAT_NUMBER> | inf | -inf
-<FLOAT_NUMBER> ::= \d*\.?\d+
-<BOOLEAN> ::= false | true
-<FUNCTION> ::= <ARITHMETIC> | <COMPARATION> | <LOGICAL_OP> | <BOOLEAN>
-<ARITHMETIC> ::= min | max | + | - | / | * | abs
-<COMPARATION> ::= < | <= | > | >=
-<LOGICAL_OP> ::= and |or | not | ->
-<INTERVAL> ::= ( <NUMBER> <NUMBER> )
-<AGGREGATE> ::= ( Min <FORMULA> ) | ( Max <FORMULA> )
-'''
-
-'''
-· Language STLE2 syntax
-^ ::= <SPEC_FILE>
-<SPEC_FILE> ::= <DEFINITIONS> <PROP_LIST> <EVAL_LIST>
-
-<DEFINITIONS> ::= <DEF> | <DEF> <DEFINITIONS>?
-<DEF> ::= <PARAM_DEF> | <SIGNAL_DEF> | <PROBSIGNAL_DEF>
-<PARAM_DEF> ::= <LET> <PARAM> <PARAM_LIST> <SEMICOLON>
-<PARAM_LIST> ::= <ID_LIST>
-<ID_LIST> ::= ID | ID COMMA ID_LIST
-<ID> ::= [TERMINAL]
-<SIGNAL_DEF> ::= <LET> <SIGNAL> <SIGNAL_LIST> <SEMICOLON>
-<SIGNAL_LIST> ::= <ID_LIST>
-<PROBSIGNAL_DEF> : <LET> <PROBABILISTIC> <SIGNAL> <PROBSIGNAL_LIST> <SEMICOLON>
-<PROBSIGNAL_LIST> ::= <ID_LIST>
-
-<PROP_LIST> : <PROP> | <PROP> [<PROP_LIST>]?
-<PROP> : <ID> <ASSIGNMENT> <PHI> <SEMICOLON> | <ID> <ASSIGNMENT> <PSI> <SEMICOLON>
-<PHI> : <SIG>
-        | <FUNC>
-        | <NOT> <PHI>
-        | <PROB> <PHI>
-        | <PHI> <BIN_BOOL_OP> <PHI>
-        | F <INTVL> <PHI>
-        | F <PHI>
-        | G <INTVL> <PHI>
-        | G <PHI>
-        | <PHI> <UNTIL> <INTVL> <PHI>
-        | <ON> <INTVL> <PSI>
-        | <LPAREN> <PHI> <RPAREN>
-        | <PHI> <UNTIL> <PHI>
-<SIG> : <ID>
-        | <CONSTANT_SIGNAL>
-        | <SIG> <BIN_OP> <SIG>
-        | <LPAREN> <SIG> <RPAREN>
-<CONSTANT_SIGNAL> : <NUMBER>
-<NUMBER> ::= [TERMINAL]
-<BIN_OP> : <PLUS>
-    | <MINUS>
-    | <TIMES>
-    | <DIVIDE>
-<FUNC> : <SIG> <BIN_COND> <SIG>
-<BIN_BOOL_OP> : <AND>
-        | <OR>
-        | <IMPLY>
-<BIN_COND> : <LEQ>
-    | <LESS>
-    | <GEQ>
-    | <GREATER>
-    | <NEQ>
-<INTVL> ::= <LBRACK> <NUMBER_ID> <COMMA> <NUMBER_ID> <RBRACK>
-<NUMBER_ID> ::= <NUMBER> | <ID>
-<PSI> : <MIN> <PHI>
-            | <MAX> <PHI>
-            | <INT> <PHI>
-            | <DER> <PHI>
-
-<EVAL_LIST> ::= <EVAL_EXPR> [<EVAL_LIST>]?
-<EVAL_EXPR> ::= <EVAL> <ID> <ON> <ID_LIST> <WITH> <INTVL_LIST>
-<INTVL_LIST> ::= <ID> <IN> <INTVL> [<COMMA> <INTVL_LIST>]?
-<NUMBER_ID> ::= <NUMBER> | <ID>
-'''
-
-'''
 Input:
     AST (tree of the STLE2 syntax analysis).
 Output:
@@ -119,37 +25,29 @@ def translate(tree_com_lang):
 
     # <DEFINITION> Node: tree_com_lang[1] == ('DEF', t[1])
     _, definitions = tree_com_lang[1]
-    signal_variables, prob_signal_variables, parameters = translate_definitions(definitions)
-
-    # TODO: Todas las prop de prop_list usan todos los parametros de parameters?
-    #  -> Se pueden crear ficheros temporales "personalizados" por propiedad.
-    #  Es decir, se crearia un fichero temporal de parámetros con un subconjunto de parametros del conjuto inicial
+    translate_definitions(memory, definitions)
 
     # <PROP_LIST>
     # tree_com_lang[2] == ('PROP_LIST', t[2])
     _, prop_list = tree_com_lang[2]
-    # TODO: make "translate_prop_list" return the list of properties "prop_list" in new format ("new_prop_list")
-    # Warning: cuidado con propiedades anidadas! E.g.:
-    # prop_1 := (s1 > 0)
-    # prop_2 := F prop_1
 
     prop_file_name = create_prop_file()
     create_prop(prop_file_name, memory.properties[len(memory.properties) - 1])
 
     # <EVAL_LIST>
-    # cpn_tree[3] == ('EVAL_LIST', t[3])
+    # tree_com_lang[3] == ('EVAL_LIST', t[3])
     _, eval_list = tree_com_lang[3]
     translate_eval_list(memory, eval_list)
 
-    # TODO:
-    #  1) desenrollar las propiedades anidadas y
-    #  2) recuperar los enlaces a las rutas temporales de los ficheros de prop y param correspondientes
     return translations
 
 
 def init_memory(translations):
     class Memory:
         def __init__(self):
+            # Signal variables (probabilistic and common)
+            self.signal_variables = {}
+
             # Parameters that has been declared
             self.parameters = {}
 
@@ -245,7 +143,7 @@ def basic_translate(tree):
 # -- <PROBSIGNAL_LIST> ::= <ID_LIST>
 # -- <ID_LIST> ::= ID | ID COMMA ID_LIST
 
-def translate_definitions(definitions):
+def translate_definitions(memory, definitions):
     # Signal components
     signal_variables = []
 
@@ -267,7 +165,12 @@ def translate_definitions(definitions):
             # parameters == ["s1", "s2", ...]
             parameters = signal_or_param_list
 
-    return signal_variables, prob_signal_variables, parameters
+    memory.signal_variables = signal_variables
+    memory.signal_variables = prob_signal_variables
+    i = 0
+    for parameter in parameters:
+        memory.parameters.push(parameter, 'x'.join(str(i)))
+        i += 1
 
 
 def create_file():
@@ -293,19 +196,10 @@ def write_property(file_name, my_property):
         file.write(my_property + '\n')
 
 
-# TODO: ¿formula?
 def translate_prop_list(memory, prop_list):
     for prop in prop_list:
         memory.actual_property_param = []
-        # Translate prop into STLe1 format
-        my_id, formula = generate_property(memory, prop)
-
-        if prop[2][0] == "PSI":
-            my_property = translate_psi(memory, prop[2][1])
-        else:
-            my_property = translate_phi(memory, prop[2][1])
-
-        memory.properties[my_id] = my_property
+        formula = generate_property(memory, prop)
 
         param_file_name = create_file()
         # Each property will be stored in a 'temporary.stl' file STL 1.0 format
@@ -313,7 +207,41 @@ def translate_prop_list(memory, prop_list):
         memory.translations.push([param_file_name, stl_prop_file])
 
         write_params(param_file_name, memory.actual_property_param)
-        write_property(stl_prop_file, my_property)
+        write_property(stl_prop_file, formula)
+
+
+# Input: treeSTLE (tuple)
+#     (<VARIABLE>, )  |
+#     (<NUMBER>, )    |
+#     (<BOOLEAN>, )   |
+#     (<FUNCTION> <FORMULA>*)   |
+#     (F, <INTERVAL>, <FORMULA>)  |
+#     (G, <INTERVAL>, <FORMULA>)"  |
+#     (UNTIL, <INTERVAL>, <FORMULA>, <FORMULA>)
+
+# Output: (str)
+# <FORMULA> ::=
+#     <VARIABLE>  |
+#     <NUMBER>    |
+#     <BOOLEAN>   |
+#     (<FUNCTION> <FORMULA>*)   |
+#     (F <INTERVAL> <FORMULA>)  |
+#     (G <INTERVAL> <FORMULA>)  |
+#     (StlUntil <INTERVAL> <FORMULA> <FORMULA>)
+
+
+def generate_property(memory, prop):
+    # prop = ('PROP', ID, PHI/PSI)
+    _, prop_id, phi_or_psi = prop
+
+    # Translate prop into STLe1 format
+    if phi_or_psi[0] == "PSI":
+        formula = translate_psi(memory, prop[2])
+    else:
+        formula = translate_phi(memory, prop[2])
+
+    memory.properties[prop_id] = formula
+    return formula
 
 
 # Information required in translate_phi(memory, phi):
@@ -335,28 +263,42 @@ def translate_prop_list(memory, prop_list):
 '''
 
 
-def translate_phi(memory, phi):
-    if phi[1][0] == "SIG":
-        return phi[1]
-    elif phi[1][0] == "ID":
-        return phi[1]
-    elif phi[1][0] == "FUNC":
-        return translate_function(phi[1])
-    elif phi[1][0] == "NOT":
-        return "not".join(translate_phi(memory, phi[2]))
-    elif phi[1][0] == "PROB":
-        return "prob".join(translate_phi(memory, phi[2]))
-    elif phi[1][0] == "BIN_BOOL_OP":
-        return "(" + translate_bool_op(phi[1]).join(translate_phi(memory, phi[2])) \
-            .join(translate_phi(memory, phi[3])) + ")"
-    elif phi[1][0] == "F":
-        return generate_f(memory, phi)
-    elif phi[1][0] == "G":
-        return generate_g(memory, phi)
-    elif phi[1][0] == "UNTIL":
-        return generate_u(memory, phi)
-    elif phi[1][0] == "ON":
-        return generate_on(memory, phi)
+def translate_phi(memory, tree_com_lang):
+    var_type = str(tree_com_lang[0]).lower()
+    body = tree_com_lang[1]
+    if var_type == 'variable':
+        formula = generate_variable(memory, body)
+    elif var_type == 'function':
+        formula = generate_function(memory, body)
+    elif var_type == 'sig':
+        formula = tree_com_lang[1]
+    elif var_type == "id":
+        my_id = tree_com_lang[1]
+        formula = memory.properties[my_id]
+    elif var_type == 'func':
+        formula = translate_function(tree_com_lang[1])
+    elif var_type == 'not':
+        formula = "not".join(translate_phi(memory, tree_com_lang[2]))
+    elif var_type == 'prob':
+        formula = "prob".join(translate_phi(memory, tree_com_lang[2]))
+    elif var_type == 'bin_bool_op':
+        formula = "(" + translate_bool_op(tree_com_lang[1]).join(translate_phi(memory, tree_com_lang[2])) \
+            .join(translate_phi(memory, tree_com_lang[3])) + ")"
+    elif var_type == 'number':
+        formula = str(body)
+    elif var_type == 'boolean':
+        formula = generate_boolean(body)
+    elif var_type == 'f':
+        formula = generate_f(memory, body)
+    elif var_type == 'g':
+        formula = generate_g(memory, body)
+    elif var_type == 'until':
+        formula = generate_u(memory, body)
+    elif var_type == 'on':
+        formula = generate_on(memory, body)
+    else:
+        formula = None
+    return formula
 
 
 def create_prop_file():
@@ -445,53 +387,6 @@ def generate_function(memory, tree_com_lang):
     if tree_com_lang[0] == 'BIN_BOOL_OP' or tree_com_lang[0] == 'BIN_COND':
         sol = '({0})'.format(generate_property(memory, prop_i) for prop_i in tree_com_lang[1:])
     return sol
-
-
-# Input: treeSTLE (tuple)
-#     (<VARIABLE>, )  |
-#     (<NUMBER>, )    |
-#     (<BOOLEAN>, )   |
-#     (<FUNCTION> <FORMULA>*)   |
-#     (F, <INTERVAL>, <FORMULA>)  |
-#     (G, <INTERVAL>, <FORMULA>)"  |
-#     (UNTIL, <INTERVAL>, <FORMULA>, <FORMULA>)
-
-# Output: (str)
-# <FORMULA> ::=
-#     <VARIABLE>  |
-#     <NUMBER>    |
-#     <BOOLEAN>   |
-#     (<FUNCTION> <FORMULA>*)   |
-#     (F <INTERVAL> <FORMULA>)  |
-#     (G <INTERVAL> <FORMULA>)  |
-#     (StlUntil <INTERVAL> <FORMULA> <FORMULA>)
-
-
-def generate_property(memory, prop):
-    # prop = ('PROP', ID, PHI/PSI)
-    _, id_prop, phi_or_psi = prop
-    return id_prop, transform_formula(memory, phi_or_psi)
-
-
-def transform_formula(memory, tree_com_lang):
-    var_type = str(tree_com_lang[0]).lower()
-    if var_type == 'variable':
-        formula = generate_variable(memory, tree_com_lang)
-    elif var_type == 'number':
-        formula = str(tree_com_lang)
-    elif var_type == 'boolean':
-        formula = generate_boolean(tree_com_lang)
-    elif var_type == 'function':
-        formula = generate_function(memory, tree_com_lang)
-    elif var_type == 'f':
-        formula = generate_f(memory, tree_com_lang)
-    elif var_type == 'g':
-        formula = generate_g(memory, tree_com_lang)
-    elif var_type == 'u':
-        formula = generate_u(memory, tree_com_lang)
-    else:
-        formula = None
-    return formula
 
 
 # (F <INTERVAL> <FORMULA>)
