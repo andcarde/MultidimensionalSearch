@@ -18,6 +18,7 @@
               [Omitted] -- ( Until <INTERVAL> <NUMBER> ( Get <FORMULA> ) <FORMULA> ) | --
               ( Lookup <NUMBER> <NUMBER> <FORMULA> )
 <VARIABLE> ::= x<INTEGER>
+<INTEGER> ::= \d+
 <NUMBER> ::= <FLOAT_NUMBER> | inf | -inf
 <FLOAT_NUMBER> ::= \d*\.?\d+
 <BOOLEAN> ::= false | true

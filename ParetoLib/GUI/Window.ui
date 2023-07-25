@@ -22,9 +22,135 @@
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
-     <layout class="QVBoxLayout" name="left_verticalLayout">
-      <item alignment="Qt::AlignLeft|Qt::AlignTop">
+     <widget class="QGroupBox" name="groupBox_2">
+      <property name="maximumSize">
+       <size>
+        <width>1000</width>
+        <height>900</height>
+       </size>
+      </property>
+      <property name="title">
+       <string/>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+      </property>
+      <widget class="QGroupBox" name="formula_groupBox">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="geometry">
+        <rect>
+         <x>110</x>
+         <y>490</y>
+         <width>20</width>
+         <height>808</height>
+        </rect>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>500</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="title">
+        <string>Formula</string>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_5">
+        <property name="leftMargin">
+         <number>6</number>
+        </property>
+        <item>
+         <widget class="QPlainTextEdit" name="formula_textEdit">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="readOnly">
+           <bool>false</bool>
+          </property>
+          <property name="plainText">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <item>
+           <widget class="QPushButton" name="open_spec_file_button">
+            <property name="text">
+             <string>Open</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pareto_execution_button">
+            <property name="text">
+             <string>Run</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="guardarFormulaButton">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>200</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Guardar</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QGroupBox" name="groupBox">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>351</width>
+         <height>821</height>
+        </rect>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>500</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="title">
+        <string/>
+       </property>
        <widget class="QGroupBox" name="input_files_groupBox">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>351</width>
+          <height>321</height>
+         </rect>
+        </property>
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
           <horstretch>0</horstretch>
@@ -33,108 +159,26 @@
         </property>
         <property name="maximumSize">
          <size>
-          <width>16777215</width>
+          <width>400</width>
           <height>480</height>
          </size>
         </property>
         <property name="title">
-         <string>Input Files</string>
+         <string>Input signal</string>
         </property>
         <layout class="QFormLayout" name="formLayout">
-         <item row="0" column="0">
-          <widget class="QLabel" name="spec_label">
-           <property name="text">
-            <string>STL specification</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="0">
-          <widget class="QLabel" name="signal_label">
-           <property name="text">
-            <string>Input signal</string>
-           </property>
-          </widget>
-         </item>
-         <item row="6" column="0">
-          <widget class="QLabel" name="param_label">
-           <property name="text">
-            <string>Parameters</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QPushButton" name="open_spec_file_button">
-           <property name="text">
-            <string>Open</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="1">
+         <item row="1" column="1">
           <widget class="QPushButton" name="open_signal_file_button">
-           <property name="text">
-            <string>Open</string>
-           </property>
-          </widget>
-         </item>
-         <item row="6" column="1">
-          <widget class="QPushButton" name="open_param_file_button">
-           <property name="text">
-            <string>Open</string>
-           </property>
-          </widget>
-         </item>
-         <item row="8" column="0" colspan="2">
-          <widget class="QPlainTextEdit" name="param_filepath_textbox">
-           <property name="acceptDrops">
-            <bool>true</bool>
-           </property>
            <property name="layoutDirection">
             <enum>Qt::LeftToRight</enum>
            </property>
-           <property name="lineWrapMode">
-            <enum>QPlainTextEdit::WidgetWidth</enum>
-           </property>
-           <property name="readOnly">
-            <bool>true</bool>
-           </property>
-           <property name="plainText">
-            <string/>
-           </property>
-           <property name="backgroundVisible">
-            <bool>false</bool>
+           <property name="text">
+            <string>Open</string>
            </property>
           </widget>
          </item>
-         <item row="5" column="0" colspan="2">
+         <item row="3" column="0" colspan="2">
           <widget class="QPlainTextEdit" name="signal_filepath_textbox">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="acceptDrops">
-            <bool>true</bool>
-           </property>
-           <property name="layoutDirection">
-            <enum>Qt::LeftToRight</enum>
-           </property>
-           <property name="lineWrapMode">
-            <enum>QPlainTextEdit::WidgetWidth</enum>
-           </property>
-           <property name="readOnly">
-            <bool>true</bool>
-           </property>
-           <property name="plainText">
-            <string/>
-           </property>
-           <property name="backgroundVisible">
-            <bool>false</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="0" colspan="2">
-          <widget class="QPlainTextEdit" name="spec_filepath_textbox">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
              <horstretch>0</horstretch>
@@ -163,54 +207,26 @@
          </item>
         </layout>
        </widget>
-      </item>
-      <item alignment="Qt::AlignLeft|Qt::AlignVCenter">
-       <widget class="QTableWidget" name="param_tableWidget">
+       <widget class="QGroupBox" name="options_groupBox">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>320</y>
+          <width>351</width>
+          <height>341</height>
+         </rect>
+        </property>
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+         <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
         <property name="maximumSize">
          <size>
-          <width>16777215</width>
+          <width>500</width>
           <height>16777215</height>
          </size>
-        </property>
-        <property name="sizeAdjustPolicy">
-         <enum>QAbstractScrollArea::AdjustToContents</enum>
-        </property>
-        <attribute name="horizontalHeaderMinimumSectionSize">
-         <number>15</number>
-        </attribute>
-        <attribute name="horizontalHeaderStretchLastSection">
-         <bool>false</bool>
-        </attribute>
-        <column>
-         <property name="text">
-          <string>param</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
-          <string>min</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
-          <string>max</string>
-         </property>
-        </column>
-       </widget>
-      </item>
-      <item>
-       <widget class="QGroupBox" name="options_groupBox">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
         </property>
         <property name="title">
          <string>Options</string>
@@ -219,69 +235,6 @@
          <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
         </property>
         <layout class="QGridLayout" name="gridLayout">
-         <item row="1" column="1" alignment="Qt::AlignRight">
-          <widget class="QComboBox" name="mining_comboBox">
-           <property name="currentText">
-            <string>BBMJ19</string>
-           </property>
-           <item>
-            <property name="text">
-             <string>BBMJ19</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>BDMJ20</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>BMNN22</string>
-            </property>
-           </item>
-          </widget>
-         </item>
-         <item row="5" column="0" alignment="Qt::AlignLeft">
-          <widget class="QComboBox" name="param_stl_selection_comboBox">
-           <item>
-            <property name="text">
-             <string>No</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Yes</string>
-            </property>
-           </item>
-          </widget>
-         </item>
-         <item row="6" column="0">
-          <widget class="QLabel" name="mining_label_2">
-           <property name="text">
-            <string>Opt level</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="1">
-          <widget class="QLabel" name="type_search_label">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>Type Search</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="0" alignment="Qt::AlignLeft">
-          <widget class="QLabel" name="param_stl_selection_label">
-           <property name="text">
-            <string>Parametric STL</string>
-           </property>
-          </widget>
-         </item>
          <item row="4" column="1" rowspan="2">
           <widget class="QComboBox" name="search_type_comboBox">
            <property name="sizePolicy">
@@ -311,10 +264,67 @@
            </item>
           </widget>
          </item>
+         <item row="1" column="1" alignment="Qt::AlignRight">
+          <widget class="QComboBox" name="mining_comboBox">
+           <property name="currentText">
+            <string>BBMJ19</string>
+           </property>
+           <item>
+            <property name="text">
+             <string>BBMJ19</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>BDMJ20</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>BMNN22</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="interpolation_label">
+           <property name="text">
+            <string>Interpolation</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0" alignment="Qt::AlignLeft">
+          <widget class="QLabel" name="param_stl_selection_label">
+           <property name="text">
+            <string>Parametric STL</string>
+           </property>
+          </widget>
+         </item>
          <item row="0" column="1">
           <widget class="QLabel" name="mining_label">
            <property name="text">
             <string>Mining method</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0" alignment="Qt::AlignLeft">
+          <widget class="QComboBox" name="interpolation_comboBox">
+           <item>
+            <property name="text">
+             <string>Constant</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Linear</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="6" column="0">
+          <widget class="QLabel" name="mining_label_2">
+           <property name="text">
+            <string>Opt level</string>
            </property>
           </widget>
          </item>
@@ -332,43 +342,57 @@
            </item>
           </widget>
          </item>
-         <item row="1" column="0" alignment="Qt::AlignLeft">
-          <widget class="QComboBox" name="interpolation_comboBox">
-           <item>
-            <property name="text">
-             <string>Constant</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Linear</string>
-            </property>
-           </item>
+         <item row="3" column="1">
+          <widget class="QLabel" name="type_search_label">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Type Search</string>
+           </property>
           </widget>
          </item>
-         <item row="0" column="0">
-          <widget class="QLabel" name="interpolation_label">
-           <property name="text">
-            <string>Interpolation</string>
-           </property>
+         <item row="5" column="0">
+          <widget class="QComboBox" name="param_stl_selection_comboBox">
+           <item>
+            <property name="text">
+             <string>No</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Yes</string>
+            </property>
+           </item>
           </widget>
          </item>
         </layout>
        </widget>
-      </item>
-      <item alignment="Qt::AlignRight|Qt::AlignBottom">
-       <widget class="QPushButton" name="pareto_execution_button">
-        <property name="text">
-         <string>Run</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item>
-     <layout class="QVBoxLayout" name="right_verticalLayout">
-      <item>
+      </widget>
+      <widget class="QGroupBox" name="groupBox_3">
+       <property name="geometry">
+        <rect>
+         <x>360</x>
+         <y>0</y>
+         <width>641</width>
+         <height>811</height>
+        </rect>
+       </property>
+       <property name="title">
+        <string/>
+       </property>
        <widget class="QGroupBox" name="signal_groupBox">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>651</width>
+          <height>401</height>
+         </rect>
+        </property>
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
           <horstretch>0</horstretch>
@@ -390,71 +414,101 @@
          </item>
         </layout>
        </widget>
-      </item>
-      <item>
-       <widget class="QGroupBox" name="formula_groupBox">
-        <property name="enabled">
-         <bool>true</bool>
+       <widget class="QPushButton" name="pushButton">
+        <property name="geometry">
+         <rect>
+          <x>440</x>
+          <y>660</y>
+          <width>121</width>
+          <height>33</height>
+         </rect>
         </property>
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
+        <property name="text">
+         <string>Check and Run</string>
         </property>
-        <property name="title">
-         <string>Formula</string>
-        </property>
-        <layout class="QVBoxLayout" name="verticalLayout_5">
-         <property name="leftMargin">
-          <number>6</number>
-         </property>
-         <item>
-          <widget class="QPlainTextEdit" name="formula_textEdit">
-           <property name="enabled">
-            <bool>true</bool>
-           </property>
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="readOnly">
-            <bool>false</bool>
-           </property>
-           <property name="plainText">
-            <string/>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_2">
-           <item>
-            <widget class="QPushButton" name="guardarFormulaButton">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>200</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>Guardar</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-        </layout>
        </widget>
-      </item>
-     </layout>
+       <widget class="QPushButton" name="pushButton_3">
+        <property name="geometry">
+         <rect>
+          <x>30</x>
+          <y>660</y>
+          <width>97</width>
+          <height>33</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Save</string>
+        </property>
+       </widget>
+       <widget class="QPlainTextEdit" name="plainTextEdit">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>720</y>
+          <width>621</width>
+          <height>81</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QPlainTextEdit" name="plainTextEdit_2">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>420</y>
+          <width>621</width>
+          <height>231</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="pushButton_2">
+        <property name="geometry">
+         <rect>
+          <x>160</x>
+          <y>660</y>
+          <width>97</width>
+          <height>33</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Check</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label">
+        <property name="geometry">
+         <rect>
+          <x>290</x>
+          <y>700</y>
+          <width>121</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Detected Errors</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_2">
+        <property name="geometry">
+         <rect>
+          <x>240</x>
+          <y>400</y>
+          <width>181</width>
+          <height>17</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Command Languaje STLE2</string>
+        </property>
+       </widget>
+       <zorder>signal_groupBox</zorder>
+       <zorder>plainTextEdit</zorder>
+       <zorder>plainTextEdit_2</zorder>
+       <zorder>pushButton_3</zorder>
+       <zorder>pushButton</zorder>
+       <zorder>pushButton_2</zorder>
+       <zorder>label</zorder>
+       <zorder>label_2</zorder>
+      </widget>
+     </widget>
     </item>
    </layout>
   </widget>
