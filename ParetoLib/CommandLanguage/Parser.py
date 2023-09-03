@@ -1,5 +1,5 @@
-from ply.yacc import yacc
 import os
+from ply.yacc import yacc
 import ParetoLib.CommandLanguage.Lexer as Lexer
 
 '''
@@ -7,14 +7,15 @@ In the intended language there are no precedence rules.
 However, if necessary, they will be included in the "precedence" array.
 
 precedence = (
+    ...
 )
 '''
 
-debug = True
-tokens = Lexer.tokens
+# Debug mode flag
+debug = False
 
-# dictionary of names
-id_dict = dict()
+# Variable needed for ply.yacc
+tokens = Lexer.tokens
 
 
 def p_param_list(t):
@@ -95,13 +96,28 @@ def p_eval_list(t):
 
 def p_eval_expr(t):
     '''
-    EVAL_EXPR : EVAL ID ON ID_LIST WITH INTVL_LIST
+    EVAL_EXPR : EVAL ID WITH EVAL_PARAM_LIST
     '''
     # Check that len([WITH INTVL_LIST]*) == len(PARAM_LIST)
     #                 ID-prop  signalList  INTVL_LIST
-    t[0] = ('EVAL_EXPR', t[2], t[4], t[6])
+    t[0] = ('EVAL_EXPR', t[2], t[4])
     if debug:
+        print('[Parser.py] [p_eval_expr(..)]')
         print('EVAL_EXPR: {0} \n'.format([i for i in t[0]]))
+
+
+def p_eval_param_list(t):
+    '''
+    EVAL_PARAM_LIST : ID IN INTVL
+            | ID IN INTVL COMMA EVAL_PARAM_LIST
+    '''
+    if len(t) == 4:
+        # (ID, INTVL)
+        t[0] = (t[1], t[3])
+    else:
+        # ((ID, INTVL), *EVAL_PARAM_LIST) where * is a pointer
+        t[0] = [t[1], t[3]]
+        t[0].extend(t[4][1:])
 
 
 def p_number_or_id(t):
@@ -146,13 +162,6 @@ def p_def(t):
     '''
     # DEF = PARAM_DEF | SIGNAL_DEF | PROBSIGNAL_DEF
     t[0] = t[1]
-    for i in t[0][1]:
-        if i in id_dict.keys():
-            print("Error: ID already defined!")
-        else:
-            # Insert type of ID
-            id_dict[i] = i
-            print("Inserted the ID: " + i)
 
 
 def p_definitions(t):
@@ -202,12 +211,6 @@ def p_prop(t):
     '''
     #       TYPE    ID    PHI/PSI
     t[0] = ['PROP', t[1], t[3]]
-    if t[1] in id_dict.keys():
-        print("Error: ID already defined!")
-    else:
-        # Insert type of ID
-        id_dict[t[1]] = t[1]
-        print("Inserted the ID: " + t[1])
 
 
 def p_phi(t):
@@ -342,5 +345,5 @@ def p_constant_signal(t):
 
 # Build the parser
 current_dir = os.path.dirname(__file__)
-tmpdirname = current_dir + "/tmp/"
-parser = yacc(start='SPEC_FILE', debugfile=tmpdirname + 'parser.out', write_tables=True)
+tmp_route_name = current_dir + "/tmp/"
+parser = yacc(start='SPEC_FILE', debugfile=tmp_route_name + 'parser.out', write_tables=True)

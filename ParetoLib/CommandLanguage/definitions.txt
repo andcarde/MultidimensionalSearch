@@ -14,7 +14,7 @@
               ( G <INTERVAL> <FORMULA> ) |
               ( StlUntil <INTERVAL> <FORMULA> <FORMULA> ) |
               ( On <INTERVAL> <AGGREGATE> ) |
-              ( Until <INTERVAL> <NUMBER> <AGGREGATE> <FORMULA> ) |
+              [Omitted] -- ( Until <INTERVAL> <NUMBER> <AGGREGATE> <FORMULA> ) |
               [Omitted] -- ( Until <INTERVAL> <NUMBER> ( Get <FORMULA> ) <FORMULA> ) | --
               ( Lookup <NUMBER> <NUMBER> <FORMULA> )
 <VARIABLE> ::= x<INTEGER>
@@ -86,6 +86,7 @@
             | <DER> <PHI>
 
 <EVAL_LIST> ::= <EVAL_EXPR> [<EVAL_LIST>]?
-<EVAL_EXPR> ::= <EVAL> <ID> <ON> <ID_LIST> <WITH> <INTVL_LIST>
+<EVAL_EXPR> ::= <EVAL> <ID> <WITH> <EVAL_PARAM_LIST>
+EVAL_PARAM_LIST :=
 <INTVL_LIST> ::= <ID> <IN> <INTVL> [<COMMA> <INTVL_LIST>]?
 <NUMBER_ID> ::= <NUMBER> | <ID>

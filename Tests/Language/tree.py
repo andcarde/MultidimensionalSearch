@@ -1,4 +1,3 @@
-
 """
 --- Tests / Language ---
 El modulo Tests/Language es un visualizador de árboles (estructuras de datos). Su utilidad en este proyecto es la de
@@ -15,6 +14,7 @@ class TreeNode:
         self.data = data
         # Lista para almacenar los nodos hijos
         self.children = []
+
     def to_string(self):
         string = self.data
         if len(self.children) > 0:

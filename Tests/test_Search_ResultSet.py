@@ -3,7 +3,6 @@ import os
 import tempfile as tf
 import unittest
 import pytest
-import copy
 
 from ParetoLib.Geometry.Rectangle import Rectangle
 
@@ -494,7 +493,8 @@ class ResultSetTestCase(unittest.TestCase):
         n = 10
         for r in self.rs_3D.get_points_yup(n):
             self.assertTrue(self.rs_3D.member_yup(r))
-            # self.assertTrue(self.rs_3D.member_yup(r), 'Point {0} not in Yup {1}, in Border? {2}'.format(str(r), str(self.rs_3D.yup), str(self.rs_3D.member_border(r))))
+            # self.assertTrue(self.rs_3D.member_yup(r), 'Point {0} not in Yup {1}, in Border? {2}'.format(str(r),
+            # str(self.rs_3D.yup), str(self.rs_3D.member_border(r))))
 
         for r in self.rs_3D.get_points_ylow(n):
             self.assertTrue(self.rs_3D.member_ylow(r))
@@ -659,7 +659,7 @@ class ResultSetTestCase(unittest.TestCase):
         # dH(X,Y) = max{d(X,Y), d(Y,X)}
         # In this case, d(rs_2, rs_1) = 0 and dH(X,Y) = d(rs_1, rs_2) because rs_2 is completely subsumed by rs_1
         dist, rs1_champion, rs2_champion = rs_1.select_champion([rs_2])
-        self.assertAlmostEqual(dist, math.sqrt(0.5**2 + 0.5**2))
+        self.assertAlmostEqual(dist, math.sqrt(0.5 ** 2 + 0.5 ** 2))
         # self.assertEqual(rs1_champion, (0.0, 0.875))
         # self.assertEqual(rs2_champion, (0.5, 1.375))
 
@@ -716,6 +716,7 @@ class ResultSetTestCase(unittest.TestCase):
         self.assertEqual(dist, 0.0)
         self.assertEqual(rs1_champion, None)
         self.assertEqual(rs2_champion, None)
+
 
 ################
 # ParResultSet #

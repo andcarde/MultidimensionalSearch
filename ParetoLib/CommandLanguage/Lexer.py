@@ -1,8 +1,6 @@
 import ply.lex as lex
 
-# En la columna izquierda aparece el texto y en la parte derecha la representación
-# interna en el parser.
-# Reserved words.
+# Reserved words: The text appears in the left column and the representation appears in the right.
 reserved = {'let': 'LET',
             'param': 'PARAM',
             'signal': 'SIGNAL',
@@ -23,18 +21,17 @@ reserved = {'let': 'LET',
             # Quantitative operators
             'Min': 'MIN',
             'Max': 'MAX',
-            # 'On': 'QON,',  # Be careful! ON also happens when 'eval prob1 on s1 ...'
             'Pr': 'PROB',
             'Der': 'DER',
             'Int': 'INT'}
 
 # All tokens must be named in advance.
 tokens = [
-    'ID', 'NUMBER', 'ASSIGNMENT',
-    'PLUS', 'MINUS', 'TIMES', 'DIVIDE', 'VAR',
-    'NEQ', 'LEQ', 'LESS', 'GEQ', 'GREATER',
-    'LPAREN', 'RPAREN', 'LBRACK', 'RBRACK', 'COMMA', 'SEMICOLON'
-] + list(reserved.values())
+             'ID', 'NUMBER', 'ASSIGNMENT',
+             'PLUS', 'MINUS', 'TIMES', 'DIVIDE', 'VAR',
+             'NEQ', 'LEQ', 'LESS', 'GEQ', 'GREATER',
+             'LPAREN', 'RPAREN', 'LBRACK', 'RBRACK', 'COMMA', 'SEMICOLON'
+         ] + list(reserved.values())
 
 # Ignored characters
 t_ignore = ' \t\n'
@@ -47,9 +44,6 @@ t_PLUS = r'\+'
 t_MINUS = r'-'
 t_TIMES = r'\*'
 t_DIVIDE = r'/'
-# Required for absolute value
-# t_VAR = r'\|'
-# t_ABS = r'\|.\|'
 
 t_ASSIGNMENT = r':='
 t_NEQ = r'<>'
@@ -62,10 +56,6 @@ t_LPAREN = r'\('
 t_RPAREN = r'\)'
 t_LBRACK = r'\['
 t_RBRACK = r'\]'
-
-# t_ID = r'[a-zA-Z_][a-zA-Z0-9_]*'
-# t_NUMBER = r'[0-9][.]?[0-9]*'
-# Alternative: r'[0-9]*[[.][0-9]*]?'
 
 
 # A regular expression rule with some action code
@@ -85,7 +75,7 @@ def t_NUMBER(t):
         t.value = 0.0
     return t
 
-# TODO Probar con FALSE (en mayúsculas)
+
 def t_BOOL(t):
     r'(?i)true|false'
     # (?i) = ignore case.

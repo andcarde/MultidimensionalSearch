@@ -19,6 +19,7 @@ from ParetoLib.Oracle.OracleSTLe import OracleSTLeLib
 from ParetoLib.Oracle.OracleEpsSTLe import OracleEpsSTLe
 from ParetoLib.Search.Search import SearchND_2, SearchIntersectionND_2, SearchND_2_BMNN22, EPS, DELTA, STEPS
 from ParetoLib.Search.ResultSet import ResultSet, champions_selection
+import ParetoLib.GUI.ApplicationService as AppService
 
 matplotlib.use('Qt5Agg')
 pd.set_option('display.float_format', lambda x: '%.7f' % x)  # For rounding purposes
@@ -93,12 +94,14 @@ class MplCanvas(FigureCanvasQTAgg):
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, *args, **kwargs):
         QMainWindow.__init__(self, *args, **kwargs)
+        self.is_parametric = None
         self.setupUi(self)
         # Connecting events and actions
-        self.open_spec_file_button.clicked.connect(self.read_spec_filepath)
         self.open_signal_file_button.clicked.connect(self.read_signal_filepath)
-        self.open_param_file_button.clicked.connect(self.read_param_filepath)
-        self.pareto_execution_button.clicked.connect(self.run_stle)
+        self.check_button.clicked.connect(AppService.check)
+        self.checkrun_button.clicked.connect(AppService.check_run)
+        self.load_button.clicked.connect(AppService.load)
+        self.save_button.clicked.connect(AppService.save)
         self.new_project_button.setShortcut("Ctrl+N")
         self.new_project_button.triggered.connect(self.create_project)
         self.save_project_button.setShortcut("Ctrl+S")
@@ -112,7 +115,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.search_type_comboBox.activated.connect(self.not_saved)
         self.opt_level_comboBox.activated.connect(self.not_saved)
         self.interpolation_comboBox.activated.connect(self.not_saved)
-        self.param_tableWidget.cellChanged.connect(self.not_saved)
 
         # Initialize empty Oracles:
         # - BBMJ19: requires 1 Oracle
@@ -126,9 +128,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.param_filepath = None
         # Solution
         self.solution = None
-        # Store the relative path where we're gonna store the projects in a variable
+        # Store the relative path where we're going to store the projects in a variable
         # This path is created having the PYTHONPATH variable set to the directory multidimensional_search, if your
-        # variable points to another direction you can change it
+        # variable points to another direction you can change itself
         # self.path_project = os.path.abspath('multidimensional_search/Projects')
         self.path_project = "./Projects"
         self.project_path = None
@@ -330,11 +332,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # Check if the directory where we are going to store the projects exists
         if not os.path.exists(self.path_project):
             # If not exists
-            # print("No existe el directorio")
+            # print("The directory does not exist")
             os.mkdir(self.path_project)
         elif not os.path.isdir(self.path_project):
             # If exists and is not a directory
-            # print("Existe pero no es un directorio")
+            # print("It exists, but it is not a directory")
             os.remove(self.path_project)
             os.mkdir(self.path_project)
 
@@ -419,7 +421,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                               ax=canvas.axes)
 
             ax.set(xlabel='Time')
-            # TODO: Allow users to select the value units (e.g., Kwh). Maybe, this tag can be extracted from the CSV header
+            # Allow users to select the value units (e.g., Kwh).
+            # Maybe, this tag can be extracted from the CSV header
             ax.set(ylabel='Value')
             canvas.figure.tight_layout(pad=0)
 
@@ -455,6 +458,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             interval = (float(min_val_text.text()), float(max_val_text.text()))
             intervals.append(interval)
         return intervals
+
+    def set_param_filepath(self, param_filepath):
+        self.is_parametric = param_filepath is not None
+        self.param_filepath = param_filepath
 
     def run_non_parametric_stle(self):
         # type: (_) -> (bool, dict)
@@ -575,8 +582,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def run_stle(self):
         # type: (_) -> None
         # Running STLEval
-        index = self.param_stl_selection_comboBox.currentIndex()
-        is_parametric = (index == 1)
+        is_parametric = self.is_parametric
         if not is_parametric:
             # Not parametric
             satisfied, bool_signal = self.run_non_parametric_stle()

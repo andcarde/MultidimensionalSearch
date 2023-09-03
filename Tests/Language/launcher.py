@@ -15,15 +15,12 @@ from tree import create_tree
 
 def get_file_path():
     class File(Enum):
-        STLE1Ex1 = "STLE1Ex1"
-        STLE1Ex2 = "STLE1Ex2"
-        STLE1Ex3 = "STLE1Ex3"
-        STLE3Ex1 = "STLE3Ex1"
-        STLE3Ex2 = "STLE1Ex2"
-        STLE3Ex3 = "STLE3Ex3"
+        Example1 = 'Example0_Tree'
+        Example2 = 'Example1.1_STLe1'
+        Example3 = 'Example1.2_STLe2'
 
     # Parámetros de configuración manual del test
-    file = File.STLE3Ex1
+    file = File.Example1
 
     import os
 

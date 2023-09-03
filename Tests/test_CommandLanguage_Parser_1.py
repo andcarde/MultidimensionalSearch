@@ -1,31 +1,26 @@
-import numpy
 import pytest
 from ParetoLib.CommandLanguage.Parser import parser
 
 
 class ParserTree:
-    @staticmethod
-    def build_son(text):
-        return ParserTree(text)
-
     def __init__(self, text):
         self.root = text[0]
-        if numpy.size(text) >= 1:
-            self.left = ParserTree.build_son(text[1])
-            if numpy.size(text) == 2:
-                self.right = ParserTree.build_son(text[2])
+        if len(text) >= 2:
+            self.left = ParserTree(text[1])
+            if len(text) == 3:
+                self.right = ParserTree(text[2])
 
 
 simple_expressions_inputs = [
     'let signal s1;',
     'let param p1;',
-    'let probabilistic signal s1'
+    'let probabilistic signal s1',
     'eval prob1 on s1',
-    '[9, 8]'
-    '[0,5]'
-    'with p1 in [0, 5]'
-    'F[0,t1]'
-    'prop1 = F[0,t1]'
+    '[9, 8]',
+    '[0,5]',
+    'with p1 in [0, 5]',
+    'F[0,t1]',
+    'prop1 := F[0,t1]'
 ]
 
 simple_expressions_outputs = [
@@ -37,7 +32,7 @@ simple_expressions_outputs = [
     ['with', ['in', 'p1', ['[]', ['9', '8']]]],
     ['with', ['in', 'p1', ['[]', ['9', '8']]]],
     ['F', ['[]', ['0', 't1']]],
-    ['=', 'prop1', ['F', ['[]', ['0', 't1']]]]
+    [':=', 'prop1', ['F', ['[]', ['0', 't1']]]]
 ]
 
 simple_expressions_tree_outputs = []
@@ -45,7 +40,7 @@ for output in simple_expressions_outputs:
     simple_expressions_tree_outputs.append(ParserTree(output))
 
 simple_expressions = []
-for i in range(numpy.size(simple_expressions_inputs)):
+for i in range(len(simple_expressions_inputs)):
     entry = [simple_expressions_inputs[i], simple_expressions_outputs[i]]
     simple_expressions.append(entry)
 
@@ -67,19 +62,20 @@ class Test:
 
 @pytest.mark.parametrice('tests', 'simpleTests')
 class TextRunner:
-    numTest = 0
-    tests = []
+    def __init__(self):
+        self.tests = []
 
-    def add_test(self, tests):
-        self.tests += tests
-        self.numTest += 1
+    def add_test(self, test):
+        self.tests.append(test)
 
     def execute_tests(self):
         j = 0
         for test in self.tests:
             print('Test nº' + str(j) + ' : ')
-            test.execute()
-            print('Passed!' + '\n')
+            if test.execute():
+                print('Passed!' + '\n')
+            else:
+                print('Fail!' + '\n')
             j += 1
 
 
@@ -99,18 +95,33 @@ class SimpleTestUnit:
         #   complexTest.append(Test(condition.pre, condition.post))
 
         # Init the TextRunner
-        textRunner = TextRunner
+        textRunner = TextRunner()
 
         # Add tests
-        textRunner.add_test(textRunner.self, simpleTests)
+        textRunner.add_test(simpleTests)
 
         # Execute the tests
-        textRunner.execute_tests(textRunner.self)
+        textRunner.execute_tests()
+
+    @staticmethod
+    def test_complex_expressions():
+        input1 = '''
+            let signal s1;
+            let param p1;
+            prop1 := F[0,p1] s1 < 0;
+            eval prob1 with p1 in [0, 0.5]
+        '''
+        output1 = [1]
+        test = Test(input1, output1)
+        testRunner = TextRunner()
+        testRunner.add_test(test)
+        testRunner.execute_tests()
 
 
 # Header of the Command Language Test Unit (Temporal Logic Language)
 print('CommandLanguage Parser Tests')
-print('>> Simple expression (' + str(numpy.size(simple_expressions)) + ')')
+print('>> Simple expression (' + str(len(simple_expressions)) + ')')
 
 # Execution of the tests with simple expressions
-SimpleTestUnit.test_simple_expressions(simple_expressions)
+# SimpleTestUnit.test_simple_expressions(simple_expressions)
+SimpleTestUnit.test_complex_expressions()

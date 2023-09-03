@@ -1,73 +1,97 @@
 import os
 import tempfile
 
-'''
-Input:
-    AST (tree of the STLE2 syntax analysis).
-Output:
-    List of pairs STL file and param file
-'''
+
+class Keys:
+    def __init__(self):
+        # Dictionary of names
+        self.id_dictionary = dict()
+        self.duplicated_keys = []
+
+    def add_key(self, key):
+        if key in self.id_dictionary.keys():
+            self.duplicated_keys.append(key)
+        else:
+            # Insert type of ID
+            self.id_dictionary[key] = key
+
+    def get_duplicated_keys(self):
+        return self.duplicated_keys
 
 
-# Function in charge of translating: <SPEC_FILE>
-# -- <SPEC_FILE> ::= <DEFINITIONS> <PROP_LIST> <EVAL_LIST>
+def translate(stl_tree):
+    """
+    Translates an STL tree into an instance of the Translation class
 
-
-def translate(tree_com_lang):
-    # Dictionary of properties. Each property is a pair with the file name path of the parameters and the file name path
-    # of the language STLE1
+    Args:
+        AST (tree of the STLE2 syntax analysis).
+    Returns:
+        List of pairs STL file and param file
+        :param stl_tree: Signal Temporal Logic Tree, it is a tree (data structure) where the data belonging
+            to a temporal logic signal language have been standardized
+    """
+    # Dictionary of properties. Each property is a pair with the file name path of
+    # the parameters and the file name path of the language STLE1
     translations = {}
 
     # Auxiliary memory as a solution to poor class and interface design
-    memory = init_memory(translations)
+    memory = Memory(translations)
 
-    assert tree_com_lang[0] == 'SPEC_FILE'
+    assert stl_tree[0] == 'SPEC_FILE'
+    translate_spec_file(memory, stl_tree)
 
+    return translations
+
+
+def translate_spec_file(memory, stl_tree):
+    """
+    Function in charge of translating:
+        <SPEC_FILE> ::= <DEFINITIONS> <PROP_LIST> <EVAL_LIST>
+
+    :param memory: instance of class Memory
+    :param stl_tree: Signal Temporal Logic Tree, it is a tree (data structure) where the data belonging
+            to a temporal logic signal language have been standardized
+    :return: no
+    """
     # <DEFINITION> Node: tree_com_lang[1] == ('DEF', t[1])
-    _, definitions = tree_com_lang[1]
+    _, definitions = stl_tree[1]
     translate_definitions(memory, definitions)
 
     # <PROP_LIST>
     # tree_com_lang[2] == ('PROP_LIST', t[2])
-    _, prop_list = tree_com_lang[2]
+    _, prop_list = stl_tree[2]
 
     prop_file_name = create_prop_file()
     create_prop(prop_file_name, memory.properties[len(memory.properties) - 1])
 
     # <EVAL_LIST>
     # tree_com_lang[3] == ('EVAL_LIST', t[3])
-    _, eval_list = tree_com_lang[3]
+    _, eval_list = stl_tree[3]
     translate_eval_list(memory, eval_list)
 
-    return translations
 
+class Memory:
+    def __init__(self, translations):
+        # Signal variables (probabilistic and common)
+        self.signal_variables = {}
 
-def init_memory(translations):
-    class Memory:
-        def __init__(self):
-            # Signal variables (probabilistic and common)
-            self.signal_variables = {}
+        # Parameters that has been declared
+        self.parameters = {}
 
-            # Parameters that has been declared
-            self.parameters = {}
+        # To count how many variables has been declared
+        self.components_counter = 0
 
-            # To count how many variables has been declared
-            self.components_counter = 0
+        # To map components (signals) names into variable 'x<NUMBER' format
+        self.components = {}
 
-            # To map components (signals) names into variable 'x<NUMBER' format
-            self.components = {}
+        # Properties list
+        self.properties = translations
 
-            # Properties list
-            self.properties = translations
+        # Keep the name of the file of params that has to be return
+        self.param_file_name = None
 
-            # Keep the name of the file of params that has to be return
-            self.param_file_name = None
-
-            # Indicates is the actual signal is probabilistic or not
-            self.is_probabilistic_signal = False
-
-    # Create an object 'memory'
-    return Memory()
+        # Indicates is the actual signal is probabilistic or not
+        self.is_probabilistic_signal = False
 
 
 def translate_param_list(memory, tree):
