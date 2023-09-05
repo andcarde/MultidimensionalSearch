@@ -1,82 +1,55 @@
-import os
-import tempfile
+# <Translation.py>
+# Exports: translate function, Translation class
+from ParetoLib.CommandLanguage.FileUtils import create_and_write_to_file
 
 
-class Keys:
+class STLe1Pack:
+    """
+    This class stores the correct translation data of a property, a pair formed
+    by the path of the parameters file name and the text itself in STLE1
+    """
+
+    def __init__(self, program_file_path, parameters_file_path):
+        # Types: (program: str), (parameters_file_path: str)
+
+        # Type: str
+        self.program_file_path = program_file_path
+        # Type: str
+        self.parameters_file_path = parameters_file_path
+
+
+class Translation:
+    """
+    This class stores the translation data originated from a program in SLe2
+    """
     def __init__(self):
-        # Dictionary of names
-        self.id_dictionary = dict()
-        self.duplicated_keys = []
+        # Description: List of STLe1Packs. Type: Array<Class STL1e1Pack>
+        self.stle1_packs = []
+        # Description: List of errors. Type: Array<str>
+        self.errors = []
 
-    def add_key(self, key):
-        if key in self.id_dictionary.keys():
-            self.duplicated_keys.append(key)
-        else:
-            # Insert type of ID
-            self.id_dictionary[key] = key
+    def add_stle1_pack(self, stle1_pack):
+        # Types: (stle1_pack: Class STL1e1Pack)
 
-    def get_duplicated_keys(self):
-        return self.duplicated_keys
+        self.stle1_packs.append(stle1_pack)
 
+    def add_error(self, error):
+        # Types: (error: str)
 
-def translate(stl_tree):
-    """
-    Translates an STL tree into an instance of the Translation class
-
-    Args:
-        AST (tree of the STLE2 syntax analysis).
-    Returns:
-        List of pairs STL file and param file
-        :param stl_tree: Signal Temporal Logic Tree, it is a tree (data structure) where the data belonging
-            to a temporal logic signal language have been standardized
-    """
-    # Dictionary of properties. Each property is a pair with the file name path of
-    # the parameters and the file name path of the language STLE1
-    translations = {}
-
-    # Auxiliary memory as a solution to poor class and interface design
-    memory = Memory(translations)
-
-    assert stl_tree[0] == 'SPEC_FILE'
-    translate_spec_file(memory, stl_tree)
-
-    return translations
-
-
-def translate_spec_file(memory, stl_tree):
-    """
-    Function in charge of translating:
-        <SPEC_FILE> ::= <DEFINITIONS> <PROP_LIST> <EVAL_LIST>
-
-    :param memory: instance of class Memory
-    :param stl_tree: Signal Temporal Logic Tree, it is a tree (data structure) where the data belonging
-            to a temporal logic signal language have been standardized
-    :return: no
-    """
-    # <DEFINITION> Node: tree_com_lang[1] == ('DEF', t[1])
-    _, definitions = stl_tree[1]
-    translate_definitions(memory, definitions)
-
-    # <PROP_LIST>
-    # tree_com_lang[2] == ('PROP_LIST', t[2])
-    _, prop_list = stl_tree[2]
-
-    prop_file_name = create_prop_file()
-    create_prop(prop_file_name, memory.properties[len(memory.properties) - 1])
-
-    # <EVAL_LIST>
-    # tree_com_lang[3] == ('EVAL_LIST', t[3])
-    _, eval_list = stl_tree[3]
-    translate_eval_list(memory, eval_list)
+        self.errors.append(error)
 
 
 class Memory:
-    def __init__(self, translations):
-        # Signal variables (probabilistic and common)
-        self.signal_variables = {}
+    """
 
-        # Parameters that has been declared
-        self.parameters = {}
+    """
+
+    def __init__(self):
+        # Signal variables (probabilistic and common)
+        self.signal_variables = set()
+
+        # Type: (id_property : str, List<Parameter>)
+        self.evaluations = []
 
         # To count how many variables has been declared
         self.components_counter = 0
@@ -85,7 +58,7 @@ class Memory:
         self.components = {}
 
         # Properties list
-        self.properties = translations
+        self.properties = None
 
         # Keep the name of the file of params that has to be return
         self.param_file_name = None
@@ -93,10 +66,92 @@ class Memory:
         # Indicates is the actual signal is probabilistic or not
         self.is_probabilistic_signal = False
 
+        # Dictionary of sentences
+        self.stle1_programs = {}
 
-def translate_param_list(memory, tree):
-    for param in tree:
-        memory.parameters.append(param)
+        # Dictionary of parameter
+        self.parameters_id = set()
+
+        # List of properties IDs
+        self.properties_ids = []
+
+        # Dictionary of parameter translations
+        self.parameters_id_translations = {}
+
+
+def generate_packs(memory, properties, translation):
+    for evaluation in memory.evaluations:
+        property_id = evaluation[0]
+        try:
+            stle1_text = properties.get[property_id]
+            # Each property will be stored in a 'temporary.stl' file STL 1.0 format
+            stle1_file_path = create_and_write_to_file(stle1_text)
+
+            # Type: str
+            parameters_file_path = None
+            # Type: bool
+            is_parameterized = len(evaluation) == 1
+            if is_parameterized:
+                # Type: List<Parameter>
+                parameters = evaluation[1]
+                parameters_file_path = create_and_write_to_file(list_to_string(parameters))
+
+            # Type: STLe1Pack
+            stle1_pack = STLe1Pack(stle1_file_path, parameters_file_path)
+            translation.add_stle1_pack(stle1_pack)
+        except KeyError:
+            translation.add_error('The property ' + property_id + 'has not been defined')
+
+
+def recursive_tree_print(tree, string):
+    if isinstance(tree, (list, tuple)):
+        for node in tree:
+            recursive_tree_print(node, string)
+    else:
+        string += str(tree) + ' '
+
+
+def stle1_print(stle1_tree):
+    # Types: (stle1_tree: Tree)
+
+    # Type: str
+    stle1_text = ''
+    recursive_tree_print(stle1_tree, stle1_text)
+    stle1_text = stle1_text.rstrip()
+    return stle1_text
+
+
+def translate_spec_file(variable_container, memory, stl_tree):
+    """
+    Function in charge of translating:
+
+    <SPEC_FILE> ::= <DEFINITIONS> <PROP_LIST> <EVAL_LIST>
+
+    :param variable_container: Contains the IDs and generates errors for repeated IDs.
+    :type variable_container: VariableContainer
+    :param memory: instance of class Memory
+    :type memory: Memory
+    :param stl_tree: Signal Temporal Logic Tree, it is a tree (data structure) where the data belonging
+            to a temporal logic signal language have been standardized
+    :type stl_tree: list
+    :return: no
+    """
+
+    assert stl_tree[0] == 'SPEC_FILE'
+
+    # <DEFINITION> Node: tree_com_lang[1] == ('DEF', t[1])
+    _, definitions = stl_tree[1]
+    translate_definitions(variable_container, definitions)
+
+    # <PROP_LIST>
+    # tree_com_lang[2] == ('PROP_LIST', t[2])
+    _, prop_list = stl_tree[2]
+    translate_prop_list(memory, prop_list)
+
+    # <EVAL_LIST>
+    # tree_com_lang[3] == ('EVAL_LIST', t[3])
+    _, eval_list = stl_tree[3]
+    translate_eval_list(memory, eval_list)
 
 
 def translate_interval(interval):
@@ -167,71 +222,107 @@ def basic_translate(tree):
 # -- <PROBSIGNAL_LIST> ::= <ID_LIST>
 # -- <ID_LIST> ::= ID | ID COMMA ID_LIST
 
-def translate_definitions(memory, definitions):
-    # Signal components
-    signal_variables = []
+class VariableContainer:
+    def __init__(self, translation):
+        self.translation = translation
+        self.signal_ids = set()
+        self.parameter_ids = set()
+        self.parameter_translator = {}
+        # Description: ID counter dictionary. Type: Dictionary<str->Integer>
+        self.id_counter = {}
 
-    # Probabilistic signal components
-    prob_signal_variables = []
+    def add_signal_id(self, _id):
+        if _id in self.signal_ids or _id in self.parameter_ids:
+            # Increase the counter
+            self.id_counter[_id] += 1
+        else:
+            # Insert id into the dictionary
+            self.id_counter[_id] = 1
+            self.signal_ids.add(_id)
 
-    # Parameters that have been declared
-    parameters = []
+    def add_parameter_id(self, _id):
+        if _id in self.signal_ids or _id in self.parameter_ids:
+            # Increase the counter
+            self.id_counter[_id] += 1
+        else:
+            # Insert id into the dictionary
+            self.id_counter[_id] = 1
+            self.parameter_translator[_id] = 'x'.join(str(len(self.parameter_ids)))
+            self.parameter_ids.add(_id)
 
+    def generate_errors(self):
+        # Type: Array<Array<id: str, count: Integer>>
+        duplicated_keys = []
+        for _id in self.id_counter.keys():
+            if self.id_counter[_id] > 1:
+                duplicated_keys.append([_id, self.id_counter[_id]])
+
+        for _id, count in duplicated_keys:
+            self.translation.add_error('The id named ' + _id + ' is declared a total of '
+                                       + count + ' times when only a maximum of 1 is allowed')
+
+
+def translate_definitions(variable_container, definitions):
     # <DEFINITIONS> == (('SIGNAL_LIST', [...]), ('PROBSIGNAL_LIST', [...]), ('PARAM_LIST', [...]))
-    for (keyword, signal_or_param_list) in definitions:
+    for keyword, ids in definitions:
         if keyword == 'SIGNAL_LIST':
             # signal_variables == ["s1", "s2", ...]
-            signal_variables = signal_or_param_list
+            for _id in ids:
+                variable_container.add_signal_id(_id)
         elif keyword == 'PROBSIGNAL_LIST':
             # prob_signal_variables == ["s1", "s2", ...]
-            prob_signal_variables = signal_or_param_list
+            for _id in ids:
+                variable_container.add_signal_id(_id)
         elif keyword == 'PARAM_LIST':
             # parameters == ["s1", "s2", ...]
-            parameters = signal_or_param_list
+            for _id in ids:
+                variable_container.add_parameter_id(_id)
 
-    memory.signal_variables = signal_variables
-    memory.signal_variables = prob_signal_variables
-    i = 0
-    for parameter in parameters:
-        memory.parameters.push(parameter, 'x'.join(str(i)))
-        i += 1
+    variable_container.generate_errors()
 
 
-def create_file():
-    file = tempfile.NamedTemporaryFile(delete=False)
-    file_name = file.name
-    file.close()
-    return file_name
+class Parameter:
+    def __init__(self, name):
+        self.name = name
+
+    def to_string(self):
+        string = self.name
+        if hasattr(self, 'below_limit'):
+            string += ' ' + str(self.below_limit)
+        if hasattr(self, 'upper_limit'):
+            string += ' ' + str(self.upper_limit)
+        return string
 
 
-def write_params(file_name, parameters):
-    with open(file_name, 'w') as file:
-        for param in parameters:
-            line = param.name
-            if hasattr(param, 'inferior'):
-                line += ' ' + str(param.below_limit)
-            if hasattr(param, 'superior'):
-                line += ' ' + str(param.upper_limit)
-            file.write(line + '\n')
+def list_to_string(_list):
+    string = ''
+    for element in _list:
+        string += element.to_string() + '\n'
+    string = string.rstrip()
+    return string
 
 
-def write_property(file_name, my_property):
-    with open(file_name, 'w') as file:
-        file.write(my_property + '\n')
+def translate_prop_list(memory, stl_tree_property_list):
+    """
+        Function in charge of translating:
 
+        <PROP_LIST> ::= ...
 
-def translate_prop_list(memory, prop_list):
-    for prop in prop_list:
-        memory.actual_property_param = []
-        formula = generate_property(memory, prop)
-
-        param_file_name = create_file()
-        # Each property will be stored in a 'temporary.stl' file STL 1.0 format
-        stl_prop_file = create_file()
-        memory.translations.push([param_file_name, stl_prop_file])
-
-        write_params(param_file_name, memory.actual_property_param)
-        write_property(stl_prop_file, formula)
+        :param memory: instance of class Memory
+        :type memory: Memory
+        :param stl_tree_property_list: Signal Temporal Logic Tree, it is a tree (data structure)
+            where the data belonging to a temporal logic signal language have been standardized
+        :type stl_tree_property_list: list
+        :return: no
+        """
+    for stl_tree_property in stl_tree_property_list:
+        generate_property(memory, stl_tree_property)
+        property_id = stl_tree_property[1]
+        if stl_tree_property[2][0] == 'PHI':
+            stle1_tree_formula = translate_phi(memory, stl_tree_property[2])
+        else:
+            stle1_tree_formula = translate_psi(memory, stl_tree_property[2])
+        memory.properties[property_id] = stle1_tree_formula
 
 
 # Input: treeSTLE (tuple)
@@ -325,25 +416,6 @@ def translate_phi(memory, tree_com_lang):
     return formula
 
 
-def create_prop_file():
-    stl_prop = tempfile.NamedTemporaryFile(delete=False)
-    stl_prop_file = stl_prop.name
-    stl_prop.close()
-    return stl_prop_file
-
-
-def create_prop(prop_file_name, prop_list):
-    # Create the temp folder if it does not exist
-    if not os.path.exists(prop_file_name):
-        os.makedirs(prop_file_name)
-
-    # Create the file param.txt in the temporal folder
-    with open(prop_file_name.join('/prop.txt'), 'w') as f:
-        for prop in prop_list:
-            # Write each parameter in a different line
-            f.write(f"{prop}\n")
-
-
 def translate_bool_op(bool_op):
     return bool_op[1]
 
@@ -355,17 +427,19 @@ def generate_on(memory, on_phi):
 
 
 # <EVAL_EXPR> ::= <EVAL> <ID> <ON> <ID_LIST> <WITH> <INTVL_LIST>
-def translate_eval_list(memory, eval_list):
-    for eval_expr in eval_list:
-        param_list = eval_expr[2]
-        interval_list = eval_expr[3]
-        index = 0
-        for param in param_list:
-            parameter = {}
-            parameter.name = param
-            parameter.below_limit = interval_list[index][0]
-            parameter.upper_limit = interval_list[index][1]
-            memory.parameters.append(memory.parameters, parameter)
+def translate_eval_list(memory, evaluation_expression_list):
+    for evaluation_expression in evaluation_expression_list:
+        _property = evaluation_expression[1]
+        parameters_list = evaluation_expression[2]
+        # Type: List<Parameter>
+        class_parameters = []
+        for tree_parameter in parameters_list:
+            name = tree_parameter[1]
+            class_parameter = Parameter(name)
+            class_parameter.below_limit = tree_parameter[2]
+            class_parameter.upper_limit = tree_parameter[3]
+            class_parameters.append(class_parameter)
+        memory.evaluations.append([_property, class_parameters])
 
 
 '''
@@ -437,3 +511,35 @@ def generate_u(memory, tree_com_lang):
     return '(StlUntil {0} {1} {2})'.format(generate_interval(tree_com_lang),
                                            generate_property(memory, tree_com_lang),
                                            generate_property(memory, tree_com_lang))
+
+
+def translate(stl_tree):
+    """
+    Translates a standardized Signal Temporal Logic (STL) tree into an instance of a Translation class.
+
+    :param stl_tree: A standardized STL tree representing temporal logic signals.
+        This tree is a data structure used to standardize temporal logic signal language data.
+    :type stl_tree: list
+    :return: An instance of the Translation class that stores the translated STLe1 data and any errors encountered.
+    :rtype: Translation
+    """
+
+    translation = Translation()
+    variable_container = VariableContainer(translation)
+
+    # Auxiliary memory as a solution to poor class and interface design
+    memory = Memory()
+
+    translate_spec_file(variable_container, memory, stl_tree)
+
+    properties = {}
+    for property_id in memory.properties_ids:
+        # Type: list
+        stle1_tree = memory.stle1_programs[property_id]
+        # Type: str
+        stle1_text = stle1_print(stle1_tree)
+        properties[property_id] = stle1_text
+
+    generate_packs(memory, properties, translation)
+
+    return translation
