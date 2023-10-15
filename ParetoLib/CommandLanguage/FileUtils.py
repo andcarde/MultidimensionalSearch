@@ -5,6 +5,8 @@ import tempfile
 
 def create_and_write_to_file(text):
     with tempfile.NamedTemporaryFile(delete=False, mode='w') as file:
+        if text is None:
+            text = ''
         file.write(text + '\n')
         return file.name
 

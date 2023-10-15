@@ -41,7 +41,7 @@ def list_to_tree(list1):
     else:
         if isinstance(list1[0], tuple) or isinstance(list1[0], list):
             tree = TreeNode('[]')
-            for i in range(1, len(list1)):
+            for i in range(0, len(list1)):
                 tree.add_son(list_to_tree(list1[i]))
             return tree
         else:

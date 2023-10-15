@@ -19,7 +19,7 @@ from ParetoLib.Oracle.OracleSTLe import OracleSTLeLib
 from ParetoLib.Oracle.OracleEpsSTLe import OracleEpsSTLe
 from ParetoLib.Search.Search import SearchND_2, SearchIntersectionND_2, SearchND_2_BMNN22, EPS, DELTA, STEPS
 from ParetoLib.Search.ResultSet import ResultSet, champions_selection
-import ParetoLib.GUI.ApplicationService as AppService
+from ParetoLib.GUI.ApplicationService import AppService
 
 matplotlib.use('Qt5Agg')
 pd.set_option('display.float_format', lambda x: '%.7f' % x)  # For rounding purposes
@@ -91,17 +91,27 @@ class MplCanvas(FigureCanvasQTAgg):
         self.axes = self.figure.add_subplot(111)
 
 
+def explain():
+    # Function only for DEBUG
+    print('Load Button Pushed!')
+
+
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, *args, **kwargs):
         QMainWindow.__init__(self, *args, **kwargs)
         self.is_parametric = None
         self.setupUi(self)
+
+        # Initializing AppService
+        appService = AppService(self)
+
         # Connecting events and actions
         self.open_signal_file_button.clicked.connect(self.read_signal_filepath)
-        self.check_button.clicked.connect(AppService.check)
-        self.checkrun_button.clicked.connect(AppService.check_run)
-        self.load_button.clicked.connect(AppService.load)
-        self.save_button.clicked.connect(AppService.save)
+        self.check_button.clicked.connect(lambda: appService.check(True))
+        self.checkrun_button.clicked.connect(lambda: appService.check_run())
+        self.load_button.clicked.connect(lambda: appService.load())
+        self.save_button.clicked.connect(lambda: appService.save())
+
         self.new_project_button.setShortcut("Ctrl+N")
         self.new_project_button.triggered.connect(self.create_project)
         self.save_project_button.setShortcut("Ctrl+S")
@@ -138,6 +148,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.parallel = False
         self.opt_level = 0
         self.data = None
+
+    def get_program(self):
+        return self.textarea.toPlainText()
+
+    def show_message(self, _type, explanation):
+        QMessageBox.critical(self, _type, explanation)
 
     def clear_layout(self, layout):
         # type: (_, QVBoxLayout) -> None

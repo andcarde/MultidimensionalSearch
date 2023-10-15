@@ -65,7 +65,7 @@ def translate(stl_tree):
 def create_translation_wildcard1():
     translation = Translation()
     translation.errors = [
-        'The variable s1 has been declared 3 times'
+        'The variable s1 has been declared 3 times',
         'The interval [9, 8] is not allowed since it must contain at least one point'
     ]
     translation.stle1_packs = []

@@ -113,11 +113,11 @@ def p_eval_param_list(t):
     '''
     if len(t) == 4:
         # (ID, INTVL)
-        t[0] = (t[1], t[3])
+        t[0] = [('restriction', ('ID', t[1]), t[3])]
     else:
         # ((ID, INTVL), *EVAL_PARAM_LIST) where * is a pointer
-        t[0] = [t[1], t[3]]
-        t[0].extend(t[4][1:])
+        t[0] = [('restriction', ('ID', t[1]), t[3])]
+        t[0].extend(t[5][0:])
 
 
 def p_number_or_id(t):
@@ -213,6 +213,7 @@ def p_prop(t):
     t[0] = ['PROP', t[1], t[3]]
 
 
+
 def p_phi(t):
     '''
     PHI : SIG
@@ -230,7 +231,14 @@ def p_phi(t):
         | PHI UNTIL PHI
     '''
     # Case of SIG, FUNC
-    if len(t) == 2:
+    if t[1] == 'G':
+        if len(t) == 3:
+            t[0] = ('PHI', 'global', t[2])
+        else:
+            t[0] = ('PHI', 'global-interval', t[2], t[3])
+    elif t[1][0] == 'SIG':
+        t[0] = ('PHI', 'SIG', t[1][1])
+    elif len(t) == 2:
         t[0] = ('PHI', t[1])
     # Case of NOT PHI, PROB PHI
     elif len(t) == 3:
@@ -321,7 +329,7 @@ def p_sig(t):
     '''
     # Save the ID or NUMBER
     if len(t) == 2:
-        t[0] = t[1]
+        t[0] = ('SIG', t[1])
         if debug:
             print('SIG: ' + str(t[0]) + '\n')
     elif t[1] == '(':
@@ -329,7 +337,7 @@ def p_sig(t):
         if debug:
             print('SIG: ' + str(t[0]) + '\n')
     else:
-        t[0] = [t[2], t[1], t[3]]
+        t[0] = ('SIG', 'BIN_OP', t[2], t[1], t[3])
         if debug:
             print("SIG: {0} \n".format([i for i in t[0]]))
 
@@ -340,7 +348,7 @@ def p_constant_signal(t):
     '''
     # Save number
     # t[0] = float(t[1])
-    t[0] = t[1]
+    t[0] = ('CONSTANT_SIGNAL', 'NUMBER', t[1])
 
 
 # Build the parser
