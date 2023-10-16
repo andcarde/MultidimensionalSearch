@@ -1,5 +1,5 @@
 from ParetoLib.CommandLanguage.Parser import parser
-from ParetoLib.CommandLanguage.TranslationWildcard import translate
+from Tests.Vista.TranslationWildcard import translate
 
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 
