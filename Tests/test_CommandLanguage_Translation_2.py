@@ -4,9 +4,8 @@
 from ParetoLib.CommandLanguage.Parser import parser
 from ParetoLib.CommandLanguage.Translation import translate
 from ParetoLib.CommandLanguage.FileUtils import read_file
-from Tests.Language.gui import init_gui
 # from Tests.test_CommandLanguage_Parser_4 import print_tree
-from ParetoLib.CommandLanguage.TreeViewer import list_to_tree, view_tree
+from Tests.View.TreeViewer import list_to_tree, view_tree
 
 
 def process(stle2_text):

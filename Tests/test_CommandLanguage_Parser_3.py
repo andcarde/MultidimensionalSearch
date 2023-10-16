@@ -1,7 +1,7 @@
 from ParetoLib.CommandLanguage.Parser import parser
 from ParetoLib.CommandLanguage.Translation import translate
-from ParetoLib.CommandLanguage.TreeViewer import view_tree
-from ParetoLib.CommandLanguage.TreeViewer import list_to_tree
+from Tests.View.TreeViewer import view_tree
+from Tests.View.TreeViewer import list_to_tree
 from Tests.test_CommandLanguage_Translation_1 import TestController
 
 input1 = '''
