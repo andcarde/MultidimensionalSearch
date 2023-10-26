@@ -72,11 +72,18 @@ def build_test1():
     return Test(1, stle2, parameters, stle1)
 
 
+def create_test(_id, name):
+    name = '..\\Language\language_examples\\' + name
+    return Test(_id + 1, read_file(name + '_Input_STLe2.stle'),
+                read_file(name + '_Output_Parameters.txt'), read_file(name + '_Output_STLe1.txt'))
+
+
 def build_tests():
     # Map [archivo STLE2] -> ([archivo STLE1], [archivo Parameters])
     tests = [
-        build_test1()
+        build_test1(),
     ]
+    tests.append(create_test(len(tests), 'Test100'))
     return tests
 
 

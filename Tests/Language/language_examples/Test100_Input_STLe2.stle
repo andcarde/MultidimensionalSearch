@@ -1,0 +1,5 @@
+let signal signal1;
+
+aaa := p1 U[1, 2] (F[0, inf] x1;
+
+eval aaa with p1 in [0, 9]
