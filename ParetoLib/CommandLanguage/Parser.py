@@ -139,21 +139,6 @@ def p_intvl(t):
         print("INTVL: {0} \n".format([i for i in t[0]]))
 
 
-def p_intvl_list(t):
-    '''
-    INTVL_LIST : ID IN INTVL
-            | ID IN INTVL COMMA INTVL_LIST
-    '''
-    if len(t) == 4:
-        # INTVL_LIST : ID, INTVL
-        t[0] = [(t[1], t[3])]
-    elif len(t) == 6:
-        # INTVL_LIST : ID, INTVL, INTVL_LIST
-        t[0] = [(t[1], t[3])] + t[5]
-    if debug:
-        print('Detected INTVL_LIST: {0} \n'.format([i for i in t[0]]))
-
-
 def p_def(t):
     '''
     DEF : PARAM_DEF
@@ -230,36 +215,40 @@ def p_phi(t):
         | LPAREN PHI RPAREN
         | PHI UNTIL PHI
     '''
-    # Case of SIG, FUNC
     if t[1] == 'G':
         if len(t) == 3:
             t[0] = ('PHI', 'global', t[2])
         else:
             t[0] = ('PHI', 'global-interval', t[2], t[3])
-    elif t[1][0] == 'SIG':
-        t[0] = ('PHI', 'SIG', t[1][1])
+    elif t[1] == 'F':
+        if len(t) == 3:
+            t[0] = ('PHI', 'future', t[2])
+        else:
+            t[0] = ('PHI', 'future-interval', t[2], t[3])
+    elif len(t) == 2 and t[1][0] == 'function':
+        t[0] = ('PHI', 'function', t[1][1:])
+    elif t[1] == 'ON':
+        t[0] = ('PHI', 'on', t[2], t[3])
+    elif t[1] == 'NOT':
+        t[0] = ('PHI', 'not', t[2])
+    elif len(t) > 2 and t[2] == 'U':
+        if len(t) == 3:
+            t[0] = ('PHI', 'until', t[1], t[3])
+        else:
+            t[0] = ('PHI', 'until-interval', t[3], t[1], t[4])
+    elif t[1] == '(':
+        # t[2]: phi
+        t[0] = t[2]
+    elif len(t) == 2 and t[1][0] == 'variable_signal':
+        t[0] = ('PHI', 'variable_signal', t[1][1])
+    elif len(t) == 2 and t[1][0] == 'constant_signal':
+        t[0] = ('PHI', 'constant_signal', t[1][1])
     elif len(t) == 2:
         t[0] = ('PHI', t[1])
-    # Case of NOT PHI, PROB PHI
-    elif len(t) == 3:
-        #       TYPE   OP    PHI
-        t[0] = ('PHI', t[1], t[2])
-    elif len(t) == 4:
-        if t[2][0] == 'BIN_BOOL_OP':
-            #       TYPE   OP    PHI   PHI
-            t[0] = ('PHI', t[2], t[1], t[3])
-        elif t[2] == 'PHI':
-            #      PHI
-            t[0] = t[2]
-        elif t[2][0] == 'UNTIL':
-            #       TYPE   UNTIL PHI   PHI
-            t[0] = ('PHI', t[2], t[1], t[3])
-        # Case of 'F INTVL PHI', 'G INTVL PHI' and 'ON INTVL PSI', elif t[2] == 'INTVL'
-        else:
-            t[0] = ('PHI', t[1], t[2], t[3])
-    elif len(t) == 5:
-        #       TYPE   U     INTVL PHI   PHI
-        t[0] = ('PHI', t[2], t[4], t[1], t[6])
+    elif len(t) == 3 and t[1] == 'PROB':
+        t[0] = ('PHI', 'prob', t[2])
+    elif len(t) == 4 and t[2][0] == 'binary_boolean_operation':
+        t[0] = ('function', t[2][1], t[1], t[3])
     if debug:
         print("PHI: {0} \n".format([i for i in t[0]]))
 
@@ -278,11 +267,10 @@ def p_psi(t):
 def p_func(t):
     '''
     FUNC : SIG BIN_COND SIG
+            | SIG BIN_OP SIG
     '''
-    #       TYPE    OP    SIG/PHI1  SIG/PHI2
-    t[0] = ('FUNC', t[2], t[1], t[3])
-    if debug:
-        print("FUNC: {0} \n".format([i for i in t[0]]))
+    #       TYPE    OP    SIG  SIG
+    t[0] = ('function', t[2], t[1], t[3])
 
 
 def p_bin_bool_op(t):
@@ -292,7 +280,7 @@ def p_bin_bool_op(t):
             | IMPLY
     '''
     #       OP
-    t[0] = ('BIN_BOOL_OP', t[1])
+    t[0] = ('binary_boolean_operation', t[1])
 
 
 def p_bin_cond(t):
@@ -316,42 +304,27 @@ def p_bin_arith_op(t):
     '''
     #       OP    SIG1  SIG2
     t[0] = t[1]
-    if debug:
-        print("BIN_OP: {0} \n".format([i for i in t[0]]))
 
 
 def p_sig(t):
     '''
     SIG : ID
             | CONSTANT_SIGNAL
-            | SIG BIN_OP SIG
-            | LPAREN SIG RPAREN
     '''
-    # Save the ID or NUMBER
-    if len(t) == 2:
-        t[0] = ('SIG', t[1])
-        if debug:
-            print('SIG: ' + str(t[0]) + '\n')
-    elif t[1] == '(':
-        t[0] = t[2]
-        if debug:
-            print('SIG: ' + str(t[0]) + '\n')
+    if isinstance(t[1], tuple):
+        t[0] = t[1]
     else:
-        t[0] = ('SIG', 'BIN_OP', t[2], t[1], t[3])
-        if debug:
-            print("SIG: {0} \n".format([i for i in t[0]]))
+        t[0] = ('variable_signal', t[1])
 
 
 def p_constant_signal(t):
     '''
     CONSTANT_SIGNAL : NUMBER
     '''
-    # Save number
-    # t[0] = float(t[1])
-    t[0] = ('CONSTANT_SIGNAL', 'NUMBER', t[1])
+    t[0] = ('constant_signal', t[1])
 
 
 # Build the parser
 current_dir = os.path.dirname(__file__)
-tmp_route_name = current_dir + "/tmp/"
-parser = yacc(start='SPEC_FILE', debugfile=tmp_route_name + 'parser.out', write_tables=True)
+tmp_route_name = os.path.join(current_dir, '/tmp/', 'parser.out')
+parser = yacc(start='SPEC_FILE', debugfile=tmp_route_name, write_tables=True)

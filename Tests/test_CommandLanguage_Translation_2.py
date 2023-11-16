@@ -1,11 +1,37 @@
-
-### test_CommandLanguage_Translation.py
+# <test_CommandLanguage_Translation.py>
 
 from ParetoLib.CommandLanguage.Parser import parser
 from ParetoLib.CommandLanguage.Translation import translate
 from ParetoLib.CommandLanguage.FileUtils import read_file
 # from Tests.test_CommandLanguage_Parser_4 import print_tree
 from Tests.View.TreeViewer import list_to_tree, view_tree
+import os
+
+
+def get_temporal_number(temporal_number):
+    try:
+        number = float(temporal_number)
+        if number.is_integer():
+            return str(int(number))
+        return str(number)
+    except ValueError:
+        return temporal_number
+
+
+def parse_numbers_in_string(string):
+    result = ""
+    temporal_number = ""
+
+    for char in string:
+        if char.isdigit() or char == '.':
+            temporal_number += char
+        else:
+            result += get_temporal_number(temporal_number) + char
+            temporal_number = ""
+
+    result += get_temporal_number(temporal_number)
+
+    return result
 
 
 def process(stle2_text):
@@ -38,15 +64,22 @@ class Test:
                 print('-' + error)
         else:
             sol_stle1 = read_file(translation.stle1_packs[0].program_file_path)
+            sol_stle1 = parse_numbers_in_string(sol_stle1)
             sol_param = read_file(translation.stle1_packs[0].parameters_file_path)
+            sol_param = parse_numbers_in_string(sol_param)
+            errors_exist = False
             if sol_param != self.param:
                 print("Test nº" + str(self.id) + " has failed.")
                 print("desired_parameter: \n" + self.param)
                 print("obtained_parameter: \n" + sol_param)
+                errors_exist = True
             if sol_stle1 != self.stle1:
                 print("Test nº" + str(self.id) + " has failed.")
                 print("desired_parameter: \n" + self.stle1)
                 print("obtained_parameter: \n" + sol_stle1)
+                errors_exist = True
+            if not errors_exist:
+                print("Test nº" + str(self.id) + " has been successful.")
 
 
 def build_test1():
@@ -63,17 +96,16 @@ def build_test1():
             + "eval prop1 with p1 in [5, 8]"
 
     # Test 1 -- Parameters
-    parameters = "p1 5 8" + "\n" \
-                 + "p2 7"
+    parameters = "p1 5 8"
 
     # Test 1 -- STLE1
-    stle1 = "G ( 8 12 ) ( and p1 p2 )"
+    stle1 = "G (8 12) p1"
 
     return Test(1, stle2, parameters, stle1)
 
 
 def create_test(_id, name):
-    name = '..\\Language\language_examples\\' + name
+    name = os.path.join('Language', 'language_examples', name)
     return Test(_id + 1, read_file(name + '_Input_STLe2.stle'),
                 read_file(name + '_Output_Parameters.txt'), read_file(name + '_Output_STLe1.txt'))
 
@@ -83,7 +115,9 @@ def build_tests():
     tests = [
         build_test1(),
     ]
+    ##################################################
     tests.append(create_test(len(tests), 'Test100'))
+    tests.append(create_test(len(tests), 'Test3'))
     return tests
 
 

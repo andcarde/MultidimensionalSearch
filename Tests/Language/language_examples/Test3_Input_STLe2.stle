@@ -1,0 +1,3 @@
+let param p1;
+v2 := v1 >= (5000 - p2);
+eval v2 with p1 in [0, inf]
