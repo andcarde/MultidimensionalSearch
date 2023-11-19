@@ -45,6 +45,10 @@ class NoTypeException(Exception):
     def __init__(self, _type):
         super().__init__('The type {0} has not been detected in generate_psi().'.format(_type))
 
+class UndeclaredIDException(Exception):
+    def __init__(self, _id):
+        super().__init__('The id \'{0}\' has not been declared.'.format(_id))
+
 
 class VariableContainer:
     def __init__(self, translation):
@@ -174,12 +178,15 @@ def translate_operator(op):
     return operators[op]
 
 
-def translate_signal(variable_container, signal):
-    _type = signal[0]
-    value = signal[1]
-    if _type == 'constant_signal':
+def translate_variable_signal(variable_container, memory, signal):
+    if signal in variable_container.parameter_ids:
         return signal
-    return variable_container.translate_signal(value)
+    elif signal in memory.properties_ids:
+        return memory.stle1_programs[signal]
+    elif signal in variable_container.signal_translator:
+        return variable_container.signal_translator[signal]
+    else:
+        raise UndeclaredIDException(signal)
 
 
 # Precondition of translate_definitions(definitions):
@@ -318,9 +325,11 @@ def translate_phi(memory, variable_container, phi):
     if var_type == 'variable':
         formula = generate_variable(memory, phi)
     elif var_type == 'function':
-        formula = generate_function(variable_container, phi)
+        formula = generate_function(variable_container, memory, phi[2])
+    elif var_type == 'constant_signal':
+        formula = phi[2][0]
     elif var_type == 'variable_signal':
-        formula = translate_signal(variable_container, ('variable_signal', phi[2]))
+        formula = translate_variable_signal(variable_container, memory, phi[2][0])
     elif var_type == 'parameter':
         formula = phi[2]
     elif var_type == "id":
@@ -369,9 +378,11 @@ def generate_on(memory, variable_container, on):
 
 
 # <EVAL_EXPR> ::= <EVAL> <ID> <ON> <ID_LIST> <WITH> <INTVL_LIST>
-def translate_eval_list(memory, evaluation_expression_list):
+def translate_eval_list(variable_container, memory, evaluation_expression_list):
     for evaluation_expression in evaluation_expression_list:
         _property = evaluation_expression[1]
+        if _property not in memory.properties_ids:
+            raise NoTypeException(_property)
         parameters_list = evaluation_expression[2]
         # Type: List<Parameter>
         class_parameters = []
@@ -424,13 +435,13 @@ def generate_variable(memory, variable):
 
 # ('PHI', 'function', (symbol, signal1  signal2))
 # (<FUNCTION> <FORMULA>*)
-def generate_function(variable_container, function):
+def generate_function(variable_container, memory, function):
     symbol = function[2][0]
     signal1 = function[2][1]
     signal2 = function[2][2]
     stle1_expression = '( {0} {1} {2} )'.format(symbol,
-                                                translate_signal(variable_container, signal1),
-                                                translate_signal(variable_container, signal2))
+                                                translate_signal(variable_container, memory, signal1),
+                                                translate_signal(variable_container, memory, signal2))
     return stle1_expression
 
 
@@ -521,7 +532,7 @@ def translate_spec_file(variable_container, memory, stl_tree):
     # <EVAL_LIST>
     # tree_com_lang[3] == ('EVAL_LIST', t[3])
     _, eval_list = stl_tree[3]
-    translate_eval_list(memory, eval_list)
+    translate_eval_list(variable_container, memory, eval_list)
 
 
 def generate_plain_text_properties(memory):

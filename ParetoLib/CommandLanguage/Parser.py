@@ -1,6 +1,7 @@
 import os
 from ply.yacc import yacc
 import ParetoLib.CommandLanguage.Lexer as Lexer
+from ParetoLib.CommandLanguage.Utils import print_tree
 
 '''
 In the intended language there are no precedence rules.
@@ -51,9 +52,9 @@ def p_id_list(t):
         #       ID
         t[0] = [t[1]]
     else:
-        # Concatenation of Python lists
-        print("Generating {0} with length {1}".format([i for i in t], len(t)))
         t[0] = [t[1]] + t[3]
+        # Concatenation of Python lists
+        print("Generating {0} with length {1}".format([i for i in t[0]], len(t)))
 
 
 def p_def_param(t):
@@ -198,11 +199,9 @@ def p_prop(t):
     t[0] = ['PROP', t[1], t[3]]
 
 
-
 def p_phi(t):
     '''
-    PHI : SIG
-        | FUNC
+    PHI : FUNC
         | NOT PHI
         | PROB PHI
         | PHI BIN_BOOL_OP PHI
@@ -215,7 +214,12 @@ def p_phi(t):
         | LPAREN PHI RPAREN
         | PHI UNTIL PHI
     '''
-    if t[1] == 'G':
+    if len(t) == 2:
+        t[0] = ('PHI', t[1][0], t[1][1:])
+        print('DEBUG -- Parser.p_phi -- {0}'.format(t[1]))
+        print('DEBUG -- Parser.p_phi -- {0}'.format(t[1][1]))
+        print('DEBUG -- Parser.p_phi -- {0}'.format(t[1][1:]))
+    elif t[1] == 'G':
         if len(t) == 3:
             t[0] = ('PHI', 'global', t[2])
         else:
@@ -225,8 +229,6 @@ def p_phi(t):
             t[0] = ('PHI', 'future', t[2])
         else:
             t[0] = ('PHI', 'future-interval', t[2], t[3])
-    elif len(t) == 2 and t[1][0] == 'function':
-        t[0] = ('PHI', 'function', t[1][1:])
     elif t[1] == 'ON':
         t[0] = ('PHI', 'on', t[2], t[3])
     elif t[1] == 'NOT':
@@ -239,16 +241,15 @@ def p_phi(t):
     elif t[1] == '(':
         # t[2]: phi
         t[0] = t[2]
-    elif len(t) == 2 and t[1][0] == 'variable_signal':
-        t[0] = ('PHI', 'variable_signal', t[1][1])
-    elif len(t) == 2 and t[1][0] == 'constant_signal':
-        t[0] = ('PHI', 'constant_signal', t[1][1])
-    elif len(t) == 2:
-        t[0] = ('PHI', t[1])
     elif len(t) == 3 and t[1] == 'PROB':
         t[0] = ('PHI', 'prob', t[2])
     elif len(t) == 4 and t[2][0] == 'binary_boolean_operation':
         t[0] = ('function', t[2][1], t[1], t[3])
+    else:
+        for i in range(0, len(t)):
+            print(t[i])
+        print('ERROR: No type detected (Parser.PSI)')
+
     if debug:
         print("PHI: {0} \n".format([i for i in t[0]]))
 
@@ -266,11 +267,19 @@ def p_psi(t):
 
 def p_func(t):
     '''
-    FUNC : SIG BIN_COND SIG
-            | SIG BIN_OP SIG
+    FUNC : SIG
+            | LPAREN FUNC RPAREN
+            | FUNC BIN_COND FUNC
+            | FUNC BIN_OP FUNC
     '''
-    #       TYPE    OP    SIG  SIG
-    t[0] = ('function', t[2], t[1], t[3])
+    if len(t) == 2:
+        t[0] = t[1]
+        print('DEBUG -- Parser.p_func -- {0}'.format(t[1]))
+    elif t[1] == '(':
+        t[0] = t[2]
+    else:
+        #       TYPE    OP    SIG  SIG
+        t[0] = ('function', t[2], t[1], t[3])
 
 
 def p_bin_bool_op(t):
@@ -311,10 +320,11 @@ def p_sig(t):
     SIG : ID
             | CONSTANT_SIGNAL
     '''
-    if isinstance(t[1], tuple):
-        t[0] = t[1]
-    else:
+    if not isinstance(t[1], tuple):
         t[0] = ('variable_signal', t[1])
+        print('DEBUG -- Parser.p_sig -- {0}'.format(t[1]))
+    else:
+        t[0] = t[1]
 
 
 def p_constant_signal(t):

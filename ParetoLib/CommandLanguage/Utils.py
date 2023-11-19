@@ -6,9 +6,9 @@ def print_dot_n_times(n):
 
 
 def print_tree(tree, deep=0):
-    print_dot_n_times(tree[0])
-    for i in range(1, len(tree)):
-        if isinstance(tree[i], list):
-            print_tree(list, deep + 1)
-        else:
-            print_dot_n_times(deep + 1)
+    if isinstance(tree, list) or isinstance(tree, tuple):
+        for i in range(len(tree)):
+            print_tree(tree[i], deep + 1)
+    else:
+        print_dot_n_times(deep)
+        print(str(tree))
