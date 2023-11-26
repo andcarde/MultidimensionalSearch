@@ -1,4 +1,0 @@
-let signal signal1, signal2;
-let param param1;
-prop1 := signal1 until [ param1 , 5 ] signal2 ;
-eval prop1 with param1 in [1, 3]

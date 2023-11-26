@@ -1,0 +1,4 @@
+let param p1, ta, inicio;
+let signal signal1, s2, elec_gasto;
+prop1 := not F [4, ta] s2 until [inicio, ta] on [p1, ta] int not signal1 + elec_gasto < 4 * 8
+eval prop1 with ta in [1, 2], inicio in [3, 9], p1 on [0, 0];

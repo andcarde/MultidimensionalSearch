@@ -82,42 +82,31 @@ class Test:
                 print("Test nº" + str(self.id) + " has been successful.")
 
 
-def build_test1():
-    # Test 1 -- STLE2
-    '''
-    stle2 = "let param p1, p2;" + "\n" \
-            + "let signal s1;" + "\n" \
-            + "prop1 := G [8, 12] p1 and p2" + "\n" \
-            + "eval prop1 with p1 in [5, 8], p2 in [7, inf]"
-    '''
-    stle2 = "let param p1;" + "\n" \
-            + "let signal s1;" + "\n" \
-            + "prop1 := G [8, 12] p1;" + "\n" \
-            + "eval prop1 with p1 in [5, 8]"
+class TestCreator:
+    def __init__(self):
+        self.counter = 0
 
-    # Test 1 -- Parameters
-    parameters = "p1 5 8"
-
-    # Test 1 -- STLE1
-    stle1 = "G (8 12) p1"
-
-    return Test(1, stle2, parameters, stle1)
-
-
-def create_test(_id, name):
-    name = os.path.join('Language', 'language_examples', name)
-    return Test(_id + 1, read_file(name + '_Input_STLe2.stle'),
-                read_file(name + '_Output_Parameters.txt'), read_file(name + '_Output_STLe1.txt'))
+    def create_test(self, name):
+        name = os.path.join('Language', 'language_examples', name)
+        self.counter += 1
+        return Test(self.counter,
+                    read_file(name + '_Input_STLe2.stle'),
+                    read_file(name + '_Output_Parameters.txt'),
+                    read_file(name + '_Output_STLe1.txt')
+                    )
 
 
 def build_tests():
+    test_creator = TestCreator()
     # Map [archivo STLE2] -> ([archivo STLE1], [archivo Parameters])
     tests = [
-        build_test1(),
+        test_creator.create_test('Test100'),
+        test_creator.create_test('Test5'),
+        test_creator.create_test('Test3-1'),
+        test_creator.create_test('Test3-2'),
+        test_creator.create_test('Test1'),
+        test_creator.create_test('Test4'),
     ]
-    ##################################################
-    tests.append(create_test(len(tests), 'Test100'))
-    tests.append(create_test(len(tests), 'Test3'))
     return tests
 
 

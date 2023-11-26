@@ -3,4 +3,4 @@ let param p1;
 
 aaa := p1 U[1, 2] (F[0, inf] s1);
 
-eval aaa with p1 in [0, 9]
+eval aaa with p1 in [0, 9];

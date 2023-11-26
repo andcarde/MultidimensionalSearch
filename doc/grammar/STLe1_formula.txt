@@ -127,6 +127,8 @@ of minimum or maximum is specified in a formula by an aggregate expression:
 <AGGREGATE> ::=
     (Min <FORMULA>)
     (Max <FORMULA>)
+    (D <FORMULA>)
+    (I <FORMULA>)
     
 An aggregate expression is used as a sub-expression for On- and Until-formulas,
 which are described below.

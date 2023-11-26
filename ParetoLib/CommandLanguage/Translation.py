@@ -42,8 +42,9 @@ class Translation:
 
 
 class NoTypeException(Exception):
-    def __init__(self, _type):
-        super().__init__('The type {0} has not been detected in generate_psi().'.format(_type))
+    def __init__(self, _type, function):
+        super().__init__('The type {0} has not been detected in {1}.'.format(_type, function))
+
 
 class UndeclaredIDException(Exception):
     def __init__(self, _id):
@@ -66,8 +67,9 @@ class VariableContainer:
         else:
             # Insert id into the dictionary
             self.id_counter[_id] = 1
+            index = str(len(self.signal_ids))
             self.signal_ids.add(_id)
-            self.signal_translator[_id] = 'x'.join(str(len(self.parameter_ids)))
+            self.signal_translator[_id] = 'x' + index
 
     def add_parameter_id(self, _id):
         if _id in self.signal_ids or _id in self.parameter_ids:
@@ -152,43 +154,6 @@ def stle1_print(stle1_tree):
     return stle1_text
 
 
-def translate_interval(interval):
-    if len(interval) == 3:
-        return f"({interval[1]} {interval[2]})"
-    else:
-        return f"({interval[1]} {interval[2]} {interval[3]})"
-
-
-def translate_operator(op):
-    operators = {
-        "AND": "and",
-        "OR": "or",
-        "NOT": "not",
-        "IMPLY": "->",
-        "LEQ": "<=",
-        "LESS": "<",
-        "GEQ": ">=",
-        "GREATER": ">",
-        "NEQ": "!=",
-        "PLUS": "+",
-        "MINUS": "-",
-        "TIMES": "*",
-        "DIVIDE": "/",
-    }
-    return operators[op]
-
-
-def translate_variable_signal(variable_container, memory, signal):
-    if signal in variable_container.parameter_ids:
-        return signal
-    elif signal in memory.properties_ids:
-        return memory.stle1_programs[signal]
-    elif signal in variable_container.signal_translator:
-        return variable_container.signal_translator[signal]
-    else:
-        raise UndeclaredIDException(signal)
-
-
 # Precondition of translate_definitions(definitions):
 # definitions are defined by:
 # -- <DEF> ::= <PARAM_DEF> | <SIGNAL_DEF> | <PROBSIGNAL_DEF>
@@ -206,15 +171,15 @@ def translate_definitions(variable_container, definitions):
     # <DEFINITIONS> == (('SIGNAL_LIST', [...]), ('PROBSIGNAL_LIST', [...]), ('PARAM_LIST', [...]))
     for keyword, ids in definitions:
         if keyword == 'SIGNAL_LIST':
-            # signal_variables == ["s1", "s2", ...]
+            # signal_variables == ['s1', 's2', ...]
             for _id in ids:
                 variable_container.add_signal_id(_id)
         elif keyword == 'PROBSIGNAL_LIST':
-            # prob_signal_variables == ["s1", "s2", ...]
+            # prob_signal_variables == ['s1', 's2', ...]
             for _id in ids:
                 variable_container.add_signal_id(_id)
         elif keyword == 'PARAM_LIST':
-            # parameters == ["s1", "s2", ...]
+            # parameters == ['s1', 's2', ...]
             for _id in ids:
                 variable_container.add_parameter_id(_id)
 
@@ -256,14 +221,14 @@ def translate_prop_list(memory, variable_container, stl_tree_property_list):
             where the data belonging to a temporal logic signal language have been standardized
         :type stl_tree_property_list: list
         :return: no
-        """
+    """
     for stl_tree_property in stl_tree_property_list:
         property_id = stl_tree_property[1]
         memory.properties_ids.append(property_id)
-        if stl_tree_property[2][0] == 'PHI':
-            stle1_tree_formula = translate_phi(memory, variable_container, stl_tree_property[2])
+        if stl_tree_property[2][0] == 'PSI':
+            stle1_tree_formula = translate_psi(memory, variable_container, stl_tree_property[2][1])
         else:
-            stle1_tree_formula = translate_psi(memory, variable_container, stl_tree_property[2])
+            stle1_tree_formula = translate_phi(memory, variable_container, stl_tree_property[2])
         memory.stle1_programs[property_id] = stle1_tree_formula
 
 
@@ -273,7 +238,7 @@ def translate_prop_list(memory, variable_container, stl_tree_property_list):
 #     (<BOOLEAN>, )   |
 #     (<FUNCTION> <FORMULA>*)   |
 #     (F, <INTERVAL>, <FORMULA>)  |
-#     (G, <INTERVAL>, <FORMULA>)"  |
+#     (G, <INTERVAL>, <FORMULA>)  |
 #     (UNTIL, <INTERVAL>, <FORMULA>, <FORMULA>)
 
 # Output: (str)
@@ -285,20 +250,6 @@ def translate_prop_list(memory, variable_container, stl_tree_property_list):
 #     (F <INTERVAL> <FORMULA>)  |
 #     (G <INTERVAL> <FORMULA>)  |
 #     (StlUntil <INTERVAL> <FORMULA> <FORMULA>)
-
-
-def generate_property(memory, variable_container, prop):
-    # prop = ('PROP', ID, PHI/PSI)
-    _, prop_id, phi_or_psi = prop
-
-    # Translate prop into STLe1 format
-    if phi_or_psi[0] == "PSI":
-        formula = translate_psi(memory, variable_container, prop[2])
-    else:
-        formula = translate_phi(memory, variable_container, prop[2])
-
-    memory.stle1_programs[prop_id] = formula
-    return formula
 
 
 # Information required in translate_phi(memory, variable_container, phi):
@@ -321,64 +272,198 @@ def generate_property(memory, variable_container, prop):
 
 
 def translate_phi(memory, variable_container, phi):
-    var_type = str(phi[1]).lower()
-    if var_type == 'variable':
-        formula = generate_variable(memory, phi)
-    elif var_type == 'function':
-        formula = generate_function(variable_container, memory, phi[2])
+    var_type = str(phi[0]).lower()
+    if var_type == 'function':
+        formula = translate_function(variable_container, memory, phi[1])
     elif var_type == 'constant_signal':
-        formula = phi[2][0]
+        formula = phi[1]
     elif var_type == 'variable_signal':
-        formula = translate_variable_signal(variable_container, memory, phi[2][0])
-    elif var_type == 'parameter':
-        formula = phi[2]
+        formula = translate_variable_signal(variable_container, memory, phi[1])
     elif var_type == "id":
-        my_id = phi[1]
+        my_id = translate_variable_signal(variable_container, memory, phi[1])
         formula = memory.properties[my_id]
     elif var_type == 'not':
-        formula = "not".join(translate_phi(memory, variable_container, phi[2]))
+        formula = 'not '.join(translate_phi(memory, variable_container, phi[1]))
     elif var_type == 'prob':
-        formula = "prob".join(translate_phi(memory, variable_container, phi[2]))
-    elif var_type == 'bin_bool_op':
-        formula = "(" + translate_bool_op(phi[1]).join(translate_phi(memory, variable_container, phi[2])) \
-            .join(translate_phi(memory, variable_container, phi[3])) + ")"
+        formula = translate_prob(memory, variable_container, phi[1])
     elif var_type == 'number':
-        formula = str(phi)
-    elif var_type == 'boolean':
-        formula = generate_boolean(phi)
+        formula = str(phi[1])
     elif var_type == 'future':
-        formula = generate_future(memory, variable_container, phi)
+        formula = translate_future(memory, variable_container, phi[1])
     elif var_type == 'future-interval':
-        formula = generate_future_interval(memory, variable_container, phi)
+        formula = translate_future_interval(memory, variable_container, phi[1])
     elif var_type == 'global-interval':
-        formula = generate_global_interval(memory, variable_container, phi)
+        formula = translate_global_interval(memory, variable_container, phi[1])
     elif var_type == 'global':
-        formula = generate_global(memory, variable_container, phi)
+        formula = translate_global(memory, variable_container, phi[1])
     elif var_type == 'until':
-        formula = generate_until(memory, variable_container, phi)
+        formula = translate_until(memory, variable_container, phi[1])
     elif var_type == 'until-interval':
-        formula = generate_until_interval(memory, variable_container, phi)
+        formula = translate_until_interval(memory, variable_container, phi[1])
     elif var_type == 'on':
-        formula = generate_on(memory, variable_container, phi)
+        formula = translate_on(memory, variable_container, phi[1])
     else:
-        Exception()
-        raise NoTypeException(var_type)
+        raise NoTypeException(var_type, 'translate_phi')
     return formula
 
 
-def translate_bool_op(bool_op):
-    return bool_op[1]
+def translate_prob(memory, variable_container, phi):
+    formula = translate_phi(memory, variable_container, phi)
+    return formula
 
 
-def generate_on(memory, variable_container, on):
-    interval = translate_interval(on[1])
-    psi = translate_psi(memory, variable_container, on[2])
-    stle1_expression = '(ON {0} {1})'.format(interval, psi)
+def translate_variable_signal(variable_container, memory, variable_signal):
+    return translate_id(variable_container, memory, variable_signal)
+
+
+def translate_id(variable_container, memory, _id):
+    print('DEBUG -- Translation.translate_variable_signal -- {0} (id)'.format(_id))
+    if _id in variable_container.parameter_ids:
+        return _id
+    elif _id in memory.properties_ids:
+        return memory.stle1_programs[_id]
+    elif _id in variable_container.signal_translator:
+        return variable_container.signal_translator[_id]
+    else:
+        raise UndeclaredIDException(_id)
+
+
+def translate_on(memory, variable_container, on):
+    interval = translate_interval(on[0])
+    psi = translate_psi(memory, variable_container, on[1])
+    stle1_expression = '( On {0} {1} )'.format(interval, psi)
     return stle1_expression
 
 
-# <EVAL_EXPR> ::= <EVAL> <ID> <ON> <ID_LIST> <WITH> <INTVL_LIST>
-def translate_eval_list(variable_container, memory, evaluation_expression_list):
+'''
+<PSI> : <MIN> <PHI>
+    | <MAX> <PHI>
+    | <INT> <PHI>
+    | <DER> <PHI>
+'''
+
+
+def translate_psi(memory, variable_container, psi):
+    # psi == (<OP>, <PHI>)
+    stle2_operator, phi = psi
+    stle1_operator = translate_operator(stle2_operator)
+    formula = '( {0} {1} )'.format(stle1_operator, translate_phi(memory, variable_container, phi))
+    return formula
+
+
+def translate_operator(stle2_op):
+    stle1_operator_map = {
+        'Min': 'min',
+        'Max': 'Max',
+        'Der': 'D',
+        'Int': 'I'
+    }
+    stle1_operator = stle1_operator_map[stle2_op]
+    return stle1_operator
+
+
+# <BOOLEAN> ::= false | true
+def translate_boolean(tree_com_lang):
+    if tree_com_lang[0]:
+        return 'true'
+    else:
+        return 'false'
+
+
+# <NUMBER> ::= Floating-point number | inf | -inf
+# <INTERVAL> ::= (<NUMBER> <NUMBER>)
+def translate_interval(interval):
+    return '( {0} {1} )'.format(interval[1], interval[2])
+
+
+# <VARIABLE> ::= x<INTEGER>
+def translate_variable(memory, variable):
+    integer = variable[1]
+    # To map variable names into variable 'x<NUMBER' format
+    memory.signal_variable_counter += 1
+    memory.signal_variables[integer] = memory.signal_variable_counter
+    return 'x' + str(memory.signal_variable_counter)
+
+
+# ('PHI', 'function', (symbol, signal1  signal2))
+# (<FUNCTION> <FORMULA>*)
+def translate_function(variable_container, memory, function):
+    symbol = function[0]
+    print('DEBUG -- Translator.translate_function -- {0} (symbol)'.format(function))
+    signal1 = function[1]
+    print('DEBUG -- Translator.translate_function -- {0} (signal2)'.format(function))
+    signal2 = function[2]
+    print('DEBUG -- Translator.translate_function -- {0} (signal)'.format(function))
+    stle1_expression = '( {0} {1} {2} )'.format(symbol,
+                                                translate_phi(memory, variable_container, signal1),
+                                                translate_phi(memory, variable_container, signal2))
+    return stle1_expression
+
+
+# until = (('PHI', 'until', phi, phi)
+# (StlUntil <INTERVAL> <FORMULA> <FORMULA>)
+def translate_until(memory, variable_container, until):
+    phi1 = until[0]
+    phi2 = until[1]
+    stle1_expression = '( StlUntil ( 0 inf ) {0} {1} )'.format(translate_phi(memory, variable_container, phi1),
+                                                             translate_phi(memory, variable_container, phi2))
+    return stle1_expression
+
+
+# until_interval = ('PHI', 'until-interval', interval, psi, psi)
+# (StlUntil <INTERVAL> <FORMULA> <FORMULA>)
+def translate_until_interval(memory, variable_container, until_interval):
+    interval = until_interval[0]
+    phi1 = until_interval[1]
+    phi2 = until_interval[2]
+    stle1_expression = '( StlUntil {0} {1} {2} )'.format(translate_interval(interval),
+                                                       translate_phi(memory, variable_container, phi1),
+                                                       translate_phi(memory, variable_container, phi2))
+    return stle1_expression
+
+
+# future = ('PHI', 'future', phi)
+# (F <INTERVAL> <FORMULA>)
+def translate_future(memory, variable_container, future):
+    phi = future
+    stle1_expression = '(F (0 inf) {0})'.format(translate_phi(memory, variable_container, phi))
+    return stle1_expression
+
+
+# future_interval = ('PHI', 'future-interval', interval, phi)
+# (F <INTERVAL> <FORMULA>)
+def translate_future_interval(memory, variable_container, future_interval):
+    interval = future_interval[0]
+    phi = future_interval[1]
+    stle1_expression = '(F {0} {1})'.format(translate_interval(interval),
+                                            translate_phi(memory, variable_container, phi))
+    return stle1_expression
+
+
+# (G <INTERVAL> <FORMULA>)
+# ('PHI', 'global', _global)
+def translate_global(memory, variable_container, _global):
+    phi = _global
+    return '(G (0 inf) {0})'.format(translate_phi(memory, variable_container, phi))
+
+
+# ('PHI', 'global', interval, _global)
+# (G <INTERVAL> <FORMULA>)
+def translate_global_interval(memory, variable_container, global_interval):
+    interval = global_interval[0]
+    phi = global_interval[1]
+    stle1_expression = 'G {0} {1}'.format(translate_interval(interval),
+                                          translate_phi(memory, variable_container, phi))
+    return stle1_expression
+
+
+def translate_eval_list(memory, evaluation_expression_list):
+    """
+    <EVAL_EXPR> ::= <EVAL> <ID> <ON> <ID_LIST> <WITH> <INTVL_LIST>
+    :param memory:
+    :param evaluation_expression_list:
+    :return:
+    """
     for evaluation_expression in evaluation_expression_list:
         _property = evaluation_expression[1]
         if _property not in memory.properties_ids:
@@ -393,113 +478,6 @@ def translate_eval_list(variable_container, memory, evaluation_expression_list):
             class_parameter.upper_limit = tree_parameter[2][2]
             class_parameters.append(class_parameter)
         memory.evaluations.append([_property, class_parameters])
-
-
-'''
-<PSI> : <MIN> <PHI>
-    | <MAX> <PHI>
-    | <INT> <PHI>
-    | <DER> <PHI>
-'''
-
-
-def translate_psi(memory, variable_container, tree_com_lang):
-    # cpn_tree == ('PSI', OP, PHI)
-    _, op, phi = tree_com_lang
-    formula = '({0} {1})'.format(op, translate_phi(memory, variable_container, phi))
-    return formula
-
-
-# <BOOLEAN> ::= false | true
-def generate_boolean(tree_com_lang):
-    if tree_com_lang[0]:
-        return 'true'
-    else:
-        return 'false'
-
-
-# <NUMBER> ::= Floating-point number | inf | -inf
-# <INTERVAL> ::= (<NUMBER> <NUMBER>)
-def generate_interval(interval):
-    return '({0} {1})'.format(interval[1], interval[2])
-
-
-# <VARIABLE> ::= x<INTEGER>
-def generate_variable(memory, variable):
-    integer = variable[1]
-    # To map variable names into variable 'x<NUMBER' format
-    memory.signal_variable_counter += 1
-    memory.signal_variables[integer] = memory.signal_variable_counter
-    return 'x' + str(memory.signal_variable_counter)
-
-
-# ('PHI', 'function', (symbol, signal1  signal2))
-# (<FUNCTION> <FORMULA>*)
-def generate_function(variable_container, memory, function):
-    symbol = function[2][0]
-    signal1 = function[2][1]
-    signal2 = function[2][2]
-    stle1_expression = '( {0} {1} {2} )'.format(symbol,
-                                                translate_signal(variable_container, memory, signal1),
-                                                translate_signal(variable_container, memory, signal2))
-    return stle1_expression
-
-
-# until = (('PHI', 'until', phi, phi)
-# (StlUntil <INTERVAL> <FORMULA> <FORMULA>)
-def generate_until(memory, variable_container, until):
-    phi1 = until[2]
-    phi2 = until[3]
-    stle1_expression = '(StlUntil ( 0 inf ) {0} {1})'.format(translate_phi(memory, variable_container, phi1),
-                                                             translate_phi(memory, variable_container, phi2))
-    return stle1_expression
-
-
-# until_interval = ('PHI', 'until-interval', interval, psi, psi)
-# (StlUntil <INTERVAL> <FORMULA> <FORMULA>)
-def generate_until_interval(memory, variable_container, until_interval):
-    interval = until_interval[2]
-    phi1 = until_interval[3]
-    phi2 = until_interval[4]
-    stle1_expression = '(StlUntil {0} {1} {2})'.format(generate_interval(interval),
-                                                       translate_phi(memory, variable_container, phi1),
-                                                       translate_phi(memory, variable_container, phi2))
-    return stle1_expression
-
-
-# future = ('PHI', 'future', phi)
-# (F <INTERVAL> <FORMULA>)
-def generate_future(memory, variable_container, future):
-    psi = future[2]
-    stle1_expression = '(F (0 inf) {0})'.format(translate_phi(memory, variable_container, psi))
-    return stle1_expression
-
-
-# future_interval = ('PHI', 'future-interval', interval, phi)
-# (F <INTERVAL> <FORMULA>)
-def generate_future_interval(memory, variable_container, future_interval):
-    interval = future_interval[2]
-    phi = future_interval[3]
-    stle1_expression = '(F {0} {1})'.format(generate_interval(interval),
-                                            translate_phi(memory, variable_container, phi))
-    return stle1_expression
-
-
-# (G <INTERVAL> <FORMULA>)
-# ('PHI', 'global', _global)
-def generate_global(memory, variable_container, _global):
-    phi = _global[2]
-    return '(G (0 inf) {0})'.format(translate_phi(memory, variable_container, phi))
-
-
-# ('PHI', 'global', interval, _global)
-# (G <INTERVAL> <FORMULA>)
-def generate_global_interval(memory, variable_container, global_interval):
-    interval = global_interval[2]
-    phi = global_interval[3]
-    stle1_expression = 'G {0} {1}'.format(generate_interval(interval),
-                                          translate_phi(memory, variable_container, phi))
-    return stle1_expression
 
 
 def translate_spec_file(variable_container, memory, stl_tree):
@@ -532,7 +510,7 @@ def translate_spec_file(variable_container, memory, stl_tree):
     # <EVAL_LIST>
     # tree_com_lang[3] == ('EVAL_LIST', t[3])
     _, eval_list = stl_tree[3]
-    translate_eval_list(variable_container, memory, eval_list)
+    translate_eval_list(memory, eval_list)
 
 
 def generate_plain_text_properties(memory):

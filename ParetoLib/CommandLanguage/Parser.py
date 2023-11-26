@@ -97,7 +97,7 @@ def p_eval_list(t):
 
 def p_eval_expr(t):
     '''
-    EVAL_EXPR : EVAL ID WITH EVAL_PARAM_LIST
+    EVAL_EXPR : EVAL ID WITH EVAL_PARAM_LIST SEMICOLON
     '''
     # Check that len([WITH INTVL_LIST]*) == len(PARAM_LIST)
     #                 ID-prop  signalList  INTVL_LIST
@@ -215,40 +215,39 @@ def p_phi(t):
         | PHI UNTIL PHI
     '''
     if len(t) == 2:
-        t[0] = ('PHI', t[1][0], t[1][1:])
-        print('DEBUG -- Parser.p_phi -- {0}'.format(t[1]))
-        print('DEBUG -- Parser.p_phi -- {0}'.format(t[1][1]))
-        print('DEBUG -- Parser.p_phi -- {0}'.format(t[1][1:]))
+        t[0] = (t[1][0], t[1][1])
+        print('DEBUG -- Parser.p_phi -- {0} (function)'.format(t[1][0]))
+        print('DEBUG -- Parser.p_phi -- {0} (definition)'.format(t[1][1]))
     elif t[1] == 'G':
         if len(t) == 3:
-            t[0] = ('PHI', 'global', t[2])
+            t[0] = ('global', t[2])
         else:
-            t[0] = ('PHI', 'global-interval', t[2], t[3])
+            t[0] = ('global-interval', (t[2], t[3]))
     elif t[1] == 'F':
         if len(t) == 3:
-            t[0] = ('PHI', 'future', t[2])
+            t[0] = ('future', t[2])
         else:
-            t[0] = ('PHI', 'future-interval', t[2], t[3])
-    elif t[1] == 'ON':
-        t[0] = ('PHI', 'on', t[2], t[3])
-    elif t[1] == 'NOT':
-        t[0] = ('PHI', 'not', t[2])
+            t[0] = ('future-interval', (t[2], t[3]))
+    elif t[1] == 'on':
+        t[0] = ('on', (t[2], t[3][1]))
+    elif t[1] == 'not':
+        t[0] = ('not', t[2])
     elif len(t) > 2 and t[2] == 'U':
-        if len(t) == 3:
-            t[0] = ('PHI', 'until', t[1], t[3])
+        if len(t) == 4:
+            t[0] = ('until', (t[1], t[3]))
         else:
-            t[0] = ('PHI', 'until-interval', t[3], t[1], t[4])
+            t[0] = ('until-interval', (t[3], t[1], t[4]))
     elif t[1] == '(':
         # t[2]: phi
         t[0] = t[2]
     elif len(t) == 3 and t[1] == 'PROB':
-        t[0] = ('PHI', 'prob', t[2])
+        t[0] = ('prob', t[2])
     elif len(t) == 4 and t[2][0] == 'binary_boolean_operation':
-        t[0] = ('function', t[2][1], t[1], t[3])
+        t[0] = ('function', (t[2][1], t[1], t[3]))
     else:
         for i in range(0, len(t)):
             print(t[i])
-        print('ERROR: No type detected (Parser.PSI)')
+        print('ERROR: No type detected (Parser.p_phi)')
 
     if debug:
         print("PHI: {0} \n".format([i for i in t[0]]))
@@ -262,7 +261,7 @@ def p_psi(t):
             | DER PHI
     '''
     #       TYPE   OP   PHI
-    t[0] = ('PSI', t[1], t[2])
+    t[0] = ('PSI', (t[1], t[2]))
 
 
 def p_func(t):
@@ -279,7 +278,7 @@ def p_func(t):
         t[0] = t[2]
     else:
         #       TYPE    OP    SIG  SIG
-        t[0] = ('function', t[2], t[1], t[3])
+        t[0] = ('function', (t[2], t[1], t[3]))
 
 
 def p_bin_bool_op(t):
