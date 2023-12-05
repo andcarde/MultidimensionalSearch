@@ -1,5 +1,8 @@
+
+# <ApplicationService.py>
+
 from ParetoLib.CommandLanguage.Parser import parser
-from Tests.View.TranslationWildcard import translate
+from ParetoLib.GUI.Router import translate
 
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 

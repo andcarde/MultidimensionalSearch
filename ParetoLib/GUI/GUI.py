@@ -13,7 +13,7 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg, NavigationToolb
 from PyQt5.QtWidgets import QApplication, QFileDialog, QMainWindow, QTableWidgetItem, QWidget, QVBoxLayout, QLabel, \
     QMessageBox
 
-import ParetoLib.GUI as RootGUI
+import ParetoLib.GUI as ROOT_GUI
 from ParetoLib.GUI.Window import Ui_MainWindow
 from ParetoLib.Oracle.OracleSTLe import OracleSTLeLib
 from ParetoLib.Oracle.OracleEpsSTLe import OracleEpsSTLe
@@ -42,6 +42,26 @@ class StandardSolutionWindow(QWidget):
         # Message
         label = QLabel(str(result))
         self.layout().addWidget(label)
+
+    '''
+    class ResultSet {
+        attribute Rectangle xspace;
+        method plot_2D_light(list var_names, Figure figure) : None
+        method plot_3D_light(list var_names, Figure figure) : None
+    }
+
+    class Rectangle {
+        *** Definition ***
+        Pese a su nombre, esta clase no simboliza un rectángulo, sino un ortotopo. Un ortotopo es la generalización
+        para n dimensiones de un segmento (1 dimensión, 1-ortotopo), ortogono o rectángulo (2 dimensiones,
+        2-ortotopo), ortoedro o paralelepípedo (3 dimensiones, 3-ortotopo) e hiperrectángulo (4 dimensiones,
+        4-ortotopo). Todo ortotopo es un politopo (lugar espacial de n dimensiones) con todos sus ángulos rectos.
+        ******************
+
+        // Return the number of dimensions of the Ortotopo
+        method dim() : Integer dimension
+    }
+    '''
 
     def set_resultset(self, rs, var_names):
         # type: (_, ResultSet, list) -> None
@@ -199,6 +219,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         matplotlib.pyplot.show()
 
     def champion_select(self):
+        # rs: Result Set
         rs_list_filepaths, _ = QFileDialog.getOpenFileNames(self, "Select the ResultSets", "./Projects", "(*.zip)")
         rs_list = []
         for file in rs_list_filepaths:
@@ -213,7 +234,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if dim_champ is not None:
             self.plot_champions(champions, dim_champ)
         else:
-            RootGUI.logger.info("No champions were found")
+            ROOT_GUI.logger.info("No champions were found")
 
     def close_event(self, event):
         def is_non_zero_file(fpath):
@@ -239,7 +260,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 else:
                     event.ignore()
         except Exception as e:
-            RootGUI.logger.debug(e.message())
+            ROOT_GUI.logger.debug(e.message())
             event.accept()
 
     def save_project(self):
@@ -371,7 +392,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.formula_textEdit.setPlainText(''.join(lines))
             self.not_saved()
         except Exception as e:
-            RootGUI.logger.debug(e)
+            ROOT_GUI.logger.debug(e)
 
     def read_signal_filepath(self):
         # type: (_) -> None
@@ -386,7 +407,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.plot_csv()
             self.not_saved()
         except Exception as e:
-            RootGUI.logger.debug(e)
+            ROOT_GUI.logger.debug(e)
 
     def read_param_filepath(self):
         # type: (_) -> None
@@ -401,7 +422,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.load_parameters(self.param_filepath)
             self.not_saved()
         except Exception as e:
-            RootGUI.logger.debug(e)
+            ROOT_GUI.logger.debug(e)
 
     def plot_csv(self):
         # type: (_) -> None
@@ -448,7 +469,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             canvas.print_figure('./images/file.png', bbox_inches='tight')
             self.show()
         except Exception as e:
-            RootGUI.logger.debug(e)
+            ROOT_GUI.logger.debug(e)
 
     def load_parameters(self, stl_param_file):
         # type: (_, str) -> None
@@ -460,7 +481,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             for row, param in enumerate(params):
                 self.param_tableWidget.setItem(row, 0, QTableWidgetItem(param))
         except Exception as e:
-            RootGUI.logger.debug(e)
+            ROOT_GUI.logger.debug(e)
 
     def read_parameters_intervals(self):
         # type: (_) -> list
@@ -497,7 +518,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             # Evaluate the STLe expression
             stl_formula = self.oracle._load_stl_formula(stl_prop_file)
             satisfied = self.oracle.eval_stl_formula(stl_formula)
-            RootGUI.logger.debug('Satisfied? {0}'.format(satisfied))
+            ROOT_GUI.logger.debug('Satisfied? {0}'.format(satisfied))
 
             # Generate Boolean signal
             stl_formula = self.oracle._load_stl_formula(stl_prop_file)
@@ -505,7 +526,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
             os.remove(stl_param_file)
         except Exception as e:
-            RootGUI.logger.debug(e)
+            ROOT_GUI.logger.debug(e)
         finally:
             return satisfied, bool_signal
 
@@ -523,20 +544,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         try:
             # Initialize the OracleSTLeLib
-            RootGUI.logger.debug('Evaluating...')
-            RootGUI.logger.debug(stl_prop_file)
-            RootGUI.logger.debug(csv_signal_file)
-            RootGUI.logger.debug(stl_param_file)
+            ROOT_GUI.logger.debug('Evaluating...')
+            ROOT_GUI.logger.debug(stl_prop_file)
+            ROOT_GUI.logger.debug(csv_signal_file)
+            ROOT_GUI.logger.debug(stl_param_file)
 
             # Read parameter intervals
             intervals = self.read_parameters_intervals()
-            RootGUI.logger.debug('Intervals:')
-            RootGUI.logger.debug(intervals)
+            ROOT_GUI.logger.debug('Intervals:')
+            ROOT_GUI.logger.debug(intervals)
             assert len(intervals) >= 2, 'Warning! Invalid number of dimensions. Returning empty ResultSet.'
 
             # Mining the STLe expression
             if method == 0:
-                RootGUI.logger.debug('Method 0...')
+                ROOT_GUI.logger.debug('Method 0...')
                 self.oracle = OracleSTLeLib(stl_prop_file, csv_signal_file, stl_param_file)
                 rs = SearchND_2(ora=self.oracle,
                                 list_intervals=intervals,
@@ -553,7 +574,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 # TODO: Popup window for reading the parameters "bound_on_count" and "intvl_epsilon"
                 #  for Oracle1 and Oracle2
 
-                RootGUI.logger.debug('Method 1...')
+                ROOT_GUI.logger.debug('Method 1...')
                 stl_prop_file = self.spec_filepaths[0]
                 stl_prop_file_2 = self.spec_filepaths[1]
                 self.oracle = OracleEpsSTLe(bound_on_count=0, intvl_epsilon=10, stl_prop_file=stl_prop_file,
@@ -579,7 +600,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                                 self.signal_filepaths]
                 # self.oracle.from_file(stl_prop_file, human_readable=True)
                 # self.oracle.from_file(stl_prop_file_2, human_readable=True)
-                RootGUI.logger.debug('Method 2...')
+                ROOT_GUI.logger.debug('Method 2...')
                 rs = SearchND_2_BMNN22(ora_list=self.oracles,
                                        list_intervals=intervals,
                                        blocking=False,
@@ -591,7 +612,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                                        simplify=False)
 
         except Exception as e:
-            RootGUI.logger.debug(e)
+            ROOT_GUI.logger.debug(e)
         finally:
             return rs
 
@@ -622,9 +643,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.solution.show()
 
 
-if __name__ == '__main__':
+import ParetoLib.main as configuration
+
+
+def execute_gui():
+    if configuration.DEBUG_MODE:
+        print('Debug Mode On')
+    else:
+        print('Debug Mode Off')
     app = QApplication(sys.argv)  # []
     window = MainWindow()
     window.show()
     window.centralwidget.adjustSize()
     sys.exit(app.exec_())
+
+
+if __name__ == '__main__':
+    execute_gui()

@@ -1245,17 +1245,32 @@ class ResultSet(object):
                       sec=0.0,
                       opacity=1.0,
                       fig_title='Approximation of the Pareto front',
-                      fig1=None):
+                      figure=None):
         # type: (ResultSet, str, int, int, int, list, bool, float, float, str, Figure) -> Figure
+        """
+        Precondition: The 'xspace' attribute of the ResulSet instance must have 3 dimensions ({ xspace.dim() == 3 }).
 
-        embedded_fig = fig1 is not None
-        if fig1 is None:
-            fig1 = plt.figure()
+        :param filename:
+        :param xaxe:
+        :param yaxe:
+        :param zaxe:
+        :param var_names:
+        :param blocking:
+        :param sec:
+        :param opacity:
+        :param fig_title:
+        :param figure:
+        :return:
+        """
 
-        ax1_list = fig1.axes
+        embedded_fig = figure is not None
+        if figure is None:
+            figure = plt.figure()
+
+        ax1_list = figure.axes
         if ax1_list is None or len(ax1_list) == 0:
             # ax1 = fig1.add_subplot(111, aspect='equal', projection='3d')
-            ax1 = fig1.add_subplot(111, projection='3d')
+            ax1 = figure.add_subplot(111, projection='3d')
         else:
             ax1 = ax1_list[0]
 
@@ -1288,7 +1303,7 @@ class ResultSet(object):
 
         ax1.dist = 12
 
-        fig1.tight_layout()
+        figure.tight_layout()
 
         ax1.set_xscale('linear')
         ax1.set_yscale('linear')
@@ -1306,9 +1321,9 @@ class ResultSet(object):
             plt.close()
 
         if filename != '':
-            fig1.savefig(filename, dpi=90, bbox_inches='tight')
+            figure.savefig(filename, dpi=90, bbox_inches='tight')
 
-        return fig1
+        return figure
 
     # @cython.ccall
     @cython.locals(filename=str, xaxe=cython.ushort, yaxe=cython.ushort, zaxe=cython.ushort, var_names=list,
