@@ -1,0 +1,4 @@
+./square.stl
+../../../2D/square/square.vcd
+./square.alias
+./square.param

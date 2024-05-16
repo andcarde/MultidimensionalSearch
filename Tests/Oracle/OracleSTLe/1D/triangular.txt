@@ -1,0 +1,3 @@
+./triangular/triangular.stl
+./triangular/triangular.csv
+./triangular/triangular.param

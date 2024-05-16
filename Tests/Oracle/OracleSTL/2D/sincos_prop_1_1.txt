@@ -1,0 +1,4 @@
+./sincos/prop1_1/sincos.stl
+./sincos/sincos500.vcd
+./sincos/prop1_1/sincos.alias
+./sincos/prop1_1/sincos.param

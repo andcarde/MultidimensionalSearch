@@ -1,0 +1,30 @@
+
+    README file of the Test suite for ParetoLib
+"""""""""""""""""""""""""""""""""""""""""""""""""
+
+This README contains information about every data file used in the test
+suite of ParetoLib for OraclePoint. Each file defines a OraclePoint.
+
+2D/3D
+- test-2d-[6|12]points.txt: Oracle that has a set of [6|12] points obtained by evaluating a linear function (diagonal)
+- test-2d-10points.txt: Oracle that has a set of 10 points obtained by evaluating an inverse function (hyperbola)
+- test-[2|3]d-[1000|2000|10000]points.txt: Oracle that has a set of X points of [2|3]-dimension. They are LIDAR points
+ extracted from the adaptation of:
+
+ ftp://ftp.geo.euskadi.net/lidar/LIDAR_2012_ETRS89/XYZ/COMPLETO/458_4782_completo.zip
+
+
+ND
+- test-Nd-Xpoints.bin: Oracle that has a set of X random points of N-dimension
+
+
+    File format
+"""""""""""""""""
+There are two kind of files (*.txt, *.bin):
+- *.txt are textual human-readable files.
+Each line of the file represents a point in the closure.
+Every point is defined by a tuple with the format '(x, y, z)',
+The dimension of the n-dimensional space is implicitly defined by the number of
+coordinates in the tuple.
+
+- *.bin are binary files created by the serialization of Oracles with the Python's Pickle library.

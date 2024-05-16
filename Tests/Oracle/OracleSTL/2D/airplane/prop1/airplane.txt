@@ -1,0 +1,4 @@
+./airplane.stl
+../airplane.vcd
+./airplane.alias
+./airplane.param

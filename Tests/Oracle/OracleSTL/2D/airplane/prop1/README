@@ -1,0 +1,4 @@
+The validity interval for 'p1' is p1 >= 1
+The validity interval for 'p2' is p2 >= 1
+
+It is recommended to invoke the Pareto multidimensional search in the parametric space [-2.0, 2.0] for p1 and p2

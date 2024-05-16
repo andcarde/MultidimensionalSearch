@@ -1,0 +1,92 @@
+
+· Language STLE1 syntax
+
+-- Extra, not treated
+[Omitted] <TERNARY> ::= ite <FUNCTION> <VALUE> <VALUE>
+[Omitted] <VALUE> ::= <NUMBER> | <VARIABLE>
+
+^ ::= <FORMULA>
+<FORMULA> ::= <VARIABLE> |
+              <NUMBER> |
+              <BOOLEAN> |
+              ( <FUNCTION> <FORMULA>* ) |
+              ( F <INTERVAL> <FORMULA> ) |
+              ( G <INTERVAL> <FORMULA> ) |
+              ( StlUntil <INTERVAL> <FORMULA> <FORMULA> ) |
+              ( On <INTERVAL> <AGGREGATE> ) |
+              [Omitted] -- ( Until <INTERVAL> <NUMBER> <AGGREGATE> <FORMULA> ) |
+              [Omitted] -- ( Until <INTERVAL> <NUMBER> ( Get <FORMULA> ) <FORMULA> ) | --
+              ( Lookup <NUMBER> <NUMBER> <FORMULA> )
+<VARIABLE> ::= x<INTEGER>
+<INTEGER> ::= \d+
+<NUMBER> ::= <FLOAT_NUMBER> | inf | -inf
+<FLOAT_NUMBER> ::= \d*\.?\d+
+<BOOLEAN> ::= false | true
+<FUNCTION> ::= <ARITHMETIC> | <COMPARATION> | <LOGICAL_OP> | <BOOLEAN>
+<ARITHMETIC> ::= min | max | + | - | / | * | abs
+<COMPARATION> ::= < | <= | > | >=
+<LOGICAL_OP> ::= and |or | not | ->
+<INTERVAL> ::= ( <NUMBER> <NUMBER> )
+<AGGREGATE> ::= ( Min <FORMULA> ) | ( Max <FORMULA> )
+
+· Language STLE2 syntax
+^ ::= <SPEC_FILE>
+<SPEC_FILE> ::= <DEFINITIONS> <PROP_LIST> <EVAL_LIST>
+
+<DEFINITIONS> ::= <DEF> | <DEF> <DEFINITIONS>?
+<DEF> ::= <PARAM_DEF> | <SIGNAL_DEF> | <PROBSIGNAL_DEF>
+<PARAM_DEF> ::= <LET> <PARAM> <PARAM_LIST> <SEMICOLON>
+<PARAM_LIST> ::= <ID_LIST>
+<ID_LIST> ::= ID | ID COMMA ID_LIST
+<ID> ::= [TERMINAL]
+<SIGNAL_DEF> ::= <LET> <SIGNAL> <SIGNAL_LIST> <SEMICOLON>
+<SIGNAL_LIST> ::= <ID_LIST>
+<PROBSIGNAL_DEF> : <LET> <PROBABILISTIC> <SIGNAL> <PROBSIGNAL_LIST> <SEMICOLON>
+<PROBSIGNAL_LIST> ::= <ID_LIST>
+
+<PROP_LIST> : <PROP> | <PROP> [<PROP_LIST>]?
+<PROP> : <ID> <ASSIGNMENT> <PHI> <SEMICOLON> | <ID> <ASSIGNMENT> <PSI> <SEMICOLON>
+<PHI> : <SIG>
+        | <FUNC>
+        | <NOT> <PHI>
+        | <PROB> <PHI>
+        | <PHI> <BIN_BOOL_OP> <PHI>
+        | F <INTVL> <PHI>
+        | F <PHI>
+        | G <INTVL> <PHI>
+        | G <PHI>
+        | <PHI> <UNTIL> <INTVL> <PHI>
+        | <ON> <INTVL> <PSI>
+        | <LPAREN> <PHI> <RPAREN>
+        | <PHI> <UNTIL> <PHI>
+<SIG> : <ID>
+        | <CONSTANT_SIGNAL>
+        | <SIG> <BIN_OP> <SIG>
+        | <LPAREN> <SIG> <RPAREN>
+<CONSTANT_SIGNAL> : <NUMBER>
+<NUMBER> ::= [TERMINAL]
+<BIN_OP> : <PLUS>
+    | <MINUS>
+    | <TIMES>
+    | <DIVIDE>
+<FUNC> : <SIG> <BIN_COND> <SIG>
+<BIN_BOOL_OP> : <AND>
+        | <OR>
+        | <IMPLY>
+<BIN_COND> : <LEQ>
+    | <LESS>
+    | <GEQ>
+    | <GREATER>
+    | <NEQ>
+<INTVL> ::= <LBRACK> <NUMBER_ID> <COMMA> <NUMBER_ID> <RBRACK>
+<NUMBER_ID> ::= <NUMBER> | <ID>
+<PSI> : <MIN> <PHI>
+            | <MAX> <PHI>
+            | <INT> <PHI>
+            | <DER> <PHI>
+
+<EVAL_LIST> ::= <EVAL_EXPR> [<EVAL_LIST>]?
+<EVAL_EXPR> ::= <EVAL> <ID> <WITH> <EVAL_PARAM_LIST>
+EVAL_PARAM_LIST :=
+<INTVL_LIST> ::= <ID> <IN> <INTVL> [<COMMA> <INTVL_LIST>]?
+<NUMBER_ID> ::= <NUMBER> | <ID>

@@ -1,0 +1,4 @@
+./sincos.stl
+../../../2D/sincos/sincos500.vcd
+./sincos.alias
+./sincos.param
