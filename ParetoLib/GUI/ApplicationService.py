@@ -6,6 +6,8 @@ from ParetoLib.GUI.Router import translate
 
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 
+from pathlib import Path
+
 # DEBUG
 from ParetoLib.CommandLanguage.Translation import Translation, STLe1Pack
 
@@ -35,19 +37,30 @@ class AppService:
             self.window.show_message('Error', error_text)
         return len(translation.errors) == 0, translation
 
+    def convertPath(self, filename):
+        # os.path.join('Language', 'language_examples', name)
+        current = Path(".")
+        filepath = current / filename
+        return filepath.resolve().absolute()
+
     def check_run(self):
         # ORIGINAL
         # no_error, translation = self.check(False)
+
         # DEBUG
         no_error = True
         translation = Translation()
-        program_file_path = 'Test_Output_STLe1.txt'
-        parameters_file_path = 'Test_Output_STLe1.txt'
+        print(self.convertPath('Test_Output_STLe1.txt'))
+        program_file_path = self.convertPath('Test_Output_STLe1.txt')
+        parameters_file_path = self.convertPath('Test_Output_STLe1.txt')
         sTLe1Pack = STLe1Pack(program_file_path, parameters_file_path)
         translation.add_stle1_pack(self, sTLe1Pack)
+
         translation.stle1_packs
         if no_error:
             for stle1_pack in translation.stle1_packs:
+                is_parametric = (stle1_pack.parameters_file_path is None)
+                self.window.setParemetric(is_parametric)
                 self.window.set_param_filepath(stle1_pack.parameters_file_path)
                 self.window.run_stle(stle1_pack.program_file_path)
 

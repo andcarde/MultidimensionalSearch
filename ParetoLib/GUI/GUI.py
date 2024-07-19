@@ -622,6 +622,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             ROOT_GUI.logger.debug('Evaluation completed')
             return rs
 
+    def setParemetric(self, is_parametric):
+        self.is_parametric = is_parametric
+
     def run_stle(self):
         # type: (_) -> None
         # Running STLEval
@@ -650,7 +653,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
 
 import ParetoLib.main as configuration
-
 
 def execute_gui():
     if configuration.DEBUG_MODE:
