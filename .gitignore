@@ -1,3 +1,9 @@
-/.python-version
-/ParetoLib.egg-info/
-/build
+.idea/*
+.git/*
+bin/*
+build/*
+myenv/*
+ParetoLib.egg-info/*
+.python-version
+.DS_Store
+
