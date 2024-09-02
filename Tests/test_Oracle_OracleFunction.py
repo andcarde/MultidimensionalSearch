@@ -88,7 +88,8 @@ class OracleFunctionTestCase(unittest.TestCase):
         self.read_write_condition_files(human_readable=False)
         self.read_write_condition_files(human_readable=True)
 
-    def read_write_condition_files(self, human_readable=False):
+    def read_write_condition_files(self,
+                                human_readable=False):
         # type: (OracleFunctionTestCase, bool) -> None
 
         tmpfile = tf.NamedTemporaryFile(delete=False)
@@ -122,7 +123,8 @@ class OracleFunctionTestCase(unittest.TestCase):
         self.read_write_oracle_files(False)
         self.read_write_oracle_files(True)
 
-    def read_write_oracle_files(self, human_readable=False):
+    def read_write_oracle_files(self,
+                         human_readable=False):
         # type: (OracleFunctionTestCase, bool) -> None
         tmpfile = tf.NamedTemporaryFile(delete=False)
         nfile = tmpfile.name

@@ -1,0 +1,103 @@
+
+· Grammar of the language STLe2
+
+In this file the grammar rules are exposed using the BNF syntax.
+The symbol '?', '+', '*' represents the cardinality of the expression between '[' and ']'. Symbols:
+
+- ? = 0, 1
+- + = 1..N
+- * = 0..N
+
+The rules are automatically introduced into the system through the processing of the Language class defined in ParetoLib.
+
+-*- Grammatical Rules -*-
+
+>>> bnf.constants
+
+LET: let
+SIGNAL: signal
+SEMICOLON: ;
+PROBABILISTIC: probabilistic
+PARAM: param
+COMMA: ,
+LBRACKET: [
+RBRACKET: ]
+PLUS: +
+MINUS: -
+TIMES: *
+DIVIDE: /
+LEQ: <=
+LESS: <
+GEQ: >=
+GREATER: >
+NEQ: <>
+EQ: ==
+AND: and
+OR: or
+IMPLY: ->
+NOT: not
+ASSIGNMENT: :=
+F: F
+G: G
+UNTIL: U
+ON: on
+MIN: min
+MAX: max
+DER: der
+INT: int
+PROB: prob
+LPAREN: (
+RPAREN: )
+EVAL: eval
+IN: in
+
+>>> end
+
+>>> bnf.variables
+ID: r'[a-zA-Z_][a-zA-Z_0-9\'\.]*'
+NUMBER: r'\d*\.?\d+ | inf | -inf'
+>>> end
+
+>>> bnf.syntax
+
+# CDV: Construcciones de declaración de variables
+ID_LIST: ID | ID COMMA ID_LIST
+PARAM_LIST: ID_LIST
+SIGNAL_LIST: ID_LIST
+PROBSIGNAL_LIST: ID_LIST
+DEF_SIGNAL: LET SIGNAL SIGNAL_LIST SEMICOLON
+DEF_PROBSIGNAL: LET PROBABILISTIC SIGNAL PROBSIGNAL_LIST SEMICOLON
+DEF_PARAM: LET PARAM PARAM_LIST SEMICOLON
+
+# CI: Construcciones de intervalo
+NUMBER_OR_ID: ID | NUMBER
+INTVL: LBRACKET NUMBER_OR_ID COMMA NUMBER_OR_ID RBRACKET
+INTVL_LIST: ID IN INTVL | ID IN INTVL COMMA INTVL_LIST
+
+# SS: Signals
+CONSTANT_SIGNAL: NUMBER
+SIG: ID | CONSTANT_SIGNAL
+
+# OP: Operandos
+BIN_OP : PLUS | MINUS | TIMES | DIVIDE
+BIN_COND: LEQ | LESS | GEQ | GREATER | NEQ
+BIN_BOOL_OP: AND | OR | IMPLY
+
+# CA: Construcciones de asignaciones (Necesita: OP, SS)
+FUNC: SIG | LPAREN FUNC RPAREN | FUNC BIN_COND FUNC | FUNC BIN_OP FUNC
+PHI: ID | FUNC | NOT PHI | PROB PHI | PHI BIN_BOOL_OP PHI | F [INTVL]? PHI | G [INTVL]? PHI | PHI UNTIL [INTVL]? PHI |
+    ON INTVL PSI! | LPAREN PHI RPAREN
+PSI: MIN PHI | MAX PHI | INT PHI | DER PHI
+PROP: ID ASSIGNMENT [PHI | PSI] SEMICOLON
+
+# CE: Construcciones de evaluación (Necesita: CI)
+EVAL_PARAM_LIST: ID IN INTVL | ID IN INTVL COMMA EVAL_PARAM_LIST
+EVAL: EVAL ID ON EVAL_PARAM_LIST SEMICOLON
+
+# CG: Construcción general (Necesita: CDV, CA, CE)
+SPEC_FILE: 
+    [DEF_SIGNAL | DEF_PROBSIGNAL]?
+    [DEF_PARAM]?
+    [PROP]+
+    [EVAL]+
+>>> end

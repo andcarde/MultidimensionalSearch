@@ -39,6 +39,6 @@ rs = Search2D(ora=oracle,
               sleep=0,
               opt_level=0,
               parallel=False,
-              logging=False,
+              logging=True,
               simplify=False)
 rs.to_file("result.zip")

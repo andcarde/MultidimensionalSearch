@@ -1,4 +1,0 @@
-let param p1, p2;
-let signal s1;
-prop1 := G [8, 12] p1 and p2
-eval prop1 with p1 in [5, 8], p2 in [7, inf];

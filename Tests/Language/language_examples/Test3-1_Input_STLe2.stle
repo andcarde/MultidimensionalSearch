@@ -1,3 +1,0 @@
-let param p1;
-v2 := 10 + ( 5000 - p1 );
-eval v2 with p1 in [0, inf];

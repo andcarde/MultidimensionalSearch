@@ -1,4 +1,0 @@
-let signal height, width;
-let param param1;
-prop1 := height U [param1, 5] width;
-eval prop1 with param1 in [1, 3];
