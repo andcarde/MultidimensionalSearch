@@ -11,6 +11,7 @@ from ParetoLib.Oracle.OracleEpsSTLe import OracleEpsSTLe
 from ParetoLib.Search.Search import SearchND_2, SearchIntersectionND_2, SearchND_2_BMNN22, EPS, DELTA, STEPS
 from ParetoLib.CommandLanguage.FileUtils import read_file
 from ParetoLib.GUI.solution_window import StandardSolutionWindow
+from ParetoLib.CommandLanguage.FileUtils import create_empty_file
 
 RootGUI = ParetoLib.GUI
 
@@ -31,7 +32,6 @@ class ApplicationService(ApplicationServiceInterface):
         # :: OracleContainer
         self.oracle_container = OracleContainer()
         self.main_window = main_window
-        self.main_window.set_application_service(self)
 
     def _get_parameters(self):
         # :: List[str]
@@ -79,13 +79,13 @@ class ApplicationService(ApplicationServiceInterface):
                 var_names = self.oracle_container.get_oracle().get_var_names()
                 StandardSolutionWindow.show_single_oracle_solution(result_set, var_names)
 
-    def _run_non_parametric_stle(self, property_file_name, signal_file_name):
+    def _run_non_parametric_stle(self, formula_filepath, signal_filepath):
         """
         Runs STLEval without parameters
 
         Parameters:
-        property_file_name :: str
-        csv_signal_file :: str
+        formula_filepath :: str
+        signal_filepath :: str
 
         Returns: Tuple = (bool, dict[c_double, c_double])
         """
@@ -95,26 +95,23 @@ class ApplicationService(ApplicationServiceInterface):
         # :: Dictionary[Double, Double]
         bool_signal = dict()
         try:
-            # :: _TemporaryFileWrapper : Since there are no parameters, an empty temporary file is used
-            parameters_file = tempfile.NamedTemporaryFile(delete=False)
-            parameters_file.close()
-            # :: str
-            parameters_file_name = parameters_file.name
+            # :: str : Since there are no parameters, an empty temporary file is used
+            parameters_filepath = create_empty_file()
 
             # :: OracleSTLeLib : Initialize the OracleSTLeLib
-            oracle = OracleSTLeLib(property_file_name, signal_file_name, parameters_file_name)
+            oracle = OracleSTLeLib(formula_filepath, signal_filepath, parameters_filepath)
             self.oracle_container.set_oracle(oracle)
             # :: str : Evaluate the STLe expression
-            stl_formula = oracle._load_stl_formula(property_file_name)
+            stl_formula = oracle._load_stl_formula(formula_filepath)
             is_satisfied = oracle.eval_stl_formula(stl_formula)
             RootGUI.logger.debug('Satisfied? {0}'.format(is_satisfied))
 
             # :: str : Generate Boolean signal
-            stl_formula = oracle._load_stl_formula(property_file_name)
+            stl_formula = oracle._load_stl_formula(formula_filepath)
             # :: dict[c_double, c_double]
             bool_signal = oracle.get_stle_pcseries(stl_formula)
 
-            os.remove(property_file_name)
+            os.remove(formula_filepath)
         except Exception as exception:
             RootGUI.logger.debug(exception)
         finally:
@@ -151,14 +148,14 @@ class ApplicationService(ApplicationServiceInterface):
 
         return intervals
 
-    def _run_parametric_stle(self, stl_prop_file, csv_signal_file, stl_param_file):
+    def _run_parametric_stle(self, formula_filepath, signal_filepath, parameters_filepath):
         """
-        Running STLEval without parameters
+        Running STLEval with parameters
 
         Parameters:
-        stl_prop_file :: str
-        csv_signal_file :: str
-        stl_param_file :: str
+        formula_filepath :: str : Formula in STLe1 syntax
+        signal_filepath :: str
+        parameters_filepath :: str
 
         Returns: ResultSet
         """
@@ -175,13 +172,13 @@ class ApplicationService(ApplicationServiceInterface):
         try:
             # Initialize the OracleSTLeLib
             RootGUI.logger.debug('Evaluating...')
-            RootGUI.logger.debug(stl_prop_file)
-            RootGUI.logger.debug(csv_signal_file)
-            RootGUI.logger.debug(stl_param_file)
+            RootGUI.logger.debug(formula_filepath)
+            RootGUI.logger.debug(signal_filepath)
+            RootGUI.logger.debug(parameters_filepath)
 
             # Read parameter intervals --> Save the parameters
             # :: List[Tuple = (float, float)]
-            intervals = ApplicationService._read_parameters_intervals(stl_param_file)
+            intervals = ApplicationService._read_parameters_intervals(parameters_filepath)
             RootGUI.logger.debug('Intervals:')
             RootGUI.logger.debug(intervals)
             assert len(intervals) >= 2, 'Warning! Invalid number of dimensions. Returning empty ResultSet.'
@@ -189,7 +186,7 @@ class ApplicationService(ApplicationServiceInterface):
             # Mining the STLe expression
             if method == 0:
                 RootGUI.logger.debug('Method 0...')
-                oracle = OracleSTLeLib(stl_prop_file, csv_signal_file, stl_param_file)
+                oracle = OracleSTLeLib(formula_filepath, signal_filepath, parameters_filepath)
                 self.oracle_container.set_oracle(oracle)
                 result_set = SearchND_2(ora=oracle,
                                         list_intervals=intervals,
@@ -204,13 +201,11 @@ class ApplicationService(ApplicationServiceInterface):
                                         simplify=False)
             elif method == 1:
                 RootGUI.logger.debug('Method 1')
-                # :: str : File path number 2
-                stl_prop_file2 = self.main_window.get_specification_filepath(1)
-                oracle = OracleEpsSTLe(bound_on_count=0, intvl_epsilon=10, stl_prop_file=stl_prop_file,
-                                       csv_signal_file=csv_signal_file, stl_param_file=stl_param_file)
+                oracle = OracleEpsSTLe(bound_on_count=0, intvl_epsilon=10, stl_prop_file=formula_filepath,
+                                       csv_signal_file=signal_filepath, stl_param_file=parameters_filepath)
                 self.oracle_container.set_oracle(oracle)
-                oracle2 = OracleEpsSTLe(bound_on_count=0, intvl_epsilon=10, stl_prop_file=stl_prop_file2,
-                                        csv_signal_file=csv_signal_file, stl_param_file=stl_param_file)
+                oracle2 = OracleEpsSTLe(bound_on_count=0, intvl_epsilon=10, stl_prop_file=formula_filepath,
+                                        csv_signal_file=signal_filepath, stl_param_file=parameters_filepath)
                 self.oracle_container.set_oracle2(oracle2)
                 result_set = SearchIntersectionND_2(oracle, oracle2,
                                                     intervals,
@@ -225,10 +220,9 @@ class ApplicationService(ApplicationServiceInterface):
                                                     logging=False,
                                                     simplify=False)
             elif method == 2:
-                # :: List[str]
-                signal_filepaths = self.main_window.get_signal_filepaths()
-                oracles = [OracleSTLeLib(stl_prop_file, csv_signal_file, stl_param_file)
-                           for csv_signal_file in signal_filepaths]
+                # :: str
+                signal_filepath = self.main_window.get_signal_filepath()
+                oracles = OracleSTLeLib(formula_filepath, signal_filepath, parameters_filepath)
                 self.oracle_container.set_oracles(oracles)
                 RootGUI.logger.debug('Method 2')
                 result_set = SearchND_2_BMNN22(ora_list=oracles,

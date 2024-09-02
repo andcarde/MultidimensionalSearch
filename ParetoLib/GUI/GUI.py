@@ -97,12 +97,15 @@ class MainWindow(QMainWindow, Ui_MainWindow, WindowInterface):
         if self.controller is None:
             raise Exception('The controller has not been assigned so it is not possible to run stle')
         else:
-            signal_filepath = self.signal_filepath
             if self.signal_filepath is None:
-                self.show_message('Missing signal', 'The signal has not been set.')
+                self.show_message('Missing signal', 'The signal has not been set.', True)
             else:
-                stle2_program = self.program_textarea.toPlainText()
-                self.controller.check_run(self, stle2_program, signal_filepath)
+                stle2_program = self.get_program()
+                self.controller.check_run(self, stle2_program, self.signal_filepath)
+
+    def show_message(self, title: str, body: str, is_error: bool):
+        if is_error:
+            QMessageBox.critical(self, title, body)
 
     """
     def _is_parametric(self):
@@ -116,6 +119,26 @@ class MainWindow(QMainWindow, Ui_MainWindow, WindowInterface):
         is_parametric = (index == 1)
         return is_parametric
     """
+
+    def get_program(self):
+        """
+        Returns:
+            program :: str
+        """
+        # :: str
+        program = self.program_textarea.toPlainText()
+        return program
+
+    def set_program(self, program: str):
+        """
+        Set the STLe2 program
+
+        Parameters:
+            program :: str
+
+        Returns: None
+        """
+        self.program_textarea.setPlainText(program)
 
     def get_method(self):
         """
@@ -140,6 +163,15 @@ class MainWindow(QMainWindow, Ui_MainWindow, WindowInterface):
         # :: int
         self.opt_level = self.opt_level_comboBox.currentIndex()
         return self.opt_level
+
+    def get_signal_filepath(self):
+        """
+        Gives the filepath of the signal.
+
+        Returns:
+            signal_filepath :: str
+        """
+        return self.signal_filepath
 
     @staticmethod
     def _clear_layout(layout):
@@ -274,13 +306,15 @@ class MainWindow(QMainWindow, Ui_MainWindow, WindowInterface):
 
         Returns: None
         """
+        # :: str
         self.program_filepath = data["stl_specification"]
         if self.program_filepath:
-            self._set_spec_filepath(self.program_filepath)
+            self._set_program_filepath(self.program_filepath)
 
-        self.signal_filepath = data["signal_specification"]
-        if self.signal_filepath:
-            self._set_signal_filepath(self.signal_filepath)
+        # :: str
+        signal_filepath = data["signal_specification"]
+        if signal_filepath:
+            self._set_signal_filepath(signal_filepath)
 
         options = data["options"]
 
@@ -307,31 +341,21 @@ class MainWindow(QMainWindow, Ui_MainWindow, WindowInterface):
         """
         Returns: None
         """
-        spec_filepath, _ = QFileDialog.getOpenFileNames(self, 'Select a file', '../../Tests/Oracle/OracleSTLe',
-                                                        '(*.stl)')
-        self._set_spec_filepath(spec_filepath)
-        program = read_file(spec_filepath)
-        self.program_textarea.setPlainText(program)
-
-    def _set_spec_filepath(self, spec_filepath):
-        try:
-            self.spec_filepath_textbox.setPlainText("\n".join(specification_filepath
-                                                              for specification_filepath in spec_filepath))
-            with open(self.spec_filepath_textbox.toPlainText()) as file:
-                lines = file.readlines()
-            self.formula_textEdit.setPlainText(''.join(lines))
-            self._not_saved()
-        except Exception as e:
-            RootGUI.logger.debug(e)
+        # :: str
+        program_filepath, _ = QFileDialog.getOpenFileName(self, 'Select a file', '../../Tests/Oracle/OracleSTLe',
+                                                          '(*.stl)')
+        # :: str
+        program = read_file(program_filepath)
+        self.set_program(program)
 
     def read_signal_filepath(self):
         """
         Returns: None
         """
         # :: List[str]
-        signal_filepaths, _ = QFileDialog.getOpenFileNames(self, 'Select a file', '../../Tests/Oracle/OracleSTLe',
-                                                           '(*.csv)')
-        self._set_signal_filepath(signal_filepaths[0])
+        signal_filepath, _ = QFileDialog.getOpenFileName(self, 'Select a file', '../../Tests/Oracle/OracleSTLe',
+                                                         '(*.csv)')
+        self._set_signal_filepath(signal_filepath)
 
     def _set_signal_filepath(self, signal_filepath: str):
         """
@@ -340,8 +364,9 @@ class MainWindow(QMainWindow, Ui_MainWindow, WindowInterface):
         Returns: None
         """
         try:
+            self.signal_filepath = signal_filepath
             self.signal_filepath_textbox.setPlainText(signal_filepath)
-            self._plot_csv()
+            self._plot_csv(signal_filepath)
             self._not_saved()
         except Exception as e:
             RootGUI.logger.debug(e)
@@ -361,35 +386,26 @@ class MainWindow(QMainWindow, Ui_MainWindow, WindowInterface):
             RootGUI.logger.debug(e)
     """
 
-    def set_program(self, program: str):
+    def _plot_csv(self, signal_filepath: str):
         """
-        Set the STLe2 program
-
         Parameters:
-            program :: str
+            signal_filepath: str
 
-        Returns: None
-        """
-        self.program_textarea.setPlainText(program)
-
-    def _plot_csv(self):
-        """
-        Returns: None
+        Returns:
+            None
         """
         # Create the 'maptlotlib' FigureCanvas object,
         # which defines a single set of axes as self.axes.
         canvas = MplCanvas(parent=self)
         canvas.set_axis()
         try:
-            # Read csvfile from self.label_3
-            # csvfile = '../../Tests/Oracle/OracleSTLe/2D/stabilization/stabilization.csv'
-            csvfile = self.signal_filepath_textbox.toPlainText()
+            # signal_filepath = '../../Tests/Oracle/OracleSTLe/2D/stabilization/stabilization.csv'
 
             # Read CSV file
             names = ['Time', 'Signal']
             # dtypes = [int, float]
             # df_signal = pd.read_csv(csvfile, sep=',', names=names, dtypes=dtypes)
-            df_signal = pd.read_csv(csvfile, sep=',', names=names)
+            df_signal = pd.read_csv(signal_filepath, sep=',', names=names)
 
             # Plot the responses for different events and regions
             sns.set_theme(style='darkgrid')
@@ -402,7 +418,6 @@ class MainWindow(QMainWindow, Ui_MainWindow, WindowInterface):
             canvas.figure.tight_layout(pad=0)
 
             MainWindow._clear_layout(self.signal_layout)
-            # self.signal_layout.layout().addWidget(canvas)
             self.signal_layout.addWidget(canvas)
             self.show()
         except Exception as e:

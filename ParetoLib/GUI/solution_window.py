@@ -8,11 +8,12 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QHBoxLayo
 
 from ParetoLib.Search.ResultSet import ResultSet
 from ParetoLib.GUI.mpl_canvas import MplCanvas
+from ParetoLib.GUI.solution_window_interface import SolutionWindowInterface
 
 matplotlib.use('Qt5Agg')
 
 
-class StandardSolutionWindow(QWidget):
+class StandardSolutionWindow(QWidget, SolutionWindowInterface):
     """
     This "window" is a QWidget. If it has no parent, it
     will appear as a free-floating window as we want.
@@ -221,8 +222,8 @@ class StandardSolutionWindow(QWidget):
     def show_multi_oracle_solution(result_set: ResultSet, parameters: list):
         """
         Parameters:
-        result_set :: ResultSet
-        parameters :: List[str]
+            result_set :: ResultSet
+            parameters :: List[str]
 
         Return: None
         """

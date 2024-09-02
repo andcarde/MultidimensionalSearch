@@ -21,18 +21,17 @@ class Controller:
             stl_tree = parser.parse(stle2_program)
         except Exception as e:
             error_message = str(e)
-            QMessageBox.critical(self.window, "Error", f"An error occurred: {error_message}")
-            self.window.show_message('Error', f"An error occurred:\n{error_message}")
+            self.window.show_message(title='Error', body=f"An exception occurred:\n{error_message}", is_error=True)
         translation = translate(stl_tree)
         if len(translation.errors) == 0:
             if should_show_message:
-                self.window.show_message('Info', 'There is no error found')
+                self.window.show_message(title='Info', body='There is no error found', is_error=False)
         else:
             error_text = 'The follow errors have been detected: ' + '\n'
             error_text += '- ' + translation.errors[0]
             for i in range(1, len(translation.errors)):
                 error_text += '\n' + '- ' + translation.errors[i]
-            self.window.show_message('Error', error_text)
+            self.window.show_message(title='Error', body=error_text, is_error=True)
         return len(translation.errors) == 0, translation
 
     @staticmethod
@@ -66,15 +65,15 @@ class Controller:
         if file_name:
             with open(file_name, 'r') as file:
                 content = file.read()
-                self.window.textarea.setPlainText(content)
+                self.window.set_program(content)
 
     def save(self):
         # Retrieving the content of the textarea
-        content = self.window.textarea.toPlainText()
+        content = self.window.get_program()
 
         # Checking if the content is empty
         if not content:
-            self.window.show_message("Error", "The STLe language field is empty.")
+            self.window.show_message("Error", "The STLe language field is empty.", False)
         else:
             options = QFileDialog.Options()
             file_name, _ = QFileDialog.getSaveFileName(self.window, "Save as .stle", "",
