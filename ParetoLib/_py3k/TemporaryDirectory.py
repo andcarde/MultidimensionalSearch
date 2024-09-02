@@ -19,6 +19,7 @@ from __future__ import print_function
 
 import warnings as _warnings
 import os as _os
+import sys as _sys
 
 from tempfile import mkdtemp
 
@@ -37,19 +38,19 @@ class TemporaryDirectory(object):
     in it are removed.
     """
 
-    def __init__(self, suffix="", prefix="tmp", dir=None):
+    def __init__(self, suffix="", prefix="tmp", _dir=None):
         self._closed = False
         self.name = None  # Handle mkdtemp raising an exception
-        self.name = mkdtemp(suffix, prefix, dir)
+        self.name = mkdtemp(suffix, prefix, _dir)
 
     def __repr__(self):
-        return ("<{} {!r}>".format(self.__class__.__name__, self.name))
+        return "<{} {!r}>".format(self.__class__.__name__, self.name)
 
     def __enter__(self):
-        return (self.name)
+        return self.name
 
     def cleanup(self, _warn=False):
-        if (self.name and not self._closed):
+        if self.name and not self._closed:
             try:
                 self._rmtree(self.name)
             except (TypeError, AttributeError) as ex:
@@ -62,7 +63,7 @@ class TemporaryDirectory(object):
                       file=_sys.stderr)
                 return
             self._closed = True
-            if (_warn):
+            if _warn:
                 self._warn("Implicitly cleaning up {!r}".format(self))
 
     def __exit__(self, exc, value, tb):
@@ -73,7 +74,7 @@ class TemporaryDirectory(object):
         self.cleanup()
 
     # XXX (ncoghlan): The following code attempts to make
-    # this class tolerant of the module nulling out process
+    # this class tolerant of the module nullification process
     # that happens during CPython interpreter shutdown
     # Alas, it doesn't actually manage it. See issue #10188
     _listdir = staticmethod(_os.listdir)
@@ -85,15 +86,15 @@ class TemporaryDirectory(object):
     _warn = _warnings.warn
 
     def _rmtree(self, path):
-        # Essentially a stripped down version of shutil.rmtree.  We can't
-        # use globals because they may be None'ed out at shutdown.
+        # Essentially a stripped down version of shutil.rmtree.
+        # We cannot use globals because they may not be set to None on shutdown.
         for name in self._listdir(path):
             fullname = self._path_join(path, name)
             try:
                 isdir = self._isdir(fullname) and not self._islink(fullname)
             except OSError:
                 isdir = False
-            if (isdir):
+            if isdir:
                 self._rmtree(fullname)
             else:
                 try:

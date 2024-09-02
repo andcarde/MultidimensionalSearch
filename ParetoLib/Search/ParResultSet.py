@@ -21,6 +21,7 @@ The ResultSet class provides functions for:
 - Exporting/Importing the results to text and binary files.
 """
 
+from typing import Tuple, List
 from multiprocessing import Pool, cpu_count
 from itertools import combinations
 from scipy.spatial.distance import directed_hausdorff as dhf
@@ -39,8 +40,8 @@ class ParResultSet(ResultSet):
     @cython.returns(cython.void)
     def __init__(self, border=list(), ylow=list(), yup=list(), xspace=Rectangle()):
         # type: (ParResultSet, iter, iter, iter, Rectangle) -> None
-        # super(ParResultSet, self).__init__(border, ylow, yup, xspace)
-        ResultSet.__init__(self, border, ylow, yup, xspace)
+        super(ParResultSet, self).__init__(border, ylow, yup, xspace)
+        # ResultSet.__init__(self, border, ylow, yup, xspace)
 
     # Vertex functions
     # @cython.ccall
@@ -240,13 +241,20 @@ class ParResultSet(ResultSet):
         return self.member_space(xpoint) and not self.member_yup(xpoint) and not self.member_ylow(xpoint)
 
 
+@cython.locals(args=tuple, rs_list=list, rs=object)
+def par_haussdorf_distance(args):
+    # type: (Tuple[ResultSet, List[ResultSet]]) -> Tuple[float]
+    current_rs, rs_list = args
+    return current_rs.select_champion(rs_list)
+
+
 @cython.locals(rs_list=list, args=tuple, p=object, dist_list=list)
 @cython.returns(list)
 def champions_selection(rs_list):
-    # type: (list[ParResultSet]) -> list[tuple]
+    # type: (list[ParResultSet]) -> List[Tuple]
     args = ((rs, rs_list) for rs in rs_list)
     p = Pool(cpu_count())
-    dist_list = list(p.map(lambda rs, rs_list: rs.select_champion(rs_list), args))
+    dist_list = p.map(par_haussdorf_distance, args)
     p.close()
     p.join()
     return dist_list

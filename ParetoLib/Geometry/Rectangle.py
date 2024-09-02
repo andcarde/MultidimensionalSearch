@@ -77,7 +77,10 @@ import math
 import numpy as np
 import matplotlib.patches as patches
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-from itertools import product, tee
+from itertools import product, tee, chain
+from typing import List, Tuple
+from typing_extensions import Self
+
 import cython
 
 # import ParetoLib.Geometry as RootGeom
@@ -1378,16 +1381,16 @@ class Rectangle(object):
         return faces
 
     @cython.ccall
-    @cython.locals(n=cython.uint, verts=list, half=cython.uint, ver_dist=list, i=cython.uint)
+    @cython.locals(n=cython.uint, vertical=cython.bint, verts=list, half=cython.uint, ver_dist=list, i=cython.uint)
     @cython.returns(list)
-    def cell_partition(self, n=50, vertical=True):
-        # type: (Rectangle, int, bool) -> list
+    def cell_partition(self, n: int = 50, vertical: bool = True) -> list:
         """
           Given a rectangle, it 'slices' it in n smaller rectangles of equal sizes
 
           Args:
               self (Rectangle): The Rectangle.
               n (int): Number of equal sized rectangles we want to have as a result
+              vertical (bool): Direction of the partitioning
 
           Returns:
               rect_list (list): the result of 'slicing' self into n smaller rectangles
@@ -1397,14 +1400,18 @@ class Rectangle(object):
         if vertical:
             ver_dist = np.subtract(verts[half], verts[0])
             rect_list = [Rectangle(np.add(verts[0], np.multiply(ver_dist, i / n)),
-                               np.add(verts[half-1], np.multiply(ver_dist, (i + 1) / n))) for i in range(n)]
+                                   np.add(verts[half - 1], np.multiply(ver_dist, (i + 1) / n))) for i in range(n)]
         else:
             ver_dist = np.subtract(verts[1], verts[0])
             rect_list = [Rectangle(np.add(verts[0], np.multiply(ver_dist, i / n)),
-                                np.add(verts[half], np.multiply(ver_dist, (i + 1) / n))) for i in range(n)]
+                                   np.add(verts[half], np.multiply(ver_dist, (i + 1) / n))) for i in range(n)]
 
         return rect_list
 
+    @cython.ccall
+    @cython.locals(n=cython.uint, d=cython.uint, k=cython.double, step=tuple, indices_min_corners=list, rect_list=list,
+                   index=tuple, min_corner=tuple)
+    @cython.returns(list)
     def cell_partition_bin(self, n: int) -> list:
         """
           Given a rectangle, it divides it in n <= k^d smaller rectangles of equal sizes, with d the dimension of the
@@ -1430,6 +1437,24 @@ class Rectangle(object):
         list_min_corners = (np.add(self.min_corner, np.multiply(index, step)) for index in indices_min_corners)
         rect_list = [Rectangle(min_corner, np.add(min_corner, step)) for min_corner in list_min_corners]
         return rect_list
+
+    @cython.ccall
+    @cython.returns(list)
+    @cython.locals(cell=object, g=tuple, n=cython.uint, cut_list=list, new_list=list)
+    def divide_to_min_resolution(self, g: Tuple[float]) -> List[Self]:
+        # Divide a cell into the minimum resolution possible, set by g
+        n = pow(2, self.dim())
+        cut_list = [Rectangle(self.min_corner, self.max_corner)]
+        while not all(less_equal(rect.diag_vector(), g) for rect in cut_list):
+            new_list = chain.from_iterable(rect.cell_partition_bin(n) for rect in cut_list)
+            cut_list = list(new_list)
+            # Alternatively:
+            # new_list = list()
+            # for rect in cut_list:
+            #     new_list.extend(rect.cell_partition_bin(n))
+            # cut_list = new_list
+
+        return cut_list
 
     #####################
     # Auxiliary functions

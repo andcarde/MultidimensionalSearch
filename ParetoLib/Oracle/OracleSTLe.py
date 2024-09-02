@@ -320,7 +320,6 @@ class OracleSTLe(Oracle):
         # type: (OracleSTLe) -> list
         """
         See Oracle.get_var_names().
-        Returns: List[str]
         """
         return [str(i) for i in self.stl_parameters]
 

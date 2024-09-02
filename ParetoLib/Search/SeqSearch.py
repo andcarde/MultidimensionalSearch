@@ -131,6 +131,48 @@ def multidim_intersection_search(xspace, list_constraints,
 
 
 ########################################
+###### ADVANCED METHOD: ROBUSTNESS #####
+########################################
+
+@cython.ccall
+@cython.returns(object)
+@cython.locals(xspace=object, oracle1=object, oracle2=object, oracle3=object, oracle4=object, epsilon=cython.double,
+               delta=cython.double, max_step=cython.ulonglong, blocking=cython.bint, sleep=cython.double,
+               opt_level=cython.uint, logging=cython.bint, md_search=list, start=cython.double, end=cython.double,
+               time0=cython.double, intersect_result=object)
+def multidim_robust_intersection_search(xspace,
+                                        oracle1, oracle2,
+                                        oracle3, oracle4,
+                                        epsilon=EPS,
+                                        delta=DELTA,
+                                        max_step=STEPS,
+                                        blocking=False,
+                                        sleep=0.0,
+                                        opt_level=2,
+                                        logging=True):
+    # type: (Rectangle, Oracle, Oracle, Oracle, Oracle, float, float, int, bool, float, int, bool) -> ResultSet
+    md_search = [multidim_robust_intersection_search_opt_0,
+                 multidim_robust_intersection_search_opt_1,
+                 multidim_robust_intersection_search_opt_2]
+    RootSearch.logger.info('Starting multidimensional search')
+    start = time.time()
+    intersect_result = md_search[opt_level](xspace,
+                                            oracle1, oracle2,
+                                            oracle3, oracle4,
+                                            epsilon=epsilon,
+                                            delta=delta,
+                                            max_step=max_step,
+                                            blocking=blocking,
+                                            sleep=sleep,
+                                            logging=logging)
+    end = time.time()
+    time0 = end - start
+    RootSearch.logger.info('Time multidim search (robust intersection): ' + str(time0))
+
+    return intersect_result
+
+
+########################################
 ######## ADVANCED METHOD: BMNN22 #######
 ########################################
 
@@ -149,11 +191,15 @@ def multidim_search_BMNN22(xspace: Rectangle,
                            sleep: float = 0.0,
                            opt_level: int = 0,
                            logging: bool = True) -> ResultSet:
-    # type: (Rectangle, list[Oracle], int, int, bool, float, int, bool) -> ResultSet
+    border = xspace.volume()
 
     RootSearch.logger.info('Starting multidimensional search (BMNN22)')
+    RootSearch.logger.info('Report\nStep, Red, Green, Border, Total, nRed, nGreen, nBorder')
+    # RootSearch.logger.info('{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(0, 0.0, 0.0, border, border, 0, 0, 1))
+
     start = time.time()
-    if opt_level == 0:  # Fixed cell creation
+    if opt_level == 0:
+        # Fixed cell creation
         rs = multidim_search_BMNN22_opt_0(xspace,
                                           oracles,
                                           num_samples=num_samples,
@@ -161,7 +207,8 @@ def multidim_search_BMNN22(xspace: Rectangle,
                                           blocking=blocking,
                                           sleep=sleep,
                                           logging=logging)
-    else:  # Dinamyc cell creation
+    else:
+        # Dynamic cell creation
         ps = 0.95
         g = mult(xspace.diag_vector(), 1.0 / 10.0)
         rs = multidim_search_BMNN22_opt_1(xspace,
@@ -171,7 +218,8 @@ def multidim_search_BMNN22(xspace: Rectangle,
                                           sleep=sleep,
                                           logging=logging,
                                           ps=ps,
-                                          g=g)
+                                          g=g,
+                                          vol_border=border)
     end = time.time()
     time0 = end - start
     RootSearch.logger.info('Time multidim search (Pareto front): ' + str(time0))
@@ -1191,6 +1239,55 @@ def bound_box_with_constraints(box, list_constraints):
     return min_bound, max_bound
 
 
+@cython.ccall
+@cython.returns(list)
+@cython.locals(incomp_pos=list, incomp_neg_down=list, incomp_neg_up=list, y_in=object, y_cover=object,
+               xrectangle=object, incomp1=list, incomp_list_down=list, incomp_list_up=list, yrect_mid=object,
+               y_rect_up=object, i_rect_down=object, i1=list, i2=list, i3=list, i_down=list, i_up=list, i=list)
+def pos_neg_box_gen(incomp_pos, incomp_neg_down, incomp_neg_up, y_in, y_cover, xrectangle):
+    # type: (list, list, list, Segment, Segment, Rectangle) -> list
+    incomp1 = incomp_pos[2:]
+    incomp_list_down = [incomp_pos[0]]
+    incomp_list_up = [incomp_pos[1]]
+    yrect_mid = Rectangle(y_in.low, y_in.high)
+    i1 = interirect(incomp1, yrect_mid, xrectangle)
+    i2 = interirect(incomp_list_down, yrect_mid, xrectangle)
+    i3 = interirect(incomp_list_up, yrect_mid, xrectangle)
+    i_down = []
+    i_up = []
+    for rect in i2:
+        y_rect_down = Rectangle(y_cover.low, rect.max_corner)
+        i_down += interirect(incomp_neg_down, y_rect_down, rect)
+    for rect in i3:
+        y_rect_up = Rectangle(y_cover.high, rect.max_corner)
+        i_up += interirect(incomp_neg_up, y_rect_up, rect)
+    i = i_down + i_up + i1
+    return i
+
+
+@cython.ccall
+@cython.returns(list)
+@cython.locals(incomparable=list, incomparable_segment=list, yIn=object, yCover=object, xrectangle=object,
+               y_rect_in=object, x_rect_up=object, x_rect_down=object, y_rect_up=object, y_rect_down=object,
+               i1=list, i2=list, i3=list, i=list)
+def pos_overlap_box_gen(incomparable, incomparable_segment, yIn, yCover, xrectangle):
+    # type: (list, list, Segment, Segment, Rectangle) -> list
+    y_rect_in = Rectangle(yIn.low, yIn.high)
+    i1 = interirect(incomparable_segment, y_rect_in, xrectangle)
+
+    y_rect_down = Rectangle(yCover.low, yIn.low)
+    x_rect_down = Rectangle(xrectangle.min_corner, yIn.high)
+    i2 = irect(incomparable, y_rect_down, x_rect_down)
+
+    y_rect_up = Rectangle(yIn.high, yCover.high)
+    x_rect_up = Rectangle(yIn.low, xrectangle.max_corner)
+    i3 = irect(incomparable, y_rect_up, x_rect_up)
+
+    i = i1 + i2 + i3
+
+    return i
+
+
 # @cython.ccall
 @cython.returns(object)
 @cython.locals(xspace=object, list_constraints=list, oracle1=object, oracle2=object, epsilon=cython.double,
@@ -1264,6 +1361,7 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
     while (vol_border >= vol_total * delta) and (step <= max_step) and (len(border) > 0):
         step = step + 1
 
+        i = []
         xrectangle = border.pop()
 
         RootSearch.logger.debug('xrectangle: {0}'.format(xrectangle))
@@ -1361,55 +1459,6 @@ def multidim_intersection_search_opt_0(xspace, list_constraints,
 
 
 @cython.ccall
-@cython.returns(list)
-@cython.locals(incomp_pos=list, incomp_neg_down=list, incomp_neg_up=list, y_in=object, y_cover=object,
-               xrectangle=object, incomp1=list, incomp_list_down=list, incomp_list_up=list, yrect_mid=object,
-               y_rect_up=object, i_rect_down=object, i1=list, i2=list, i3=list, i_down=list, i_up=list, i=list)
-def pos_neg_box_gen(incomp_pos, incomp_neg_down, incomp_neg_up, y_in, y_cover, xrectangle):
-    # type: (list, list, list, Segment, Segment, Rectangle) -> list
-    incomp1 = incomp_pos[2:]
-    incomp_list_down = [incomp_pos[0]]
-    incomp_list_up = [incomp_pos[1]]
-    yrect_mid = Rectangle(y_in.low, y_in.high)
-    i1 = interirect(incomp1, yrect_mid, xrectangle)
-    i2 = interirect(incomp_list_down, yrect_mid, xrectangle)
-    i3 = interirect(incomp_list_up, yrect_mid, xrectangle)
-    i_down = []
-    i_up = []
-    for rect in i2:
-        y_rect_down = Rectangle(y_cover.low, rect.max_corner)
-        i_down += interirect(incomp_neg_down, y_rect_down, rect)
-    for rect in i3:
-        y_rect_up = Rectangle(y_cover.high, rect.max_corner)
-        i_up += interirect(incomp_neg_up, y_rect_up, rect)
-    i = i_down + i_up + i1
-    return i
-
-
-@cython.ccall
-@cython.returns(list)
-@cython.locals(incomparable=list, incomparable_segment=list, yIn=object, yCover=object, xrectangle=object,
-               y_rect_in=object, x_rect_up=object, x_rect_down=object, y_rect_up=object, y_rect_down=object,
-               i1=list, i2=list, i3=list, i=list)
-def pos_overlap_box_gen(incomparable, incomparable_segment, yIn, yCover, xrectangle):
-    # type: (list, list, Segment, Segment, Rectangle) -> list
-    y_rect_in = Rectangle(yIn.low, yIn.high)
-    i1 = interirect(incomparable_segment, y_rect_in, xrectangle)
-
-    y_rect_down = Rectangle(yCover.low, yIn.low)
-    x_rect_down = Rectangle(xrectangle.min_corner, yIn.high)
-    i2 = irect(incomparable, y_rect_down, x_rect_down)
-
-    y_rect_up = Rectangle(yIn.high, yCover.high)
-    x_rect_up = Rectangle(yIn.low, xrectangle.max_corner)
-    i3 = irect(incomparable, y_rect_up, x_rect_up)
-
-    i = i1 + i2 + i3
-
-    return i
-
-
-@cython.ccall
 @cython.returns(object)
 @cython.locals(xspace=object, list_constraints=list, oracle1=object, oracle2=object, epsilon=cython.double,
                delta=cython.double, max_step=cython.ulonglong, blocking=cython.bint, sleep=cython.double,
@@ -1485,6 +1534,8 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
     while (vol_border >= vol_total * delta) and (step <= max_step) and (len(border) > 0):
         step = step + 1
 
+        i = []
+
         xrectangle = border.pop()
         vol_boxes -= xrectangle.volume()
 
@@ -1507,7 +1558,7 @@ def multidim_intersection_search_opt_1(xspace, list_constraints,
         RootSearch.logger.debug('y: {0}'.format(y))
 
         if intersect_indicator == INTERFULL:
-            intersect_box.append(Rectangle(y.low, y.high))
+            intersect_box.append(yrectangle)
             vol_xrest += xrectangle.volume()
             vol_border = vol_total - vol_xrest
             RootSearch.logger.info(
@@ -1635,8 +1686,11 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
 
     error = (epsilon,) * n
     vol_total = xspace.volume()
+    # vol_xrest is the volume of the boxes that need to be processed again and either discarded or added
+    # to the approximation of intersection
     vol_xrest = 0.0
     vol_border = vol_total
+    # vol_boxes is the sum of volume of boxes yet to be processed
     vol_boxes = vol_border
     step = 0
 
@@ -1657,6 +1711,8 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
     while (vol_border >= vol_total * delta) and (step <= max_step) and (len(border) > 0):
         step = step + 1
 
+        i = []
+
         xrectangle = border.pop()
         vol_boxes -= xrectangle.volume()
 
@@ -1673,11 +1729,12 @@ def multidim_intersection_search_opt_2(xspace, list_constraints,
             y = y_in
         else:
             y = y_cover
+
         yrectangle = Rectangle(y.low, y.high)
         RootSearch.logger.debug('y: {0}'.format(y))
 
         if intersect_indicator == INTERFULL:
-            intersect_box.append(Rectangle(y.low, y.high))
+            intersect_box.append(yrectangle)
             vol_xrest += xrectangle.volume()
             vol_border = vol_total - vol_xrest
             RootSearch.logger.info(
@@ -1778,11 +1835,9 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
                                  oracles: List[Oracle],
                                  num_samples: int,
                                  num_cells: int,
-                                 blocking : bool = False,
-                                 sleep : float = 0.0,
-                                 logging : bool = True) -> ResultSet:
-    # type: (Rectangle, list[Oracle], int, int, bool, float, bool) -> ResultSet
-    # - Write asserts and logger info (useful for debugging and defensive programming)
+                                 blocking: bool = False,
+                                 sleep: float = 0.0,
+                                 logging: bool = True) -> ResultSet:
 
     # Dimension
     n = xspace.dim()
@@ -1791,7 +1846,8 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
     green = list()
     red = list()
     border = list()
-    vol_green, vol_red, vol_border = 0.0, 0.0, 0.0  # Area of all the regions for debugging purposes
+    # Area of all the regions for debugging purposes
+    vol_green, vol_red, vol_border = 0.0, 0.0, xspace.volume()
     mems = [ora.membership() for ora in oracles]
 
     step = 0
@@ -1799,15 +1855,12 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
     # Create temporary directory for storing the result of each step
     tempdir = tempfile.mkdtemp()
 
-    RootSearch.logger.info('Report\nStep, Red, Green, Border, Total, nRed, nGreen, nBorder')
-    RootSearch.logger.info(
-        '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(step, vol_red, vol_green, vol_border, xspace.volume(), len(red),
-                                                        len(green), len(border)))  # 0th step
-
     for cell in rect_list:
+        RootSearch.logger.info(
+            '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(step, vol_red, vol_green, vol_border, xspace.volume(),
+                                                            len(red), len(green), len(border)))
+
         step = step + 1
-        # Write some Logg info here: step, red area size, green area size, ... total area (xspace), number of rectangles
-        # in each region, etc.
 
         samples = cell.uniform_sampling(num_samples)
 
@@ -1818,9 +1871,7 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
             red.append(cell)
             vol_red = vol_red + cell.volume()
 
-        RootSearch.logger.info(
-            '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(step, vol_red, vol_green, vol_border, xspace.volume(),
-                                                            len(red), len(green), len(border)))
+        vol_border -= cell.volume()
 
         # Visualization
         if sleep > 0.0:
@@ -1842,10 +1893,11 @@ def multidim_search_BMNN22_opt_0(xspace: Rectangle,
 @cython.ccall
 @cython.returns(object)
 @cython.locals(xpace=object, oracles=list, num_samples=cython.uint, num_cells=cython.uint, g=tuple,
-               blocking=cython.bint, sleep=cython.double, logging=cython.bint, ps=cython.double, m=cython.uint,
-               n=cython.uint, rect_list=list, new_rect_list=list, green=set, red=set, border=set, mems=list,
-               counter=cython.uint,
-               tempdir=cython.basestring, cell=object, samples=list, rs=object)
+               blocking=cython.bint, sleep=cython.double, logging=cython.bint, ps=cython.double, step=cython.uint,
+               vol_green=cython.double, vol_red=cython.double, vol_border=cython.double, d=cython.uint, green=set,
+               red=set, border=set, mems=list, samples=list, tempdir=str, counter=cython.uint, current_step=cython.uint,
+               current_vol_green=cython.double, current_vol_red=cython.double, current_vol_border=cython.double,
+               n=cython.uint, rect_list=list, rs=object)
 def multidim_search_BMNN22_opt_1(xspace: Rectangle,
                                  oracles: List[Oracle],
                                  num_samples: int,
@@ -1853,34 +1905,64 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
                                  blocking: bool = False,
                                  sleep: float = 0.0,
                                  logging: bool = True,
-                                 ps: float = 0.95) -> ResultSet:
-    # type: (Rectangle, list[Oracle], int, tuple, bool, float, bool, float) -> ResultSet
+                                 ps: float = 0.95,
+                                 step: int = 0,
+                                 vol_green: float = 0.0,
+                                 vol_red: float = 0.0,
+                                 vol_border: float = 0.0) -> ResultSet:
+    # Dimension
+    d = xspace.dim()
 
     green = set()
     red = set()
     border = set()
-    d = xspace.dim()
+
     mems = [ora.membership() for ora in oracles]
+
     samples = xspace.uniform_sampling(num_samples)
-    step = 0
 
     # Create temporary directory for storing the result of each step
     tempdir = tempfile.mkdtemp()
 
     all_fs_in_sample = (all(f(s) for f in mems) for s in samples)
     counter = sum(all_fs_in_sample)
+    curr_step = step
+    curr_vol_green, curr_vol_red, curr_vol_border = vol_green, vol_red, vol_border
+
+    RootSearch.logger.info(
+        '{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}'.format(curr_step, curr_vol_red, curr_vol_green, curr_vol_border,
+                                                        xspace.volume(), len(red), len(green), len(border)))
+
     if counter == 0:
         red.add(xspace)
+        curr_vol_red = curr_vol_red + xspace.volume()
+        curr_vol_border = vol_border - xspace.volume()
     elif counter / num_samples >= ps or less_equal(xspace.diag_vector(), g):
         green.add(xspace)
+        curr_vol_green = curr_vol_green + xspace.volume()
+        curr_vol_border = vol_border - xspace.volume()
     else:
         n = pow(2, d)
         rect_list = xspace.cell_partition_bin(n)
         for r in rect_list:
-            temp_rs = multidim_search_BMNN22_opt_1(r, oracles, num_samples, g, blocking, sleep, logging, ps)
+            curr_step = curr_step + 1
+            curr_vol_border = r.volume()
+            temp_rs = multidim_search_BMNN22_opt_1(r, oracles, num_samples, g, blocking, sleep, logging, ps, curr_step,
+                                                   curr_vol_green, curr_vol_red, curr_vol_border)
             green = green.union(set(temp_rs.yup))
+            curr_vol_green = curr_vol_green + sum((x.volume() for x in list(temp_rs.yup)))
             red = red.union(set(temp_rs.ylow))
+            curr_vol_red = curr_vol_red + sum((x.volume() for x in list(temp_rs.ylow)))
             border = border.union(set(temp_rs.border))
+            curr_vol_border = sum((x.volume() for x in list(temp_rs.border)))
+
+    # Visualization
+    if sleep > 0.0:
+        rs = ResultSet(border, red, green, xspace)
+        if d == 2:
+            rs.plot_2D_light(blocking=blocking, sec=sleep, opacity=0.7)
+        elif d == 3:
+            rs.plot_3D_light(blocking=blocking, sec=sleep, opacity=0.7)
 
     if logging:
         rs = ResultSet(border=list(border), ylow=list(red), yup=list(green), xspace=xspace)
@@ -1888,3 +1970,520 @@ def multidim_search_BMNN22_opt_1(xspace: Rectangle,
         rs.to_file(name)
 
     return ResultSet(yup=list(green), ylow=list(red), border=list(border), xspace=xspace)
+
+
+########################################
+###### ADVANCED METHOD: ROBUSTNESS #####
+########################################
+
+@cython.ccall
+@cython.returns(tuple)
+@cython.locals(xrectangle=object, incomparable=list, incomparable_segment=list, fcons1=callable, fcons2=callable,
+               qunknown=object, qvalid=object, vol_boxes=cython.double, vol_xrest=cython.double,
+               vol_border=cython.double, vol_total=cython.double, error=tuple, step=cython.ulonglong,
+               want_to_expand=cython.bint, y_in=object, y_cover=object, intersect_indicator=cython.short,
+               steps_binsearch=cython.ushort, y=object, i=list, yrectangle=object, pos_box=object, neg_box1=object,
+               neg_box2=object, lower_rect=object, upper_rect=object, b0=object, b1=object, rect=object)
+def divide_box_full_space(xrectangle,
+                          incomparable, incomparable_segment,
+                          fcons1, fcons2,
+                          qunknown, qvalid,
+                          vol_boxes, vol_xrest,
+                          vol_border, vol_total, error, step):
+    # type: (Rectangle, list, list, callable, callable, SortedListWithKey, SortedListWithKey, int, int, int, int, tuple, int) -> (int, int, int)
+    # Search on the diagonal
+    want_to_expand = True
+    y_in, y_cover, intersect_indicator, steps_binsearch = intersection_expansion_search(xrectangle.diag(),
+                                                                                        fcons1, fcons2,
+                                                                                        error, want_to_expand)
+    if intersect_indicator == NO_INTER:
+        y = y_in
+    else:
+        y = y_cover
+
+    i = []
+
+    yrectangle = Rectangle(y.low, y.high)
+    RootSearch.logger.debug('y: {0}'.format(y))
+
+    if intersect_indicator == INTERFULL:
+        qvalid.add(yrectangle)
+        vol_boxes += yrectangle.volume()
+
+    elif intersect_indicator == INTERNULL:
+        vol_xrest += xrectangle.volume()
+
+    elif intersect_indicator == INTER:
+        i = pos_overlap_box_gen(incomparable, incomparable_segment, y_in, y_cover, xrectangle)
+        pos_box = Rectangle(y_in.low, y_in.high)
+        neg_box1 = Rectangle(xrectangle.min_corner, y_cover.low)
+        neg_box2 = Rectangle(y_cover.high, xrectangle.max_corner)
+        qvalid.add(pos_box)
+
+        vol_xrest += neg_box1.volume() + neg_box2.volume()
+        vol_boxes += pos_box.volume()
+
+    elif intersect_indicator == NO_INTER:
+        i = interirect(incomparable_segment, yrectangle, xrectangle)
+        lower_rect = Rectangle(xrectangle.min_corner, yrectangle.max_corner)
+        upper_rect = Rectangle(yrectangle.min_corner, xrectangle.max_corner)
+        vol_xrest += lower_rect.volume() + upper_rect.volume() - yrectangle.volume()
+
+    else:
+        i = irect(incomparable, yrectangle, xrectangle)
+        b0 = Rectangle(xrectangle.min_corner, y.low)
+        vol_xrest += b0.volume()
+        RootSearch.logger.debug('b0: {0}'.format(b0))
+
+        b1 = Rectangle(y.high, xrectangle.max_corner)
+        vol_xrest += b1.volume()
+        RootSearch.logger.debug('b1: {0}'.format(b1))
+
+    for rect in i:
+        if intersection_empty(rect.diag(), fcons1, fcons2):
+            vol_xrest += rect.volume()
+        else:
+            qunknown.add(rect)
+            vol_boxes += rect.volume()
+
+    RootSearch.logger.debug('irect: {0}'.format(i))
+
+    # Remove boxes in the boundary with volume 0
+    # border = border[border.bisect_key_right(0.0):]
+    del qunknown[:qunknown.bisect_key_left(0.0)]
+
+    vol_border = vol_total - vol_xrest
+
+    RootSearch.logger.info(
+        '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_xrest + vol_boxes, len(qunknown) + len(qvalid),
+                                         steps_binsearch))
+    return vol_boxes, vol_xrest, vol_border
+
+
+@cython.ccall
+@cython.returns(tuple)
+@cython.locals(xrectangle=object, incomparable=list, incomparable_segment=list, fcons1=callable, fcons2=callable,
+               qunknown=object, qvalid=object, intersect_box=list, vol_boxes=cython.double, vol_xrest=cython.double,
+               vol_border=cython.double, vol_total=cython.double, error=tuple, step=cython.ulonglong,
+               want_to_expand=cython.bint, y_in=object, y_cover=object, intersect_indicator=cython.short,
+               steps_binsearch=cython.ushort, y=object, i=list, yrectangle=object, pos_box=object, neg_box1=object,
+               neg_box2=object, lower_rect=object, upper_rect=object, b0=object, b1=object, rect=object)
+def divide_box_valid(xrectangle,
+                     incomparable, incomparable_segment,
+                     ffor1, ffor2,
+                     qunknown, qvalid, intersect_box,
+                     vol_boxes, vol_xrest,
+                     vol_border, vol_total, error, step):
+    # type: (Rectangle, list, list, callable, callable, SortedListWithKey, SortedListWithKey, list, int, int, int, int, tuple, int) -> (int, int, int)
+    # Search on the diagonal
+    want_to_expand = True
+    y_in, y_cover, intersect_indicator, steps_binsearch = intersection_expansion_search(xrectangle.diag(), ffor1, ffor2,
+                                                                                        error, want_to_expand)
+    if intersect_indicator == NO_INTER:
+        y = y_in
+    else:
+        y = y_cover
+
+    i = []
+
+    yrectangle = Rectangle(y.low, y.high)
+    RootSearch.logger.debug('y: {0}'.format(y))
+
+    if intersect_indicator == INTERFULL:
+        intersect_box.append(yrectangle)
+        vol_xrest += yrectangle.volume()
+
+    elif intersect_indicator == INTERNULL:
+        vol_xrest += xrectangle.volume()
+
+    elif intersect_indicator == INTER:
+        i = pos_overlap_box_gen(incomparable, incomparable_segment, y_in, y_cover, xrectangle)
+        pos_box = Rectangle(y_in.low, y_in.high)
+        neg_box1 = Rectangle(xrectangle.min_corner, y_cover.low)
+        neg_box2 = Rectangle(y_cover.high, xrectangle.max_corner)
+        intersect_box.append(pos_box)
+
+        vol_xrest += pos_box.volume() + neg_box1.volume() + neg_box2.volume()
+
+    elif intersect_indicator == NO_INTER:
+        i = interirect(incomparable_segment, yrectangle, xrectangle)
+        lower_rect = Rectangle(xrectangle.min_corner, yrectangle.max_corner)
+        upper_rect = Rectangle(yrectangle.min_corner, xrectangle.max_corner)
+
+        vol_xrest += lower_rect.volume() + upper_rect.volume() - yrectangle.volume()
+
+    else:
+        i = irect(incomparable, yrectangle, xrectangle)
+
+        b0 = Rectangle(xrectangle.min_corner, y.low)
+        vol_xrest += b0.volume()
+        RootSearch.logger.debug('b0: {0}'.format(b0))
+
+        b1 = Rectangle(y.high, xrectangle.max_corner)
+        vol_xrest += b1.volume()
+        RootSearch.logger.debug('b1: {0}'.format(b1))
+
+    for rect in i:
+        if intersection_empty(rect.diag(), ffor1, ffor2):
+            vol_xrest += rect.volume()
+        else:
+            qvalid.add(rect)
+            vol_boxes += rect.volume()
+
+    RootSearch.logger.debug('irect: {0}'.format(i))
+
+    # Remove boxes in the boundary with volume 0
+    # border = border[border.bisect_key_right(0.0):]
+    del qvalid[:qvalid.bisect_key_left(0.0)]
+
+    vol_border = vol_total - vol_xrest
+
+    RootSearch.logger.info(
+        '{0}, {1}, {2}, {3}, {4}'.format(step, vol_border, vol_xrest + vol_boxes, len(qunknown) + len(qvalid),
+                                         steps_binsearch))
+    return vol_boxes, vol_xrest, vol_border
+
+
+@cython.ccall
+@cython.returns(tuple)
+@cython.locals(xspace=object, oracle1=object, oracle2=object, oracle3=object, oracle4=object, epsilon=cython.double,
+               delta=cython.double, max_step=cython.ulonglong, blocking=cython.bint, sleep=cython.double,
+               logging=cython.bint, n=cython.ushort, incomparable=list, incomparable_segment=list, qunknown=object,
+               qvalid=object, fcons1=callable, fcons2=callable, ffor1=callable, ffor2=callable, error=tuple,
+               vol_total=cython.double, vol_xrest=cython.double, vol_border=cython.double, vol_boxes=cython.double,
+               step=cython.ulonglong, intersect_box=list, tempdir=str, xrectangle=object, rs=object)
+def multidim_robust_intersection_search_opt_0(xspace,
+                                              oracle1, oracle2,
+                                              oracle3, oracle4,
+                                              epsilon=EPS,
+                                              delta=DELTA,
+                                              max_step=STEPS,
+                                              blocking=False,
+                                              sleep=0.0,
+                                              logging=True):
+    # type: (Rectangle, Oracle, Oracle, Oracle, Oracle, float, float, int, bool, float, bool) -> ResultSet
+
+    # Xspace is a particular case of maximal rectangle
+    # Xspace = [min_corner, max_corner]^n = [0, 1]^n
+    # xspace.min_corner = (0,) * n
+    # xspace.max_corner = (1,) * n
+
+    # Dimension
+    n = xspace.dim()
+
+    # Set of comparable and incomparable rectangles, represented by 'alpha' indices
+    incomparable = incomp(n)
+    incomparable_segment = incomp_segment(n)
+    # comparable = comp(n)
+    # comparable = [zero, one]
+    # incomparable = list(set(alpha) - set(comparable))
+    # with:
+    # zero = (0_1,...,0_n)
+    # one = (1_1,...,1_n)
+
+    # Lists of incomparable rectangles
+    # qunknown = [xspace]
+    # qvalid = []
+    qunknown = SortedListWithKey(key=Rectangle.volume)
+    qunknown.add(xspace)
+    qvalid = SortedListWithKey(key=Rectangle.volume)
+
+    # oracle functions
+    fcons1 = oracle1.membership()
+    fcons2 = oracle2.membership()
+    ffor1 = oracle3.membership()
+    ffor2 = oracle4.membership()
+
+    error = (epsilon,) * n
+    vol_total = xspace.volume()
+    # vol_xrest is the volume of the boxes that need to be processed again and either discarded or added
+    # to the approximation of intersection
+    vol_xrest = 0.0
+    vol_border = vol_total
+    # vol_boxes is the sum of volume of boxes yet to be processed
+    vol_boxes = vol_border
+    step = 0
+
+    # intersection
+    intersect_box = []
+    RootSearch.logger.debug('xspace: {0}'.format(xspace))
+    RootSearch.logger.debug('vol_border: {0}'.format(vol_border))
+    RootSearch.logger.debug('delta: {0}'.format(delta))
+    RootSearch.logger.debug('step: {0}'.format(step))
+    RootSearch.logger.debug('incomparable: {0}'.format(incomparable))
+
+    # Create temporary directory for storing the result of each step
+    tempdir = tempfile.mkdtemp()
+
+    # Try to find a single box of intersection and then exit
+    RootSearch.logger.info('Report\nStep, Border, Total, nBorder, BinSearch')
+    while (vol_border >= vol_total * delta) and (step <= max_step) and ((len(qunknown) > 0) or (len(qvalid) > 0)) \
+            and len(intersect_box) == 0:
+        step = step + 1
+
+        if (len(qunknown) == 0) and (len(qvalid) != 0):
+            xrectangle = qvalid.pop()
+            vol_boxes -= xrectangle.volume()
+            (vol_boxes, vol_xrest, vol_border) = divide_box_valid(xrectangle,
+                                                                  incomparable, incomparable_segment,
+                                                                  ffor1, ffor2,
+                                                                  qunknown, qvalid, intersect_box,
+                                                                  vol_boxes, vol_xrest,
+                                                                  vol_border, vol_total, error, step)
+
+        elif (len(qunknown) != 0) and (len(qvalid) == 0):
+            xrectangle = qunknown.pop()
+            vol_boxes -= xrectangle.volume()
+            (vol_boxes, vol_xrest, vol_border) = divide_box_full_space(xrectangle,
+                                                                       incomparable, incomparable_segment,
+                                                                       fcons1, fcons2,
+                                                                       qunknown, qvalid,
+                                                                       vol_boxes, vol_xrest,
+                                                                       vol_border, vol_total, error, step)
+        elif (len(qunknown) != 0) and (len(qvalid) != 0):
+            # TODO: Heuristic in the if condition to select from qvalid
+            if qvalid[-1].volume() >= qunknown[-1].volume():
+                xrectangle = qvalid.pop()
+                vol_boxes -= xrectangle.volume()
+                (vol_boxes, vol_xrest, vol_border) = divide_box_valid(xrectangle,
+                                                                      incomparable, incomparable_segment,
+                                                                      ffor1, ffor2,
+                                                                      qunknown, qvalid, intersect_box,
+                                                                      vol_boxes, vol_xrest,
+                                                                      vol_border, vol_total, error, step)
+            else:
+                xrectangle = qunknown.pop()
+                vol_boxes -= xrectangle.volume()
+                (vol_boxes, vol_xrest, vol_border) = divide_box_full_space(xrectangle,
+                                                                           incomparable, incomparable_segment,
+                                                                           fcons1, fcons2,
+                                                                           qunknown, qvalid,
+                                                                           vol_boxes, vol_xrest,
+                                                                           vol_border, vol_total, error, step)
+
+        RootSearch.logger.debug('xrectangle: {0}'.format(xrectangle))
+        RootSearch.logger.debug('xrectangle.volume: {0}'.format(xrectangle.volume()))
+        RootSearch.logger.debug('xrectangle.norm: {0}'.format(xrectangle.norm()))
+
+        if sleep > 0.0:
+            rs = ResultSet(qvalid, qunknown, intersect_box, xspace)
+            if n == 2:
+                rs.plot_2D_light(blocking=blocking, sec=sleep, opacity=0.7)
+            elif n == 3:
+                rs.plot_3D_light(blocking=blocking, sec=sleep, opacity=0.7)
+
+        if logging:
+            rs = ResultSet(qvalid, qunknown, intersect_box, xspace)
+            name = os.path.join(tempdir, str(step))
+            rs.to_file(name)
+
+    RootSearch.logger.info('For pareto front robust intersection exploring algorithm (with overlap):')
+    RootSearch.logger.info('remaining volume: {0}'.format(vol_border))
+    RootSearch.logger.info('total volume: {0}'.format(vol_total))
+    RootSearch.logger.info('percentage unexplored: {0}'.format((100.0 * vol_border) / vol_total))
+
+    return ResultSet(qvalid, qunknown, intersect_box, xspace)
+
+
+@cython.ccall
+@cython.returns(tuple)
+@cython.locals(xspace=object, oracle1=object, oracle2=object, oracle3=object, oracle4=object, epsilon=cython.double,
+               delta=cython.double, max_step=cython.ulonglong, blocking=cython.bint, sleep=cython.double,
+               logging=cython.bint, n=cython.ushort, incomparable=list, incomparable_segment=list, qunknown=object,
+               qvalid=object, fcons1=callable, fcons2=callable, ffor1=callable, ffor2=callable, error=tuple,
+               vol_total=cython.double, vol_xrest=cython.double, vol_border=cython.double, vol_boxes=cython.double,
+               step=cython.ulonglong, intersect_box=list)
+def multidim_robust_intersection_search_opt_1(xspace,
+                                              oracle1, oracle2,
+                                              oracle3, oracle4,
+                                              epsilon=EPS,
+                                              delta=DELTA,
+                                              max_step=STEPS,
+                                              blocking=False,
+                                              sleep=0.0,
+                                              logging=True):
+    # type: (Rectangle, Oracle, Oracle, Oracle, Oracle, float, float, int, bool, float, bool) -> ResultSet
+
+    # Xspace is a particular case of maximal rectangle
+    # Xspace = [min_corner, max_corner]^n = [0, 1]^n
+    # xspace.min_corner = (0,) * n
+    # xspace.max_corner = (1,) * n
+
+    # Dimension
+    n = xspace.dim()
+
+    # Set of comparable and incomparable rectangles, represented by 'alpha' indices
+    incomparable = incomp(n)
+    incomparable_segment = incomp_segment(n)
+    # comparable = comp(n)
+    # comparable = [zero, one]
+    # incomparable = list(set(alpha) - set(comparable))
+    # with:
+    # zero = (0_1,...,0_n)
+    # one = (1_1,...,1_n)
+
+    # Lists of incomparable rectangles
+    # qunknown = [xspace]
+    # qvalid = []
+    qunknown = SortedListWithKey(key=Rectangle.volume)
+    qunknown.add(xspace)
+    qvalid = SortedListWithKey(key=Rectangle.volume)
+
+    # oracle functions
+    fcons1 = oracle1.membership()
+    fcons2 = oracle2.membership()
+    ffor1 = oracle3.membership()
+    ffor2 = oracle4.membership()
+
+    error = (epsilon,) * n
+    vol_total = xspace.volume()
+    vol_xrest = 0.0
+    vol_border = vol_total
+    vol_boxes = vol_border
+    step = 0
+
+    # intersection
+    intersect_box = []
+
+    # Some other heuristic
+    # TODO: Not implemented
+    return ResultSet(qvalid, qunknown, intersect_box, xspace)
+
+
+@cython.ccall
+@cython.returns(tuple)
+@cython.locals(xspace=object, oracle1=object, oracle2=object, oracle3=object, oracle4=object, epsilon=cython.double,
+               delta=cython.double, max_step=cython.ulonglong, blocking=cython.bint, sleep=cython.double,
+               logging=cython.bint, n=cython.ushort, incomparable=list, incomparable_segment=list, qunknown=object,
+               qvalid=object, fcons1=callable, fcons2=callable, ffor1=callable, ffor2=callable, error=tuple,
+               vol_total=cython.double, vol_xrest=cython.double, vol_border=cython.double, vol_boxes=cython.double,
+               step=cython.ulonglong, intersect_box=list, tempdir=str, xrectangle=object, rs=object)
+def multidim_robust_intersection_search_opt_2(xspace,
+                                              oracle1, oracle2,
+                                              oracle3, oracle4,
+                                              epsilon=EPS,
+                                              delta=DELTA,
+                                              max_step=STEPS,
+                                              blocking=False,
+                                              sleep=0.0,
+                                              logging=True):
+    # type: (Rectangle, Oracle, Oracle, Oracle, Oracle, float, float, int, bool, float, bool) -> ResultSet
+
+    # Xspace is a particular case of maximal rectangle
+    # Xspace = [min_corner, max_corner]^n = [0, 1]^n
+    # xspace.min_corner = (0,) * n
+    # xspace.max_corner = (1,) * n
+
+    # Dimension
+    n = xspace.dim()
+
+    # Set of comparable and incomparable rectangles, represented by 'alpha' indices
+    incomparable = incomp(n)
+    incomparable_segment = incomp_segment(n)
+    # comparable = comp(n)
+    # comparable = [zero, one]
+    # incomparable = list(set(alpha) - set(comparable))
+    # with:
+    # zero = (0_1,...,0_n)
+    # one = (1_1,...,1_n)
+
+    # Lists of incomparable rectangles
+    # qunknown = [xspace]
+    # qvalid = []
+    qunknown = SortedListWithKey(key=Rectangle.volume)
+    qunknown.add(xspace)
+    qvalid = SortedListWithKey(key=Rectangle.volume)
+
+    # oracle functions
+    fcons1 = oracle1.membership()
+    fcons2 = oracle2.membership()
+    ffor1 = oracle3.membership()
+    ffor2 = oracle4.membership()
+
+    error = (epsilon,) * n
+    vol_total = xspace.volume()
+    # vol_xrest is the volume of the boxes that need to be processed again and either discarded or added
+    # to the approximation of intersection
+    vol_xrest = 0.0
+    vol_border = vol_total
+    # vol_boxes is the sum of volume of boxes yet to be processed
+    vol_boxes = vol_border
+    step = 0
+
+    # intersection
+    intersect_box = []
+
+    RootSearch.logger.debug('xspace: {0}'.format(xspace))
+    RootSearch.logger.debug('vol_border: {0}'.format(vol_border))
+    RootSearch.logger.debug('delta: {0}'.format(delta))
+    RootSearch.logger.debug('step: {0}'.format(step))
+    RootSearch.logger.debug('incomparable: {0}'.format(incomparable))
+
+    # Create temporary directory for storing the result of each step
+    tempdir = tempfile.mkdtemp()
+
+    # Find the whole intersection space upto some accuracy
+    RootSearch.logger.info('Report\nStep, Border, Total, nBorder, BinSearch')
+    while (vol_border >= vol_total * delta) and (step <= max_step) and ((len(qunknown) > 0) or (len(qvalid) > 0)):
+        step = step + 1
+
+        if (len(qunknown) == 0) and (len(qvalid) != 0):
+            xrectangle = qvalid.pop()
+            vol_boxes -= xrectangle.volume()
+            (vol_boxes, vol_xrest, vol_border) = divide_box_valid(xrectangle,
+                                                                  incomparable, incomparable_segment,
+                                                                  ffor1, ffor2,
+                                                                  qunknown, qvalid, intersect_box,
+                                                                  vol_boxes, vol_xrest,
+                                                                  vol_border, vol_total, error, step)
+        elif (len(qunknown) != 0) and (len(qvalid) == 0):
+            xrectangle = qunknown.pop()
+            vol_boxes -= xrectangle.volume()
+            (vol_boxes, vol_xrest, vol_border) = divide_box_full_space(xrectangle,
+                                                                       incomparable, incomparable_segment,
+                                                                       fcons1, fcons2,
+                                                                       qunknown, qvalid,
+                                                                       vol_boxes, vol_xrest,
+                                                                       vol_border, vol_total, error, step)
+        elif (len(qunknown) != 0) and (len(qvalid) != 0):
+            if qunknown[-1].volume() > qvalid[-1].volume():
+                xrectangle = qunknown.pop()
+                vol_boxes -= xrectangle.volume()
+                (vol_boxes, vol_xrest, vol_border) = divide_box_full_space(xrectangle,
+                                                                           incomparable, incomparable_segment,
+                                                                           fcons1, fcons2,
+                                                                           qunknown, qvalid,
+                                                                           vol_boxes, vol_xrest,
+                                                                           vol_border, vol_total, error, step)
+            else:
+                xrectangle = qvalid.pop()
+                vol_boxes -= xrectangle.volume()
+                (vol_boxes, vol_xrest, vol_border) = divide_box_valid(xrectangle,
+                                                                      incomparable, incomparable_segment,
+                                                                      ffor1, ffor2,
+                                                                      qunknown, qvalid, intersect_box,
+                                                                      vol_boxes, vol_xrest,
+                                                                      vol_border, vol_total, error, step)
+
+        RootSearch.logger.debug('xrectangle: {0}'.format(xrectangle))
+        RootSearch.logger.debug('xrectangle.volume: {0}'.format(xrectangle.volume()))
+        RootSearch.logger.debug('xrectangle.norm: {0}'.format(xrectangle.norm()))
+
+        if sleep > 0.0:
+            rs = ResultSet(qvalid, qunknown, [], xspace)
+            if n == 2:
+                rs.plot_2D_light(blocking=blocking, sec=sleep, opacity=0.7)
+            elif n == 3:
+                rs.plot_3D_light(blocking=blocking, sec=sleep, opacity=0.7)
+
+        if logging:
+            rs = ResultSet(qvalid, qunknown, [], xspace)
+            name = os.path.join(tempdir, str(step))
+            rs.to_file(name)
+
+    RootSearch.logger.info('For pareto front robust intersection exploring algorithm (with overlap):')
+    RootSearch.logger.info('remaining volume: {0}'.format(vol_border))
+    RootSearch.logger.info('total volume: {0}'.format(vol_total))
+    RootSearch.logger.info('percentage unexplored: {0}'.format((100.0 * vol_border) / vol_total))
+
+    return ResultSet(qvalid, qunknown, intersect_box, xspace)

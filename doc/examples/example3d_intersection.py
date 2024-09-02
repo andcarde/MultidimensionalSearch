@@ -63,7 +63,7 @@ if __name__ == "__main__":
     intersect_region = []
     border = []
     rs = ResultSet(border=border, ylow=intersect_region, yup=intersection, xspace=rs.xspace)
-    rs.plot_3D(opacity=0.1)
+    rs.plot_3D(opacity=0.1, fig_title='Approximation of Pareto intersection', var_names=['p1', 'p2', 'p3'])
     rs.plot_2D_light(xaxe=0, yaxe=1, fig_title='Projection on (p1,p2) of intersection', var_names=['p1', 'p2', 'p3'])
     rs.plot_2D_light(xaxe=1, yaxe=2, fig_title='Projection on (p2,p3) of intersection', var_names=['p1', 'p2', 'p3'])
     rs.plot_2D_light(xaxe=0, yaxe=2, fig_title='Projection on (p1,p3) of intersection', var_names=['p1', 'p2', 'p3'])

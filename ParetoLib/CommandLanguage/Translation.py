@@ -406,7 +406,7 @@ def translate_until(memory, variable_container, until):
     phi1 = until[0]
     phi2 = until[1]
     stle1_expression = '( StlUntil ( 0 inf ) {0} {1} )'.format(translate_phi(memory, variable_container, phi1),
-                                                               translate_phi(memory, variable_container, phi2))
+                                                             translate_phi(memory, variable_container, phi2))
     return stle1_expression
 
 
@@ -417,8 +417,8 @@ def translate_until_interval(memory, variable_container, until_interval):
     phi1 = until_interval[1]
     phi2 = until_interval[2]
     stle1_expression = '( StlUntil {0} {1} {2} )'.format(translate_interval(interval),
-                                                         translate_phi(memory, variable_container, phi1),
-                                                         translate_phi(memory, variable_container, phi2))
+                                                       translate_phi(memory, variable_container, phi1),
+                                                       translate_phi(memory, variable_container, phi2))
     return stle1_expression
 
 

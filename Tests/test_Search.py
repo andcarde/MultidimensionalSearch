@@ -307,6 +307,7 @@ class SearchTestCase(unittest.TestCase):
                 print('Dimension {0}'.format(d))
                 print('Optimisation level {0}'.format(opt_level))
                 print('Parallel search {0}'.format(False))
+                print('Xspace [{0}, {1}]'.format(self.min_c, self.max_c))
 
                 rs = SearchND_BMNN22(ora_list=[self.oracle],
                                      min_corner=self.min_c,
@@ -336,6 +337,17 @@ class SearchTestCase(unittest.TestCase):
                                          logging=False,
                                          simplify=False)
 
+                if opt_level == 1:
+                    # Dynamic cell partition.
+                    # Parallel version of BMNN22 may split a cell that is originally conserved in the sequential version
+                    # Hence, yup or ylow may differ in a few cells.
+                    # E.g., cell [(0.75,), (1.0,)] in rs.yup is split into cells
+                    #            [(0.75,), (0.875,)], [(0.875,), (1.0,)] in rs_par.yup
+                    # Solution: compact result sets
+                    rs.fusion()
+                    rs_par.fusion()
+
+                # Green and red regions should remain the same when running the sequential and parallel version
                 # set(rs.yup) == set(rs_par.yup) ...
                 self.assertSetEqual(set(rs.yup), set(rs_par.yup))
                 self.assertSetEqual(set(rs.ylow), set(rs_par.ylow))
@@ -524,12 +536,15 @@ class SearchOracleSTLeTestCase(SearchTestCase):
         self.oracle = OracleSTLe()
 
         # Run tests of the 'stabilization' example.
-        # The validity of the parametric domain is [-1.0, 1.0]  for p1 (signal)
-        self.min_c = -1.0
-        self.max_c = 1.0
+        self.min_c = 0.0
+        self.max_c = 0.0
 
     def test_1D(self):
         # type: (SearchOracleSTLeTestCase) -> None
+
+        # The validity of the parametric domain is [-1.0, 1.0]  for p1 (signal)
+        self.min_c = -1.0
+        self.max_c = 1.0
 
         test_dir = os.path.join(self.this_dir, '1D')
         files_path = os.listdir(test_dir)
@@ -540,6 +555,11 @@ class SearchOracleSTLeTestCase(SearchTestCase):
 
     def test_2D(self):
         # type: (SearchOracleSTLeTestCase) -> None
+
+        # The validity of the parametric domain is [0, 100]  for p1 (time) and [-1.0, 1.0]  for p2 (signal)
+        # Because uniformity, choose [0.0, 1.0]
+        self.min_c = 0.0
+        self.max_c = 1.0
 
         test_dir = os.path.join(self.this_dir, '2D')
         files_path = os.listdir(test_dir)
@@ -561,12 +581,15 @@ class SearchOracleSTLeLibTestCase(SearchTestCase):
         self.oracle = OracleSTLeLib()
 
         # Run tests of the 'stabilization' example.
-        # The validity of the parametric domain is [-1.0, 1.0]  for p1 (signal)
-        self.min_c = -1.0
-        self.max_c = 1.0
+        self.min_c = 0.0
+        self.max_c = 0.0
 
     def test_1D(self):
         # type: (SearchOracleSTLeLibTestCase) -> None
+
+        # The validity of the parametric domain is [-1.0, 1.0]  for p1 (signal)
+        self.min_c = -1.0
+        self.max_c = 1.0
 
         test_dir = os.path.join(self.this_dir, '1D')
         files_path = os.listdir(test_dir)
@@ -578,6 +601,10 @@ class SearchOracleSTLeLibTestCase(SearchTestCase):
     def test_1D_BMNN22(self):
         # type: (SearchOracleSTLeLibTestCase) -> None
 
+        # The validity of the parametric domain is [-1.0, 1.0]  for p1 (signal)
+        self.min_c = -1.0
+        self.max_c = 1.0
+
         test_dir = os.path.join(self.this_dir, '1D')
         files_path = os.listdir(test_dir)
         list_test_files = [os.path.join(test_dir, x) for x in files_path if x.endswith('.txt')]
@@ -588,6 +615,11 @@ class SearchOracleSTLeLibTestCase(SearchTestCase):
     def test_2D(self):
         # type: (SearchOracleSTLeLibTestCase) -> None
 
+        # The validity of the parametric domain is [0, 100]  for p1 (time) and [-1.0, 1.0]  for p2 (signal)
+        # Because uniformity, choose [0.0, 1.0]
+        self.min_c = 0.0
+        self.max_c = 10.0
+
         test_dir = os.path.join(self.this_dir, '2D')
         files_path = os.listdir(test_dir)
         list_test_files = [os.path.join(test_dir, x) for x in files_path if x.endswith('.txt')]
@@ -597,6 +629,11 @@ class SearchOracleSTLeLibTestCase(SearchTestCase):
 
     def test_2D_BMNN22(self):
         # type: (SearchOracleSTLeLibTestCase) -> None
+
+        # The validity of the parametric domain is [0, 100]  for p1 (time) and [-1.0, 1.0]  for p2 (signal)
+        # Because uniformity, choose [0.0, 1.0]
+        self.min_c = 0.0
+        self.max_c = 10.0
 
         test_dir = os.path.join(self.this_dir, '2D')
         files_path = os.listdir(test_dir)

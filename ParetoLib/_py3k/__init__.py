@@ -94,7 +94,7 @@ else:  # sys.version_info[0] < 3
 
     def viewkeys(dictionary):
         """Return a view of the keys of 'dictionary'."""
-        return (dictionary.viewkeys())
+        return dictionary.viewkeys()
 
 
     def viewvalues(dictionary):

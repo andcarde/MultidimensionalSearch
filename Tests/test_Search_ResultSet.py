@@ -1,8 +1,8 @@
+import math
 import os
 import tempfile as tf
 import unittest
 import pytest
-import copy
 
 from ParetoLib.Geometry.Rectangle import Rectangle
 
@@ -10,9 +10,8 @@ from ParetoLib.Search.ParResultSet import ParResultSet
 from ParetoLib.Search.ResultSet import ResultSet
 from ParetoLib.Search.Search import create_2D_space, create_3D_space, SearchND_BMNN22, SearchND
 
-from ParetoLib.Search.CommonSearch import ALPHA, P0, NUMCELLS, EPS, DELTA
+from ParetoLib.Search.CommonSearch import ALPHA, P0, EPS, DELTA
 from ParetoLib.Oracle.OracleFunction import OracleFunction, Condition
-
 
 
 class ResultSetTestCase(unittest.TestCase):
@@ -494,7 +493,8 @@ class ResultSetTestCase(unittest.TestCase):
         n = 10
         for r in self.rs_3D.get_points_yup(n):
             self.assertTrue(self.rs_3D.member_yup(r))
-            # self.assertTrue(self.rs_3D.member_yup(r), 'Point {0} not in Yup {1}, in Border? {2}'.format(str(r), str(self.rs_3D.yup), str(self.rs_3D.member_border(r))))
+            # self.assertTrue(self.rs_3D.member_yup(r), 'Point {0} not in Yup {1}, in Border? {2}'.format(str(r),
+            # str(self.rs_3D.yup), str(self.rs_3D.member_border(r))))
 
         for r in self.rs_3D.get_points_ylow(n):
             self.assertTrue(self.rs_3D.member_ylow(r))
@@ -551,7 +551,7 @@ class ResultSetTestCase(unittest.TestCase):
         # os.unlink(nfile)
         self.add_file_to_clean(nfile)
 
-    def test_champions_2D_not_null(self):
+    def test_champions_2D_not_null_distance_1(self):
         # type: (ResultSetTestCase) -> None
         oracle_1 = OracleFunction()
         oracle_2 = OracleFunction()
@@ -595,18 +595,23 @@ class ResultSetTestCase(unittest.TestCase):
 
         # rs_2.plot_2D_light(blocking=True, var_names=oracle_2.get_var_names())
 
-        # Distance must be zero because rs_2 is completely subsumed by rs_1
+        # rs_1.select_champion(rs_2) == dH(rs_1, rs_2)
+        # dH(X,Y) = max{d(X,Y), d(Y,X)}
+        # In this case, d(rs_1, rs_2) != 0 and d(rs_2, rs_1) != 0 because rs_1 and rs_2 partially intersect.
+        # Then, dH(X,Y) > 0
         dist, rs1_champion, rs2_champion = rs_1.select_champion([rs_2])
-        self.assertAlmostEqual(dist,  1.118033988749895)
+        self.assertAlmostEqual(dist, math.sqrt(0.125))
         self.assertEqual(rs1_champion, (0.0, 0.0))
-        self.assertEqual(rs2_champion, (1.0, 0.5))
+        self.assertEqual(rs2_champion, (0.25, 0.25))
 
+        # Result must be similar to previous call because the computation of the champion already considers
+        # bidirectional distances
         dist, rs2_champion, rs1_champion = rs_2.select_champion([rs_1])
-        self.assertAlmostEqual(dist,  1.118033988749895)
-        self.assertEqual(rs1_champion, (0.5, 0.0))
+        self.assertAlmostEqual(dist, math.sqrt(0.125))
+        self.assertEqual(rs1_champion, (0.75, 0.75))
         self.assertEqual(rs2_champion, (1.0, 1.0))
 
-    def test_champions_2D_null(self):
+    def test_champions_2D_not_null_distance_2(self):
         # type: (ResultSetTestCase) -> None
         oracle_1 = OracleFunction()
         oracle_2 = OracleFunction()
@@ -620,33 +625,84 @@ class ResultSetTestCase(unittest.TestCase):
         min_c = 0.0
         max_c = 2.0
 
-        rs_1 = SearchND(ora=oracle_1,
-                        min_corner=min_c,
-                        max_corner=max_c,
-                        epsilon=EPS,
-                        delta=DELTA,
-                        max_step=500,
-                        blocking=False,
-                        sleep=0.0,
-                        opt_level=0,
-                        parallel=True,
-                        logging=False,
-                        simplify=False)
+        rs_1 = SearchND_BMNN22(ora_list=[oracle_1],
+                               min_corner=min_c,
+                               max_corner=max_c,
+                               p0=P0,
+                               alpha=ALPHA,
+                               num_cells=50,
+                               blocking=False,
+                               sleep=0.0,
+                               opt_level=1,
+                               parallel=True,
+                               logging=False,
+                               simplify=False)
 
         # rs_1.plot_2D_light(blocking=True, var_names=oracle_1.get_var_names())
 
-        rs_2 = SearchND(ora=oracle_2,
-                        min_corner=min_c,
-                        max_corner=max_c,
-                        epsilon=EPS,
-                        delta=DELTA,
-                        max_step=500,
-                        blocking=False,
-                        sleep=0.0,
-                        opt_level=0,
-                        parallel=True,
-                        logging=False,
-                        simplify=False)
+        rs_2 = SearchND_BMNN22(ora_list=[oracle_2],
+                               min_corner=min_c,
+                               max_corner=max_c,
+                               p0=P0,
+                               alpha=ALPHA,
+                               num_cells=50,
+                               blocking=False,
+                               sleep=0.0,
+                               opt_level=1,
+                               parallel=True,
+                               logging=False,
+                               simplify=False)
+
+        # rs_2.plot_2D_light(blocking=True, var_names=oracle_2.get_var_names())
+
+        # rs_1.select_champion(rs_2) == dH(rs_1, rs_2)
+        # dH(X,Y) = max{d(X,Y), d(Y,X)}
+        # In this case, d(rs_2, rs_1) = 0 and dH(X,Y) = d(rs_1, rs_2) because rs_2 is completely subsumed by rs_1
+        dist, rs1_champion, rs2_champion = rs_1.select_champion([rs_2])
+        self.assertAlmostEqual(dist, math.sqrt(0.5 ** 2 + 0.5 ** 2))
+        # self.assertEqual(rs1_champion, (0.0, 0.875))
+        # self.assertEqual(rs2_champion, (0.5, 1.375))
+
+    def test_champions_2D_null_distance(self):
+        # type: (ResultSetTestCase) -> None
+        oracle_1 = OracleFunction()
+        oracle_2 = OracleFunction()
+
+        cond_1 = Condition('x**2 + y**2', '<', '1.0')
+        oracle_1.add(cond_1)
+        oracle_2.add(cond_1)
+
+        # By default, use min_corner in 0.0 and max_corner in 1.0
+        min_c = 0.0
+        max_c = 1.0
+
+        rs_1 = SearchND_BMNN22(ora_list=[oracle_1],
+                               min_corner=min_c,
+                               max_corner=max_c,
+                               p0=P0,
+                               alpha=ALPHA,
+                               num_cells=50,
+                               blocking=False,
+                               sleep=0.0,
+                               opt_level=1,
+                               parallel=True,
+                               logging=False,
+                               simplify=False)
+
+        # rs_1.plot_2D_light(blocking=True, var_names=oracle_1.get_var_names())
+
+        rs_2 = SearchND_BMNN22(ora_list=[oracle_2],
+                               min_corner=min_c,
+                               max_corner=max_c,
+                               p0=P0,
+                               alpha=ALPHA,
+                               num_cells=50,
+                               blocking=False,
+                               sleep=0.0,
+                               opt_level=1,
+                               parallel=True,
+                               logging=False,
+                               simplify=False)
 
         # rs_2.plot_2D_light(blocking=True, var_names=oracle_2.get_var_names())
 
@@ -660,6 +716,7 @@ class ResultSetTestCase(unittest.TestCase):
         self.assertEqual(dist, 0.0)
         self.assertEqual(rs1_champion, None)
         self.assertEqual(rs2_champion, None)
+
 
 ################
 # ParResultSet #
