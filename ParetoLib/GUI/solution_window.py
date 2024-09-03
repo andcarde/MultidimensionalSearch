@@ -4,7 +4,7 @@
 
 import matplotlib
 from matplotlib.backends.backend_qtagg import NavigationToolbar2QT
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QHBoxLayout
+from PyQt5.QtWidgets import QVBoxLayout, QLabel, QPushButton, QHBoxLayout
 
 from ParetoLib.Search.ResultSet import ResultSet
 from ParetoLib.GUI.mpl_canvas import MplCanvas
@@ -13,7 +13,7 @@ from ParetoLib.GUI.solution_window_interface import SolutionWindowInterface
 matplotlib.use('Qt5Agg')
 
 
-class StandardSolutionWindow(QWidget, SolutionWindowInterface):
+class StandardSolutionWindow(SolutionWindowInterface):
     """
     This "window" is a QWidget. If it has no parent, it
     will appear as a free-floating window as we want.
@@ -109,7 +109,7 @@ class StandardSolutionWindow(QWidget, SolutionWindowInterface):
         result_set = self.result_sets[self.current_index]
 
         # :: MplCanvas : Create the canvas
-        canvas = MplCanvas(parent=self)
+        canvas = MplCanvas()
         self._set_toolbar(canvas)
         self.layout().addWidget(canvas)
 
@@ -174,7 +174,7 @@ class StandardSolutionWindow(QWidget, SolutionWindowInterface):
         """
         x = bool_signal.keys()
         y = bool_signal.values()
-        canvas = MplCanvas(parent=self)
+        canvas = MplCanvas()
         canvas.set_axis()
         canvas.axes.step(x, y, where='post')
         canvas.figure.tight_layout(pad=0)

@@ -2,14 +2,17 @@
 <Controller.py>
 """
 
-from PyQt5.QtWidgets import QFileDialog, QMessageBox
+from PyQt5.QtWidgets import QFileDialog
 
 from ParetoLib.CommandLanguage.Parser import parser
 from ParetoLib.CommandLanguage.Translation import translate, Translation, STLe1Pack
+from ParetoLib.GUI.application_service import ApplicationService
+from ParetoLib.GUI.controller_interface import ControllerInterface
+from ParetoLib.GUI.window_interface import WindowInterface
 
 
-class Controller:
-    def __init__(self, window, application_service):
+class Controller(ControllerInterface):
+    def __init__(self, application_service: ApplicationService, window: WindowInterface):
         self.window = window
         self.application_service = application_service
         self.window.set_controller(self)
@@ -54,7 +57,7 @@ class Controller:
                 is_parametric = False
                 if stle1_pack.parameters_file_path:
                     is_parametric = True
-                self.application_service.run_stle(self, is_parametric, stle1_pack.program_file_path,
+                self.application_service.run_stle(is_parametric, stle1_pack.program_file_path,
                                                   signal_filepath, stle1_pack.parameters_file_path)
 
     def load(self):

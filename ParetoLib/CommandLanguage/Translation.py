@@ -14,9 +14,27 @@ class STLe1Pack:
         # Types: (program: str), (parameters_file_path: str)
 
         # Type: str
-        self.program_file_path = program_file_path
+        self._program_file_path = program_file_path
         # Type: str
-        self.parameters_file_path = parameters_file_path
+        self._parameters_file_path = parameters_file_path
+
+    @property
+    def program_file_path(self):
+        """
+        Get the program file path.
+        Returns:
+            str: The path of the program file.
+        """
+        return self._program_file_path
+
+    @property
+    def parameters_file_path(self):
+        """
+        Get the parameters file path.
+        Returns:
+            str: The path of the parameters file.
+        """
+        return self._parameters_file_path
 
 
 class Translation:
@@ -30,8 +48,8 @@ class Translation:
         # Description: List of errors. Type: Array<str>
         self.errors = []
 
-    def add_stle1_pack(self, stle1_pack):
-        # Types: (stle1_pack: Class STL1e1Pack)
+    def add_stle1_pack(self, stle1_pack: STLe1Pack):
+        # Types: (stle1_pack: Class STLe1Pack)
 
         self.stle1_packs.append(stle1_pack)
 

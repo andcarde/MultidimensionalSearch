@@ -11,7 +11,7 @@ class OracleContainer:
         # :: OracleSTLeLib
         self.oracle = OracleSTLeLib()
         # :: OracleSTLeLib
-        self.oracle_2 = OracleSTLeLib()
+        self.oracle2 = OracleSTLeLib()
         # :: List[Oracle]
         self.oracles = []
 
@@ -31,7 +31,7 @@ class OracleContainer:
         """
         oracle : Oracle
         """
-        self.oracle_2 = oracle2
+        self.oracle2 = oracle2
 
     def get_oracle2(self):
         """

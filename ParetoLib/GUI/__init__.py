@@ -10,8 +10,6 @@ This package introduces a set of modules for manipulating the GUI.
 """
 
 import logging
-import sys
-from decimal import getcontext
 
 __name__ = 'GUI'
 __all__ = ['Window']

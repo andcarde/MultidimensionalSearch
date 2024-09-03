@@ -10,10 +10,9 @@ matplotlib.use('Qt5Agg')
 
 
 class MplCanvas(FigureCanvasQTAgg):
-    def __init__(self, parent=None, width: int = 5, height: int = 4, dpi: int = 100):
+    def __init__(self, width: int = 5, height: int = 4, dpi: int = 100):
         """
         Parameters:
-            parent :: QWidget
             width :: int
             height :: int
             dpi :: int

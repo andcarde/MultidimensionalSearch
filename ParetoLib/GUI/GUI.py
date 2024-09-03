@@ -1,19 +1,18 @@
 import os
-import sys
 import json
 from json.decoder import JSONDecodeError
 
 import pandas as pd
 import seaborn as sns
 import matplotlib
+from PyQt5.QtCore import QEvent
 
-from PyQt5.QtWidgets import QApplication, QFileDialog, QMainWindow, QMessageBox
+from PyQt5.QtWidgets import QFileDialog, QMainWindow, QMessageBox
 
 import ParetoLib.GUI
+from ParetoLib.GUI.controller_interface import ControllerInterface
 from ParetoLib.GUI.mpl_canvas import MplCanvas
 from ParetoLib.GUI.Window import Ui_MainWindow
-from ParetoLib.GUI.application_service import ApplicationService
-from ParetoLib.GUI.controller import Controller
 from ParetoLib.GUI.window_interface import WindowInterface
 from ParetoLib.CommandLanguage.FileUtils import read_file
 
@@ -23,10 +22,12 @@ matplotlib.use('Qt5Agg')
 pd.set_option('display.float_format', lambda x: '%.7f' % x)  # For rounding purposes
 
 
-class MainWindow(QMainWindow, Ui_MainWindow, WindowInterface):
+class MainWindow(WindowInterface, Ui_MainWindow):
     """
     Main window of the Pareto Lib.
     """
+
+    PROJECT_DIRECTORY_PATH = './Projects'
 
     def __init__(self, *args, **kwargs):
         QMainWindow.__init__(self, *args, **kwargs)
@@ -45,12 +46,12 @@ class MainWindow(QMainWindow, Ui_MainWindow, WindowInterface):
         # Connecting execution button clicked (event) running stle (action)
         self.pareto_execution_button.clicked.connect(self._run_stle)
 
-        self.mining_comboBox.activated.connect(self._not_saved)
-        self.param_stl_selection_comboBox.activated.connect(self._not_saved)
-        self.search_type_comboBox.activated.connect(self._not_saved)
-        self.opt_level_comboBox.activated.connect(self._not_saved)
-        self.interpolation_comboBox.activated.connect(self._not_saved)
-        self.param_tableWidget.cellChanged.connect(self._not_saved)
+        self.mining_comboBox.activated.connect(self._set_unsaved)
+        self.param_stl_selection_comboBox.activated.connect(self._set_unsaved)
+        self.search_type_comboBox.activated.connect(self._set_unsaved)
+        self.opt_level_comboBox.activated.connect(self._set_unsaved)
+        self.interpolation_comboBox.activated.connect(self._set_unsaved)
+        self.param_tableWidget.cellChanged.connect(self._set_unsaved)
 
         # Filepaths
         # :: str
@@ -65,11 +66,9 @@ class MainWindow(QMainWindow, Ui_MainWindow, WindowInterface):
         # If your variable points to a different directory, you may update it accordingly.
         # self.path_project = os.path.abspath('multidimensional_search/Projects')
         # :: str
-        self.path_project = "./Projects"
-        # :: str
         self.project_path = None
         # :: bool
-        self.has_been_saved = False
+        self.saved_changes = False
         # :: bool
         self.is_parallel = False
         # :: Integer
@@ -80,7 +79,7 @@ class MainWindow(QMainWindow, Ui_MainWindow, WindowInterface):
         # The initialization is deferred due to mutual reference resolution
         self.controller = None
 
-    def set_controller(self, controller: Controller):
+    def set_controller(self, controller: ControllerInterface):
         """
         Parameters:
         controller : Controller
@@ -101,7 +100,7 @@ class MainWindow(QMainWindow, Ui_MainWindow, WindowInterface):
                 self.show_message('Missing signal', 'The signal has not been set.', True)
             else:
                 stle2_program = self.get_program()
-                self.controller.check_run(self, stle2_program, self.signal_filepath)
+                self.controller.check_run(stle2_program, self.signal_filepath)
 
     def show_message(self, title: str, body: str, is_error: bool):
         if is_error:
@@ -139,6 +138,7 @@ class MainWindow(QMainWindow, Ui_MainWindow, WindowInterface):
         Returns: None
         """
         self.program_textarea.setPlainText(program)
+        self._set_unsaved()
 
     def get_method(self):
         """
@@ -158,7 +158,8 @@ class MainWindow(QMainWindow, Ui_MainWindow, WindowInterface):
 
     def generate_opt_level(self):
         """
-        Returns: int
+        Returns:
+            int
         """
         # :: int
         self.opt_level = self.opt_level_comboBox.currentIndex()
@@ -177,115 +178,139 @@ class MainWindow(QMainWindow, Ui_MainWindow, WindowInterface):
     def _clear_layout(layout):
         """
         Parameters:
-        layout :: QVBoxLayout
+            layout :: QVBoxLayout
 
-        Returns: None
+        Returns:
+            None
         """
         while layout.count() > 0:
             child = layout.takeAt(0)
             if child.widget():
                 child.widget().deleteLater()
 
-    def _not_saved(self):
+    def _set_unsaved(self):
         """
         Returns: None
         """
-        self.has_been_saved = False
+        self.saved_changes = False
 
-    def closeEvent(self, event):
+    def closeEvent(self, event: QEvent):
         """
+        Handles the window close event to prompt the user to save unsaved changes.
+
         Parameters:
-        event :: ?
+            event :: QEvent
 
-        Returns: None
+        Returns:
+            None
         """
-        try:
-            if self.project_path is not None and not self.has_been_saved:
-                title = "Close Project?"
-                message = "WARNING \n\nDo you want to save the changes you made to " + self.project_path + "?"
+        if self.project_path is not None and not self.saved_changes:
+            try:
+                # :: str
+                title = 'Unsaved Changes'
+                # :: str
+                message = 'Do you want to save the changes you made to the project?'
+                # :: QMessageBox : Display a message box to the user
                 reply = QMessageBox.question(self, title, message,
                                              QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
-
                 if reply == QMessageBox.Yes:
                     self._save_project()
                     event.accept()
                 elif reply == QMessageBox.No:
-                    # Check if the file is empty, if it is we delete the file, otherwise we leave it as it is
-                    # project_filename = ''.join(self.project_path)
-                    # :: bool
-                    is_non_zero_file = os.path.isfile(self.project_path) and os.path.getsize(self.project_path) > 0
-                    if is_non_zero_file:
-                        os.remove(self.project_path)
                     event.accept()
                 else:
                     event.ignore()
-        except Exception as e:
-            RootGUI.logger.debug(str(e))
-            event.accept()
+            except (IOError, OSError) as file_error:
+                RootGUI.logger.debug(f"File operation error: {file_error}")
+                QMessageBox.critical(self, "Error", "An error occurred while saving the project.")
+                event.accept()
+            except RuntimeError as runtime_error:
+                RootGUI.logger.debug(f"Runtime error: {runtime_error}")
+                QMessageBox.critical(self, "Error", "A runtime error occurred.")
+                event.accept()
+            except Exception as general_error:
+                RootGUI.logger.debug(f"Unexpected error: {general_error}")
+                QMessageBox.critical(self, "Error", "An unexpected error occurred.")
+                event.accept()
 
     def _save_project(self):
-        # Check if the directory exists and if is a dir, else create the dir
-        self._check_directory()
-
-        # Create the new project configuration in dir ./Projects
-        # self.create_project()
-
-        # Save all the necessary configuration data of a project in the specified file
-        self._save_data()
-        self.has_been_saved = True
-
-    def _create_project(self):
         """
-        Returns: None
+        Save all the configuration data in the project file.
+
+        Returns:
+            None
         """
-        self.has_been_saved = False
-
-        # Check if the directory exists and if is a dir, else create the dir
-        self._check_directory()
-
-        # Open the folder where we are going to save the project
-        self.project_path = QFileDialog.getSaveFileName(self, "Create project", "./Projects", ".json")
-        # Create the JSON file where we are going to save the configuration options
-        self.project_path = ''.join(self.project_path)
-        saved_file = open(self.project_path, 'w')
-
-        saved_file.close()
-
-    def _save_data(self):
-        """
-        Returns: None
-        """
-        # :: str
-        name_project = f'"name_project":"{self.project_path}"'
-        # :: str
-        name_project_json = "{" + name_project + "}"
+        # If the project file does not exist, create a new project
+        if not self.project_filepath:
+            self._create_project()
         try:
             # :: dict[str, object] : Create the JSON object to store all the necessary data
-            # Raise JSONDecodeError or TypeError at fail
-            self.data = json.loads(name_project_json)
+            self.data = dict()
+            self.data["project_path"] = self.project_path
             # :: dict[str, object]
-            # Raise JSONDecodeError or TypeError at fail
-            options = json.loads('{}')
+            options = dict()
             options["interpolation"] = self.interpolation_comboBox.currentText()
             options["mining_method"] = self.mining_comboBox.currentText()
             options["type_search"] = self.search_type_comboBox.currentText()
             options["option_level"] = self.opt_level_comboBox.currentText()
-            options["parametric"] = self.param_stl_selection_comboBox.currentText()
             self.data["options"] = options
-            self.data["stl_specification"] = self.program_filepath
+            self.data["stl_specification"] = self.get_program()
             self.data["signal_specification"] = self.signal_filepath
             self.data["parameters"] = self.read_parameters_intervals()
 
-            # Raise OSError at fail
-            saved_file = open(self.project_path, 'w')
-            # Raise TypeError at fail
-            saved_file.write(json.dumps(self.data, indent=2))
-            saved_file.close()
-        except (JSONDecodeError, TypeError):
+            # Write data to file
+            with open(self.project_path, 'w') as saved_file:
+                # Raise TypeError at fail
+                saved_file.write(json.dumps(self.data, indent=2))
+
+            # Set the 'saved_changes' flag to True
+            self.saved_changes = True
+        except (OSError, TypeError):
             QMessageBox.about(self, "File not exist", "There is no current file loaded or created")
+
+    def _create_project(self):
+        """
+        Prompts the user to specify a location and filename to create a new project.
+        Initializes a new project file and sets the `has_been_saved` flag to False.
+
+        Returns:
+            None
+        """
+        # Ensure the directory for the project exists, or create it if necessary
+        if not MainWindow._check_directory():
+            QMessageBox.critical(self, 'Directory Error', f'An error occurred while creating the directory of projects')
+            return False
+        else:
+            # project_file_path :: str
+            # Prompt the user to select a location and filename for the new project
+            project_filepath, _ = QFileDialog.getSaveFileName(
+                self,
+                "Create New Project",
+                "./Projects",
+                "JSON Files (*.json)"
+            )
+
+            # Check if the user canceled the dialog
+            if not project_filepath:
+                return False
+            else:
+                try:
+                    with open(project_filepath, 'w') as file:
+                        # Initially, the file is empty
+                        pass
+                except OSError:
+                    # Handle errors during file operations
+                    QMessageBox.critical(self, 'File Error', f'An error occurred while creating the project file')
+                    return False
+
+                # Update the project path
+                self.project_filepath = project_filepath
+                self.saved_changes = False
+                return True
 
     def _load_project(self):
         """
+        # Raise JSONDecodeError or TypeError at fail
         Returns: None
         """
         # Open the project file that we want to load and store in a variable
@@ -298,44 +323,68 @@ class MainWindow(QMainWindow, Ui_MainWindow, WindowInterface):
         data = json.load(load_path)
 
         self._load_data(data)
-        self.has_been_saved = True
+        self.saved_changes = True
 
     def _load_data(self, data):
         """
-        data: ?
+        Parameters:
+            data: dict
 
-        Returns: None
+        Returns:
+            None
         """
         # :: str
-        self.program_filepath = data["stl_specification"]
-        if self.program_filepath:
-            self._set_program_filepath(self.program_filepath)
+        program = data["program"]
+        if program:
+            self.set_program(program)
 
         # :: str
         signal_filepath = data["signal_specification"]
         if signal_filepath:
             self._set_signal_filepath(signal_filepath)
 
+        # :: dict
         options = data["options"]
+        if options:
+            interpolation = options["interpolation"]
+            if interpolation:
+                self.interpolation_comboBox.setCurrentText(options["interpolation"])
 
-        self.interpolation_comboBox.setCurrentText(options["interpolation"])
-        self.mining_comboBox.setCurrentText(options["mining_method"])
-        self.search_type_comboBox.setCurrentText(options["type_search"])
-        self.opt_level_comboBox.setCurrentText(options["option_level"])
-        self.param_stl_selection_comboBox.setCurrentText(options["parametric"])
+            mining_method = options["mining_method"]
+            if mining_method:
+                self.mining_comboBox.setCurrentText(mining_method)
+            type_search = options["type_search"]
+            if type_search:
+                self.search_type_comboBox.setCurrentText(type_search)
+            option_level = options["option_level"]
+            if option_level:
+                self.opt_level_comboBox.setCurrentText(option_level)
 
-    def _check_directory(self):
+        self.saved_changes = True
+
+    @staticmethod
+    def _check_directory():
         """
-        Check if the directory where we are going to store the projects exists
+        Ensure the directory for storing projects exists. Create it if it doesn't,
+        and handle cases where the path exists but is not a directory.
 
-        Returns: None
+        Returns:
+            bool: True if the directory check and creation were successful, False otherwise.
         """
-        if not os.path.exists(self.path_project):
-            os.mkdir(self.path_project)
-        # If is not a directory
-        elif not os.path.isdir(self.path_project):
-            os.remove(self.path_project)
-            os.mkdir(self.path_project)
+        try:
+            # Check if the project directory exists
+            if not os.path.exists(MainWindow.PROJECT_DIRECTORY_PATH):
+                # Create the directory
+                os.mkdir(MainWindow.PROJECT_DIRECTORY_PATH)
+            # If path exists but is not a directory; remove and recreate it
+            elif not os.path.isdir(MainWindow.PROJECT_DIRECTORY_PATH):
+                os.remove(MainWindow.PROJECT_DIRECTORY_PATH)
+                os.mkdir(MainWindow.PROJECT_DIRECTORY_PATH)
+            return True
+        except (OSError, IOError) as e:
+            # Handle exceptions related to file and directory operations
+            print(f"Error: {e}")
+            return False
 
     def _read_program_filepath(self):
         """
@@ -365,9 +414,9 @@ class MainWindow(QMainWindow, Ui_MainWindow, WindowInterface):
         """
         try:
             self.signal_filepath = signal_filepath
+            self._set_unsaved()
             self.signal_filepath_textbox.setPlainText(signal_filepath)
             self._plot_csv(signal_filepath)
-            self._not_saved()
         except Exception as e:
             RootGUI.logger.debug(e)
 
@@ -396,7 +445,7 @@ class MainWindow(QMainWindow, Ui_MainWindow, WindowInterface):
         """
         # Create the 'maptlotlib' FigureCanvas object,
         # which defines a single set of axes as self.axes.
-        canvas = MplCanvas(parent=self)
+        canvas = MplCanvas()
         canvas.set_axis()
         try:
             # signal_filepath = '../../Tests/Oracle/OracleSTLe/2D/stabilization/stabilization.csv'
@@ -463,20 +512,3 @@ class MainWindow(QMainWindow, Ui_MainWindow, WindowInterface):
             intervals.append(interval)
         return intervals
     """
-
-
-def main():
-    # :: QApplication
-    app = QApplication(sys.argv)
-    # :: MainWindow
-    window = MainWindow()
-    window.centralwidget.adjustSize()
-    window.show()
-    # :: ApplicationService
-    application_service = ApplicationService(window)
-    Controller(application_service, window)
-    sys.exit(app.exec_())
-
-
-if __name__ == '__main__':
-    main()

@@ -1,6 +1,5 @@
 # ApplicationService.py
 
-import tempfile
 import os
 
 import ParetoLib.GUI
@@ -38,12 +37,7 @@ class ApplicationService(ApplicationServiceInterface):
         parameters = self.oracle_container.get_parameters()
         return parameters
 
-    def get_parameters2(self, stl_param_file):
-        # :: List[str]
-        parameters = self.oracle_container.get_parameters2(stl_param_file)
-        return parameters
-
-    def run_stle(self, is_parametric, stl_prop_file, csv_signal_file, stl_param_file):
+    def run_stle(self, is_parametric: bool, stl_prop_file: str, csv_signal_file: str, stl_param_file: str):
         """
         Runs STLEval
 
@@ -71,7 +65,7 @@ class ApplicationService(ApplicationServiceInterface):
                 # Visualization of the solution
                 # :: List[str]
                 parameters = self._get_parameters()
-                StandardSolutionWindow.show_multi_oracle_solution(self, result_set, parameters)
+                StandardSolutionWindow.show_multi_oracle_solution(result_set, parameters)
             # For a single oracle
             else:
                 # Visualization of the solution
@@ -222,7 +216,8 @@ class ApplicationService(ApplicationServiceInterface):
             elif method == 2:
                 # :: str
                 signal_filepath = self.main_window.get_signal_filepath()
-                oracles = OracleSTLeLib(formula_filepath, signal_filepath, parameters_filepath)
+                oracles = [OracleSTLeLib(formula_filepath, signal_filepath, parameters_filepath)
+                           for _ in intervals]
                 self.oracle_container.set_oracles(oracles)
                 RootGUI.logger.debug('Method 2')
                 result_set = SearchND_2_BMNN22(ora_list=oracles,

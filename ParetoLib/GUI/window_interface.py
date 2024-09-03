@@ -2,18 +2,21 @@
 <window_interface.py>
 """
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 
-from ParetoLib.GUI.controller import Controller
+from PyQt5.QtWidgets import QMainWindow
+
+from ParetoLib.GUI.controller_interface import ControllerInterface
 
 
-class WindowInterface(ABC):
+class WindowInterface(QMainWindow):
     """
     Main Window Interface with all methods.
+    ABC is not used for multiple inheritance compatibility
 
     Methods:
         # Called by Controller
-        set_controller(controller: Controller)
+        set_controller(controller: ControllerInterface)
         show_message(title : str, body : str, is_error : bool)
         get_program()
         set_program(program: str)
@@ -30,7 +33,7 @@ class WindowInterface(ABC):
     """
 
     @abstractmethod
-    def set_controller(self, controller: Controller):
+    def set_controller(self, controller: ControllerInterface):
         """
         Sets the controller.
 
