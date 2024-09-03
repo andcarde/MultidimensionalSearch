@@ -7,3 +7,4 @@ ParetoLib.egg-info/*
 .python-version
 .DS_Store
 
+*.pyc
