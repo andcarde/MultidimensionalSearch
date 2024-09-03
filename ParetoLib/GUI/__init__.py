@@ -14,7 +14,7 @@ import sys
 from decimal import getcontext
 
 __name__ = 'GUI'
-__all__ = ['Window']
+__all__ = ['Window', 'window_interface', 'application_service', 'controller', 'mpl_canvas', 'solution_window']
 
 # Logging configuration
 # logging.basicConfig(format='%(message)s', level=logging.INFO)
